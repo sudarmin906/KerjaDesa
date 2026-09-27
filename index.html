@@ -19,7 +19,7 @@ body{padding-bottom:70px}
 <section id="login" class="card">
 <h2>Masuk</h2><p class="muted">Gunakan akun demo untuk mencoba.</p>
 <input id="user" value="admin" placeholder="Username"><input id="pass" value="admin123" type="password" placeholder="Password">
-<button onclick="login()">Masuk</button><p id="loginMsg" class="muted"></p>
+<button onclick="doLogin()">Masuk</button><p id="loginMsg" class="muted"></p>
 </section>
 
 <section id="app">
@@ -49,8 +49,8 @@ let data=JSON.parse(localStorage.getItem('kerjadesa')||'{"kegiatan":[],"monitori
 let deferred=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
 function save(){localStorage.setItem('kerjadesa',JSON.stringify(data));render()}
-function login(){if(user.value==='admin'&&pass.value==='admin123'){localStorage.setItem('kd_login','1');show()}else loginMsg.textContent='Username atau password salah.'}
-function show(){login.style.display='none';app.style.display='block';nav.classList.remove('hide');render()}
+function doLogin(){const u=document.getElementById('user').value.trim();const pw=document.getElementById('pass').value;if(u==='admin'&&pw==='admin123'){localStorage.setItem('kd_login','1');show()}else document.getElementById('loginMsg').textContent='Username atau password salah.'}
+function show(){document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';document.getElementById('nav').classList.remove('hide');render()}
 function page(x){['home','kegiatan','monitoring'].forEach(y=>document.getElementById(y).classList.toggle('hide',x!==y));render()}
 function addKegiatan(){let x={id:Date.now(),nama:knama.value,desa:kdesa.value,tanggal:ktgl.value,catatan:kcat.value};if(!x.nama)return alert('Nama kegiatan wajib diisi');data.kegiatan.push(x);[knama,kdesa,ktgl,kcat].forEach(e=>e.value='');save();page('kegiatan')}
 function addMonitoring(){let x={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),kegiatan:mkeg.value,petugas:mpet.value,progres:Number(mprog.value||0),catatan:mcat.value,tanggal:new Date().toLocaleString('id-ID'),gps:data.gps,synced:false};if(!x.petugas)return alert('Nama petugas wajib diisi');data.monitoring.push(x);[mkeg,mpet,mprog,mcat].forEach(e=>e.value='');save();page('monitoring')}
