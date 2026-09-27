@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f766e"><link rel="manifest" href="manifest.json">
+<title>KerjaDesa</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f7f8;color:#17202a}
+header{background:#0f766e;color:white;padding:18px 16px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:24px}header small{opacity:.85}
+main{max-width:720px;margin:auto;padding:16px}.card{background:white;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 10px #00000010}
+input,textarea,select,button{width:100%;padding:13px;margin:6px 0;border-radius:10px;border:1px solid #ccd5d8;font-size:15px}
+button{background:#0f766e;color:white;border:0;font-weight:bold}.secondary{background:#e6f3f1;color:#0f766e}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{font-size:26px;font-weight:bold}.muted{color:#667}.item{border-left:4px solid #0f766e;padding:10px;background:#f8fbfb;margin:8px 0;border-radius:8px}
+#app{display:none}.hide{display:none}.nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #ddd;padding:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.nav button{margin:0;padding:10px}
+body{padding-bottom:70px}
+</style></head><body>
+<header><h1>KerjaDesa</h1><small>Administrasi & Monitoring Desa • Offline</small></header>
+<main>
+<section id="login" class="card">
+<h2>Masuk</h2><p class="muted">Gunakan akun demo untuk mencoba.</p>
+<input id="user" value="admin" placeholder="Username"><input id="pass" value="admin123" type="password" placeholder="Password">
+<button onclick="login()">Masuk</button><p id="loginMsg" class="muted"></p>
+</section>
+
+<section id="app">
+<div id="home">
+<div class="grid"><div class="card"><div class="stat" id="jmlK">0</div><div class="muted">Kegiatan</div></div>
+<div class="card"><div class="stat" id="jmlM">0</div><div class="muted">Monitoring</div></div></div>
+<div class="card"><h3>Status Perangkat</h3><div id="online">Memeriksa...</div><button class="secondary" onclick="installApp()">Pasang ke Layar Utama</button></div>
+<div class="card"><h3>Kerja Desa</h3><p class="muted">Data tersimpan di perangkat dan dapat digunakan saat tidak ada internet.</p></div>
+</div>
+
+<div id="kegiatan" class="hide"><div class="card"><h2>Data Kegiatan</h2>
+<input id="knama" placeholder="Nama kegiatan"><input id="kdesa" placeholder="Desa">
+<input id="ktgl" type="date"><textarea id="kcat" placeholder="Catatan"></textarea>
+<button onclick="addKegiatan()">Simpan Kegiatan</button></div><div id="klist"></div></div>
+
+<div id="monitoring" class="hide"><div class="card"><h2>Monitoring Lapangan</h2>
+<input id="mkeg" placeholder="ID kegiatan"><input id="mpet" placeholder="Nama petugas">
+<input id="mprog" type="number" min="0" max="100" placeholder="Progres 0-100">
+<textarea id="mcat" placeholder="Catatan hasil monitoring"></textarea>
+<button onclick="gps()">📍 Ambil Lokasi GPS</button><p id="gpsout" class="muted">Lokasi belum diambil</p>
+<button onclick="addMonitoring()">Simpan Monitoring</button></div><div id="mlist"></div></div>
+</section>
+</main>
+<div id="nav" class="nav hide"><button onclick="page('home')">🏠 Beranda</button><button onclick="page('kegiatan')">📋 Kegiatan</button><button onclick="page('monitoring')">📍 Monitoring</button></div>
+<script>
+let data=JSON.parse(localStorage.getItem('kerjadesa')||'{"kegiatan":[],"monitoring":[],"gps":null}');
+let deferred=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
+function save(){localStorage.setItem('kerjadesa',JSON.stringify(data));render()}
+function login(){if(user.value==='admin'&&pass.value==='admin123'){localStorage.setItem('kd_login','1');show()}else loginMsg.textContent='Username atau password salah.'}
+function show(){login.style.display='none';app.style.display='block';nav.classList.remove('hide');render()}
+function page(x){['home','kegiatan','monitoring'].forEach(y=>document.getElementById(y).classList.toggle('hide',x!==y));render()}
+function addKegiatan(){let x={id:Date.now(),nama:knama.value,desa:kdesa.value,tanggal:ktgl.value,catatan:kcat.value};if(!x.nama)return alert('Nama kegiatan wajib diisi');data.kegiatan.push(x);[knama,kdesa,ktgl,kcat].forEach(e=>e.value='');save();page('kegiatan')}
+function addMonitoring(){let x={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),kegiatan:mkeg.value,petugas:mpet.value,progres:Number(mprog.value||0),catatan:mcat.value,tanggal:new Date().toLocaleString('id-ID'),gps:data.gps,synced:false};if(!x.petugas)return alert('Nama petugas wajib diisi');data.monitoring.push(x);[mkeg,mpet,mprog,mcat].forEach(e=>e.value='');save();page('monitoring')}
+function gps(){if(!navigator.geolocation)return gpsout.textContent='GPS tidak tersedia';navigator.geolocation.getCurrentPosition(p=>{data.gps={lat:p.coords.latitude,lon:p.coords.longitude};gpsout.textContent=`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`},e=>gpsout.textContent='GPS gagal: '+e.message,{enableHighAccuracy:true})}
+function render(){jmlK.textContent=data.kegiatan.length;jmlM.textContent=data.monitoring.length;
+klist.innerHTML=data.kegiatan.map(x=>`<div class="card item"><b>${x.nama}</b><br>${x.desa||'-'} • ${x.tanggal||'-'}<br><span class="muted">${x.catatan||''}</span></div>`).join('');
+mlist.innerHTML=data.monitoring.slice().reverse().map(x=>`<div class="card item"><b>Monitoring ${x.progres}%</b><br>Petugas: ${x.petugas}<br>${x.tanggal}<br>${x.catatan||''}<br><span class="muted">${x.gps?`GPS: ${x.gps.lat.toFixed(5)}, ${x.gps.lon.toFixed(5)}`:'GPS belum ada'} • ${x.synced?'Tersinkron':'Offline'}</span></div>`).join('');
+online.textContent=navigator.onLine?'🟢 Online':'🔴 Offline — data tetap tersimpan di HP'}
+async function installApp(){if(deferred){deferred.prompt();deferred=null}else alert('Jika browser mendukung PWA, buka menu Chrome ⋮ lalu pilih “Tambahkan ke layar utama”.')}
+window.addEventListener('online',render);window.addEventListener('offline',render);
+if(localStorage.getItem('kd_login')==='1')show();else render();
+navigator.serviceWorker?.register('./sw.js');</script></body></html>
