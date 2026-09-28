@@ -1,10 +1,10 @@
-name: Build KerjaDesa Android V28
+name: Build KerjaDesa Android V28 FINAL
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "KerjaDesa_Android_V28.zip"
+      - "KerjaDesa_Android_V28_FINAL.zip"
       - ".github/workflows/android.yml"
 
 jobs:
@@ -15,13 +15,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract V28
+      - name: Extract V28 FINAL
         run: |
           rm -rf android_build
-          mkdir android_build
-          unzip -q KerjaDesa_Android_V28.zip -d android_build
+          mkdir -p android_build
+          unzip -q KerjaDesa_Android_V28_FINAL.zip -d android_build
 
-          echo "=== CEK V28 ==="
+          echo "=== PROJECT ==="
           ls -la android_build/KerjaDesa_Android_V28
 
           test -f android_build/KerjaDesa_Android_V28/settings.gradle
@@ -41,17 +41,16 @@ jobs:
             platforms;android-36
             build-tools;36.0.0
 
-      - name: Check Android SDK
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          which sdkmanager
-          sdkmanager --version
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: "8.13"
+
+      - name: Verify tools
+        run: |
+          java -version
+          gradle --version
+          sdkmanager --version
 
       - name: Build APK
         working-directory: android_build/KerjaDesa_Android_V28
@@ -62,10 +61,8 @@ jobs:
         run: |
           APK="android_build/KerjaDesa_Android_V28/app/build/outputs/apk/debug/app-debug.apk"
 
-          echo "=== APK HASIL BUILD ==="
-          ls -lh "$APK"
-
           test -f "$APK"
+          ls -lh "$APK"
 
           SIZE=$(stat -c%s "$APK")
           echo "APK SIZE: $SIZE bytes"
