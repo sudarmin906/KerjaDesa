@@ -8,7 +8,7 @@
 @media(max-width:600px){.grid,.row,.actions{grid-template-columns:1fr}.nav button{font-size:11px}}
 @media print{body{background:#fff;padding:0}header,.nav,#app>div:not(#dokumen),#login,#dokumen>.card:not(.print-area),#docResult,.no-print{display:none!important}.report-print{display:block!important}.print-report{font-family:Arial,sans-serif;color:#000;line-height:1.45;font-size:11pt}.print-report h1{text-align:center;font-size:16pt}.print-report h2{text-align:center;font-size:13pt}.print-report h3{font-size:12pt;margin-top:18px}.print-report table{width:100%;border-collapse:collapse}.print-report th,.print-report td{border:1px solid #555;padding:5px;vertical-align:top}.print-report .center{text-align:center}.pagebreak{page-break-before:always}}
 </style></head><body>
-<header><h1>KerjaDesa</h1><small>Administrasi & Monitoring Desa • Offline • V5 DRP → Laporan Otomatis</small></header>
+<header><h1>KerjaDesa</h1><small>Administrasi & Monitoring Desa • Offline • V6 DRP + SPPD → Laporan Otomatis</small></header>
 <main>
 <section id="login" class="card"><h2>Masuk</h2><p class="muted">Gunakan akun demo.</p><input id="user" value="admin" placeholder="Username"><input id="pass" value="admin123" type="password" placeholder="Password"><button onclick="doLogin()">Masuk</button><p id="loginMsg" class="muted"></p></section>
 <section id="app">
@@ -90,7 +90,7 @@ async function readPdfBasic(file){
   }
   return (out||'').replace(/\u0000/g,' ').replace(/[ \t]+/g,' ').replace(/\n+/g,'\n').trim();
 }
-function cleanText(t){return String(t||'').replace(/\u0000/g,' ').replace(/\r/g,'\n').replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim()}
+function cleanText(t){return String(t||'').replace(/\u0000/g,' ').replace(/\r/g,'\n').replace(/\b\d+\s*\/\s*\d+\s+No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim()}
 function normText(t){return cleanText(t).replace(/\s+/g,' ').trim()}
 function escReg(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
 function parseDateShort(s){const m=s.match(/^(\d{2})\/(\d{2})\/(\d{2})$/);return m?`${m[1]}/${m[2]}/20${m[3]}`:s}
@@ -132,8 +132,9 @@ function parseDRP(text){
   const header=parseDrpHeader(text);
   const aktivitas=parseDrpActivities(text,'DAFTAR LAPORAN AKTIVITAS','Total Laporan Aktivitas',false);
   const kunlap=parseDrpActivities(text,'DAFTAR LAPORAN KUNJUNGAN LAPANGAN','Total Laporan Kunjungan Lapangan',true);
-  const all=aktivitas.concat(kunlap).sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no);
-  return {header,aktivitas,kunlap,all,count:all.length,source:'DRP'}
+  const all=aktivitas.concat(kunlap).sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no).map((x,i)=>({...x,no:i+1,deskripsi:cleanText(x.deskripsi)}));
+  const cleanGroup=(arr)=>arr.map(x=>all.find(y=>y.tanggal===x.tanggal&&y.deskripsi===x.deskripsi)||x);
+  return {header,aktivitas:cleanGroup(aktivitas),kunlap:cleanGroup(kunlap),all,count:all.length,source:'DRP'}
 }
 function renderDrpPreview(drp){
   if(!drp)return;
@@ -155,7 +156,10 @@ async function autoProcessOne(kind){
         document.getElementById('rNama').value=parsed.header.nama||'';document.getElementById('rPosisi').value=parsed.header.posisi||'PLD';document.getElementById('rKec').value=parsed.header.kecamatan||'';document.getElementById('rKab').value=parsed.header.kabupaten||'';document.getElementById('rProv').value=parsed.header.provinsi||'';
         const pm=(parsed.header.periode||'').match(/(\d{4})/);const months={'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05','Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12'};const mm=Object.keys(months).find(k=>(parsed.header.periode||'').toLowerCase().includes(k.toLowerCase()));if(pm&&mm)document.getElementById('rPeriode').value=`${pm[1]}-${months[mm]}`;
       }
-    } else data.docs.sppd={name:f.name,text:txt,summary:summarizeDoc(txt),processedAt:new Date().toISOString()};
+    } else {
+      const summary=summarizeDoc(txt);
+      data.docs.sppd={name:f.name,text:txt,summary,parsed:parseSPPD(txt),processedAt:new Date().toISOString()};
+    }
     save();
     st.innerHTML=kind==='drp'?`<span class="ok">✓ DRP selesai dibaca: ${parsed?.count||0} kegiatan ditemukan.</span>`:`<span class="ok">✓ Selesai: ${esc(f.name)}</span>`;
     if(kind==='drp')renderDrpPreview(parsed);
@@ -174,6 +178,22 @@ function updateDocStatus(){
   }else document.getElementById('docResult').innerHTML='';
 }
 function summarizeDoc(t){let x=cleanText(t);return {tanggal:findDate(x),lokasi:findLocations(x),panjang:x.length,cuplikan:x.slice(0,1800)}}
+function parseSPPD(text){
+  const x=normText(text);
+  const pick=(patterns)=>{for(const p of patterns){const m=x.match(p);if(m&&m[1])return m[1].trim()}return ''};
+  const dates=[...x.matchAll(/\b(\d{1,2}[\/-]\d{1,2}[\/-]20\d{2})\b/g)].map(m=>m[1]);
+  return {
+    nomor:pick([/(?:Nomor|No\.?)\s*[:.]?\s*([A-Za-z0-9\/-]{3,50})/i]),
+    tanggal:dates[0]||findDate(x),
+    tanggalList:[...new Set(dates)],
+    nama:pick([/(?:Nama|Pegawai|Yang melakukan perjalanan)\s*[:.]\s*([^\n;]{3,100})/i]),
+    tujuan:pick([/(?:Tujuan|Tempat Tujuan|Ke)\s*[:.]\s*([^\n;]{3,150})/i]),
+    maksud:pick([/(?:Maksud|Keperluan|Dalam rangka)\s*[:.]\s*([^\n;]{3,250})/i]),
+    berangkat:pick([/(?:Berangkat dari|Tanggal berangkat|Berangkat)\s*[:.]\s*([^\n;]{3,100})/i]),
+    kembali:pick([/(?:Kembali|Tanggal kembali)\s*[:.]\s*([^\n;]{3,100})/i]),
+    cuplikan:x.slice(0,1600)
+  };
+}
 function findDate(t){let m=cleanText(t).match(/\b(\d{1,2})[\/-](\d{1,2})[\/-](20\d{2})\b/);if(m)return `${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;m=cleanText(t).match(/\b(\d{1,2})\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+(20\d{2})/i);return m?m[0]:''}
 function findLocations(t){let hits=[];for(const m of cleanText(t).matchAll(/(?:Desa|Kelurahan)\s+[A-Za-zÀ-ÿ0-9' -]{2,60}/gi))hits.push(m[0].trim().replace(/[,.].*$/,''));return [...new Set(hits)].slice(0,10)}
 function periodLabel(){const v=document.getElementById('rPeriode').value;if(v){const [y,m]=v.split('-');return new Date(Number(y),Number(m)-1,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'})}return new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'})}
@@ -187,10 +207,12 @@ function makeReport(){
   const kab=document.getElementById('rKab').value||h.kabupaten||'-';
   const prov=document.getElementById('rProv').value||h.provinsi||'-';
   const periode=h.periode||periodLabel();
-  const acts=drp?.all||data.drpActivities||[];
+  const acts=(drp?.all||data.drpActivities||[]).map((x,i)=>({...x,no:i+1}));
   const activityRows=acts.map(x=>`<tr><td>${x.no}</td><td>${esc(x.tanggal)}</td><td>${esc(x.waktu)}</td><td>${esc(x.durasi)}</td><td>${esc(x.jenis)}</td><td>${esc(x.kunjungan?'Kunjungan Lapangan':'Bukan Kunjungan Lapangan')}</td><td>${esc(x.lokasi)}</td><td>${esc(x.deskripsi)}</td></tr>`).join('');
   const desa=h.desa||'-';
   const sppd=d.sppd?.name||'Belum diunggah';
+  const sp=d.sppd?.parsed||{};
+  const sppdInfo=`<table><tr><th colspan="2">PEMETAAN DOKUMEN SPPD</th></tr><tr><td>Nomor</td><td>${esc(sp.nomor||'Tidak ditemukan')}</td></tr><tr><td>Tanggal</td><td>${esc((sp.tanggalList||[]).join(', ')||sp.tanggal||'Tidak ditemukan')}</td></tr><tr><td>Nama/Pelaksana</td><td>${esc(sp.nama||'Tidak ditemukan')}</td></tr><tr><td>Tujuan</td><td>${esc(sp.tujuan||'Tidak ditemukan')}</td></tr><tr><td>Maksud/Keperluan</td><td>${esc(sp.maksud||'Tidak ditemukan')}</td></tr><tr><td>Berangkat</td><td>${esc(sp.berangkat||'Tidak ditemukan')}</td></tr><tr><td>Kembali</td><td>${esc(sp.kembali||'Tidak ditemukan')}</td></tr></table>`;
   const summary=`${h.jamKerja||'-'} jam:menit · target 140 jam`;
   reportHtml=`<div class="print-report">
   <div style="text-align:center;font-size:10pt;line-height:1.25"><b>KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA</b><br><b>BADAN PENGEMBANGAN SUMBER DAYA MANUSIA DAN PEMBERDAYAAN</b><br><b>MASYARAKAT DESA DAN DAERAH TERTINGGAL</b><br>Jalan TMP. Kalibata Nomor 17 Jakarta Selatan 12750</div>
@@ -206,6 +228,7 @@ function makeReport(){
   <tr><td>${esc(h.jamKerja||'-')}<br><span class="small">${esc(summary)}</span></td><td>${esc(h.hariKerja||'-')}<br><span class="small">hari kerja efektif</span></td><td>${esc(h.totalLaporan||acts.length||'-')}<br><span class="small">Aktivitas + Kunlap</span></td><td>${esc(h.capaian||'-')}</td></tr></table>
   <h3>DAFTAR LAPORAN AKTIVITAS</h3>
   <table><thead><tr><th>No.</th><th>Tanggal</th><th>Waktu</th><th>Durasi</th><th>Jenis Kegiatan</th><th>Status</th><th>Lokasi</th><th>Deskripsi Kegiatan</th></tr></thead><tbody>${activityRows||'<tr><td colspan="8">Belum ada aktivitas DRP yang terbaca.</td></tr>'}</tbody></table>
+  <h3>PEMETAAN SPPD</h3>${sppdInfo}
   <h3>DOKUMEN SUMBER</h3><p>DRP: ${esc(d.drp?.name||'Belum diunggah')}<br>SPPD: ${esc(sppd)}</p>
   <p class="small">Data laporan dipetakan dari dokumen sumber oleh KerjaDesa. Data yang tidak ditemukan tidak diisi dengan asumsi.</p>
   </div>`;
