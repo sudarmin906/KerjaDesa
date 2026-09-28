@@ -2,7 +2,7 @@
 <html lang="id"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f766e"><link rel="manifest" href="manifest.json">
-<title>KerjaDesa V16 - Laporan & SPPD Editable</title>
+<title>KerjaDesa V17 - Laporan & SPPD Editable</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f7f8;color:#17202a}header{background:#0f766e;color:#fff;padding:18px 16px;position:sticky;top:0;z-index:5}header h1{margin:0;font-size:24px}header small{opacity:.9}main{max-width:900px;margin:auto;padding:16px}.card{background:#fff;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 10px #00000010}input,textarea,select,button{width:100%;padding:13px;margin:6px 0;border-radius:10px;border:1px solid #ccd5d8;font-size:15px}button{background:#0f766e;color:#fff;border:0;font-weight:bold}.secondary{background:#e6f3f1;color:#0f766e}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{font-size:26px;font-weight:bold}.muted{color:#667}.item{border-left:4px solid #0f766e;padding:10px;background:#f8fbfb;margin:8px 0;border-radius:8px}#app{display:none}.hide{display:none}.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;padding:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;z-index:10}.nav button{margin:0;padding:10px 4px;font-size:13px}body{padding-bottom:82px}.drop{border:2px dashed #a8c8c4;padding:14px;border-radius:12px;background:#f7fbfb;margin:8px 0}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e6f3f1;color:#0f766e;font-size:12px}.ok{color:#137333}.warn{color:#9a6700}.small{font-size:12px}.report{white-space:pre-wrap;background:#f8fafb;border-radius:10px;padding:14px;font-size:13px;line-height:1.5;max-height:500px;overflow:auto}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pill{padding:10px;border-radius:10px;background:#eef7f5;margin:6px 0}.loading{padding:10px;border-radius:10px;background:#fff8e6}.tablewrap{overflow:auto}.simpletable{width:100%;border-collapse:collapse;font-size:12px}.simpletable th,.simpletable td{border:1px solid #cdd7d9;padding:7px;vertical-align:top}.simpletable th{background:#eef7f5}.report-print{display:none}
 @media(max-width:600px){.grid,.row,.actions{grid-template-columns:1fr}.nav button{font-size:11px}}
@@ -12,7 +12,7 @@
 @media(max-width:600px){.photo-grid{grid-template-columns:repeat(2,1fr)}}
 .print-report .report-head{display:grid;grid-template-columns:90px 1fr 90px;gap:10px;align-items:center;text-align:center}.print-report .report-head img{max-width:85px;max-height:80px;object-fit:contain}.print-report .profile-box{width:95px;height:125px;object-fit:cover}.print-report .doc-photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.print-report .doc-photo-grid img{width:100%;max-height:220px;object-fit:contain;border:1px solid #777}.print-report .signature{margin-top:30px;text-align:center}.print-report .signature img{width:90px;height:115px;object-fit:cover}
 </style></head><body>
-<header><h1>KerjaDesa</h1><small>Administrasi & Monitoring Desa • Offline • V16 DRP + SPPD Editable + Pengaturan Identitas</small></header>
+<header><h1>KerjaDesa</h1><small>Administrasi & Monitoring Desa • Offline • V17 DRP + SPPD Editable + Pengaturan Identitas</small></header>
 <main>
 <section id="login" class="card"><h2>Masuk</h2><p class="muted">Gunakan akun demo.</p><input id="user" value="admin" placeholder="Username"><input id="pass" value="admin123" type="password" placeholder="Password"><button onclick="doLogin()">Masuk</button><p id="loginMsg" class="muted"></p></section>
 <section id="app">
@@ -28,7 +28,7 @@
 <div class="card no-print"><h3>🖼️ Foto & Identitas Laporan</h3><p class="small muted">Foto profil sudah disiapkan. Anda dapat mengganti foto kapan saja. Upload juga logo Kemendesa dan foto dokumentasi kegiatan.</p><div class="grid"><div><label><b>Foto Profil</b></label><input id="profileFile" type="file" accept="image/*" onchange="loadProfilePhoto(this)"><div id="profilePreview"></div></div><div><label><b>Logo Kemendesa</b></label><input id="logoFile" type="file" accept="image/*" onchange="loadLogo(this)"><div id="logoPreview"></div></div></div><label><b>Foto Dokumentasi Kegiatan</b></label><input id="photoFiles" type="file" accept="image/*" multiple onchange="loadActivityPhotos(this)"><div id="photoPreview" class="photo-grid"></div></div>
 <div class="card no-print" id="sppdEditorCard"><h3>🧾 SPPD — Template Word Asli & Editable</h3><p class="small muted">Template Word SPPD asli digunakan apa adanya. Identitas dapat diubah melalui Pengaturan Identitas SPPD. Huruf besar/kecil pada Nama dan Jabatan dipertahankan persis seperti yang Anda ketik.</p>
 <div class="card" style="margin:10px 0;border:2px solid #0f766e;background:#f7fbfb"><h3 style="margin-top:0">⚙️ Pengaturan Identitas SPPD</h3><p class="small muted">Gunakan bagian ini khusus untuk mengganti identitas. Setelah menekan Simpan Identitas, data akan tersimpan di HP dan otomatis dipakai saat membuat SPPD berikutnya.</p><div class="grid"><div><label><b>Nama Lengkap</b></label><input id="sppdNama" placeholder="Contoh: SUDARMIN ARIPUDDIN" autocomplete="off"></div><div><label><b>Jabatan</b></label><input id="sppdJabatan" placeholder="Contoh: Pendamping lokal Desa" autocomplete="off"></div><div><label><b>Berangkat Dari</b></label><input id="sppdBerangkat" placeholder="Contoh: Paminggalan"></div><div><label><b>Tempat Kedudukan</b></label><input id="sppdKedudukan" placeholder="Contoh: Paminggalan"></div><div><label><b>Tiba di</b></label><input id="sppdTiba" placeholder="Contoh: Tallu Banua Utara"></div></div><button type="button" onclick="saveSppdIdentity()">💾 Simpan Identitas SPPD</button><div id="sppdIdentityStatus" class="small muted"></div></div>
-<div class="grid"><input id="sppdNIK" placeholder="NIK"><input id="sppdKabupaten" placeholder="Kabupaten"><input id="sppdProvinsi" placeholder="Provinsi"><input id="sppdPosisi" placeholder="Posisi"><input id="sppdBulan" placeholder="Bulan, misalnya September" autocomplete="off"><span class="small muted" style="grid-column:1/-1">Bulan bebas ditulis huruf kecil/besar. Untuk judul Word, bulan otomatis menjadi HURUF BESAR.</span><input id="sppdTahun" type="number" min="2000" max="2100" placeholder="Tahun"><label>Logo SPPD <select id="sppdLogoPos"><option value="left">Kiri atas</option><option value="right">Kanan atas</option><option value="none">Tanpa logo</option></select></label></div><div class="grid"><input id="sppdNIK" placeholder="NIK"><input id="sppdNama" placeholder="Nama Lengkap"><input id="sppdKabupaten" placeholder="Kabupaten"><input id="sppdProvinsi" placeholder="Provinsi"><input id="sppdPosisi" placeholder="Posisi"><input id="sppdJabatan" placeholder="Jabatan"><input id="sppdBulan" placeholder="Bulan, misalnya September" autocomplete="off"><span class="small muted" style="grid-column:1/-1">Bulan sekarang bebas ditulis huruf kecil/besar, misalnya <b>september</b>, <b>September</b>, atau <b>SEPTEMBER</b>.</span><input id="sppdTahun" type="number" min="2000" max="2100" placeholder="Tahun"><input id="sppdTiba" placeholder="Tiba di"><input id="sppdBerangkat" placeholder="Berangkat Dari"><input id="sppdKedudukan" placeholder="Tempat Kedudukan"><label>Logo SPPD <select id="sppdLogoPos"><option value="left">Kiri atas</option><option value="right">Kanan atas</option><option value="none">Tanpa logo</option></select></label></div><p class="small muted">Logo SPPD dapat ditempatkan di kiri atau kanan atas halaman pertama.</p><div class="pill"><b>📅 Tanggal & Jumlah Hari per Kunjungan</b><p class="small muted">Isi tanggal mulai dan selesai untuk setiap kunjungan. Jumlah hari dihitung otomatis secara inklusif (tanggal mulai dan selesai dihitung).</p><div id="sppdVisits" class="small"></div></div><div class="actions"><button class="secondary" onclick="saveSppdData()">💾 Simpan Data SPPD</button><button class="secondary" onclick="resetSppdData()">↩️ Data Awal</button></div><div class="pill"><b>Preview:</b><div id="sppdPreview" class="small"></div></div><button onclick="makeSppdWord()">⬇️ Buat SPPD Word Asli</button><div id="sppdStatus" class="small muted"></div><p class="small muted">Template: <b>template_sppd_asli.docx</b> • Format asli dipertahankan.</p></div>
+<div class="grid"><input id="sppdNIK" placeholder="NIK"><input id="sppdKabupaten" placeholder="Kabupaten"><input id="sppdProvinsi" placeholder="Provinsi"><input id="sppdPosisi" placeholder="Posisi"><input id="sppdBulan" placeholder="Bulan, misalnya September" autocomplete="off"><span class="small muted" style="grid-column:1/-1">Bulan bebas ditulis huruf kecil/besar. Untuk judul Word, bulan otomatis menjadi HURUF BESAR.</span><input id="sppdTahun" type="number" min="2000" max="2100" placeholder="Tahun"><label>Logo SPPD <select id="sppdLogoPos"><option value="left">Kiri atas</option><option value="right">Kanan atas</option><option value="none">Tanpa logo</option></select></label></div><p class="small muted">Logo SPPD dapat ditempatkan di kiri atau kanan atas halaman pertama.</p><div class="pill"><b>📅 Tanggal & Jumlah Hari per Kunjungan</b><p class="small muted">Isi tanggal mulai dan selesai untuk setiap kunjungan. Jumlah hari dihitung otomatis secara inklusif (tanggal mulai dan selesai dihitung).</p><div id="sppdVisits" class="small"></div></div><div class="actions"><button class="secondary" onclick="saveSppdData()">💾 Simpan Data SPPD</button><button class="secondary" onclick="resetSppdData()">↩️ Data Awal</button></div><div class="pill"><b>Preview:</b><div id="sppdPreview" class="small"></div></div><button onclick="makeSppdWord()">⬇️ Buat SPPD Word Asli</button><div id="sppdStatus" class="small muted"></div><p class="small muted">Template: <b>template_sppd_asli.docx</b> • Format asli dipertahankan.</p></div>
 <div class="card no-print"><h3>Identitas Laporan</h3><div class="row"><input id="rNama" placeholder="Nama Pendamping"><input id="rPosisi" value="PLD" placeholder="Posisi"></div><div class="row"><input id="rKec" placeholder="Kecamatan"><input id="rKab" placeholder="Kabupaten"></div><div class="row"><input id="rProv" placeholder="Provinsi"><input id="rPeriode" type="month"></div><textarea id="rCat" placeholder="Catatan tambahan laporan (opsional)"></textarea><button onclick="makeReport()">📑 Buat Laporan Bulanan</button></div>
 <div id="reportActions" class="card no-print hide"><h3>Output Laporan</h3><div class="actions"><button onclick="downloadWord()">⬇️ Word</button><button onclick="printPdf()">🖨️ Cetak / PDF</button></div><p class="small muted">Untuk PDF di HP/Chrome, pilih menu cetak lalu pilih “Simpan sebagai PDF”.</p></div>
 <div id="docResult2"></div>
@@ -266,9 +266,10 @@ function sppdData(){let d={};sppdIds.forEach(id=>{d[id.replace('sppdNIK','nik').
 function renderSppd(){let d=sppdData();document.getElementById('sppdPreview').innerHTML=`BULAN ${esc(d.bulan)} TAHUN ${esc(d.tahun)}<br>NIK: ${esc(d.nik)} • Nama: ${esc(d.nama)}<br>Kabupaten: ${esc(d.kabupaten)} • Provinsi: ${esc(d.provinsi)}<br>Posisi: ${esc(d.posisi)} • Jabatan: ${esc(d.jabatan)}<br>Tiba di: ${esc(d.tiba)}<br>Berangkat Dari: ${esc(d.berangkat)} • Tempat Kedudukan: ${esc(d.kedudukan)}<br>Jumlah hari dihitung otomatis dari tanggal mulai–selesai tiap kunjungan.`}
 const SPPD_VISITS=18;
 function dateDiffInclusive(a,b){if(!a||!b)return '';const x=new Date(a+'T00:00:00'),y=new Date(b+'T00:00:00');if(isNaN(x)||isNaN(y)||y<x)return '';return Math.floor((y-x)/86400000)+1}
-function loadVisitDates(){try{return JSON.parse(localStorage.getItem('kerjadesa_sppd_visit_dates')||'[]')}catch{return []}}
-function saveVisitDates(){const arr=[];for(let i=1;i<=SPPD_VISITS;i++){const a=document.getElementById('sppdStart'+i)?.value||'',b=document.getElementById('sppdEnd'+i)?.value||'';arr.push({start:a,end:b,days:dateDiffInclusive(a,b)})}localStorage.setItem('kerjadesa_sppd_visit_dates',JSON.stringify(arr));return arr}
-function renderVisitDates(){const old=loadVisitDates();let h='<div style="display:grid;gap:8px">';for(let i=1;i<=SPPD_VISITS;i++){const v=old[i-1]||{};h+=`<div style="border:1px solid #ddd;border-radius:8px;padding:8px"><b>Kunjungan ${i}</b><div class="grid"><label>Mulai <input id="sppdStart${i}" type="date" value="${v.start||''}"></label><label>Selesai <input id="sppdEnd${i}" type="date" value="${v.end||''}"></label><label>Jumlah Hari <input id="sppdDays${i}" readonly value="${v.days||''}" placeholder="otomatis"></label></div></div>`}h+='</div>';document.getElementById('sppdVisits').innerHTML=h;for(let i=1;i<=SPPD_VISITS;i++){const a=document.getElementById('sppdStart'+i),b=document.getElementById('sppdEnd'+i),d=document.getElementById('sppdDays'+i);const calc=()=>{d.value=dateDiffInclusive(a.value,b.value);saveVisitDates()};a.addEventListener('change',calc);b.addEventListener('change',calc)}}
+function loadVisitDates(){try{const a=JSON.parse(localStorage.getItem('kerjadesa_sppd_visit_dates')||'[]');return Array.from({length:SPPD_VISITS},(_,i)=>a[i]||{})}catch{return Array.from({length:SPPD_VISITS},()=>({}))}}
+function saveVisitDates(){const old=loadVisitDates(),arr=[];for(let i=1;i<=SPPD_VISITS;i++){const prev=old[i-1]||{},a=document.getElementById('sppdStart'+i)?.value||'',b=document.getElementById('sppdEnd'+i)?.value||'',t=document.getElementById('sppdVisitTiba'+i)?.value||prev.tiba||'',n=document.getElementById('sppdVisitNama'+i)?.value||prev.nama||'',j=document.getElementById('sppdVisitJabatan'+i)?.value||prev.jabatan||'',br=document.getElementById('sppdVisitBerangkat'+i)?.value||prev.berangkat||'',kd=document.getElementById('sppdVisitKedudukan'+i)?.value||prev.kedudukan||'';arr.push({start:a,end:b,days:dateDiffInclusive(a,b),tiba:t,nama:n,jabatan:j,berangkat:br,kedudukan:kd})}localStorage.setItem('kerjadesa_sppd_visit_dates',JSON.stringify(arr));return arr}
+function renderVisitDates(){const old=loadVisitDates();let d=sppdData(),h='<div style="display:grid;gap:10px">';for(let i=1;i<=SPPD_VISITS;i++){const v=old[i-1]||{};const tiba=v.tiba||d.tiba||'',nama=v.nama||d.nama||'',jabatan=v.jabatan||d.jabatan||'',br=v.berangkat||d.berangkat||'',kd=v.kedudukan||d.kedudukan||'';h+=`<div style="border:1px solid #ddd;border-radius:8px;padding:10px"><b>Kunjungan ${i}</b><div class="grid"><label>Tanggal mulai <input id="sppdStart${i}" type="date" value="${v.start||''}"></label><label>Tanggal selesai <input id="sppdEnd${i}" type="date" value="${v.end||''}"></label><label>Jumlah Hari <input id="sppdDays${i}" readonly value="${v.days||dateDiffInclusive(v.start||'',v.end||'')||''}" placeholder="otomatis"></label><label>Tiba di <input id="sppdVisitTiba${i}" value="${esc(tiba)}" placeholder="Lokasi tujuan"></label><label>Nama <input id="sppdVisitNama${i}" value="${esc(nama)}" placeholder="Nama orang pada kunjungan ini"></label><label>Jabatan <input id="sppdVisitJabatan${i}" value="${esc(jabatan)}" placeholder="Jabatan orang pada kunjungan ini"></label><label>Berangkat Dari <input id="sppdVisitBerangkat${i}" value="${esc(br)}"></label><label>Tempat Kedudukan <input id="sppdVisitKedudukan${i}" value="${esc(kd)}"></label></div><button type="button" class="secondary" onclick="saveOneVisit(${i})">💾 Simpan Kunjungan ${i}</button></div>`}h+='</div>';document.getElementById('sppdVisits').innerHTML=h;for(let i=1;i<=SPPD_VISITS;i++){const a=document.getElementById('sppdStart'+i),b=document.getElementById('sppdEnd'+i),day=document.getElementById('sppdDays'+i);const calc=()=>{day.value=dateDiffInclusive(a.value,b.value);saveVisitDates();};a.addEventListener('change',calc);b.addEventListener('change',calc);['sppdVisitTiba','sppdVisitNama','sppdVisitJabatan','sppdVisitBerangkat','sppdVisitKedudukan'].forEach(p=>document.getElementById(p+i).addEventListener('input',()=>{saveVisitDates();}));}}
+function saveOneVisit(i){saveVisitDates();const st=document.getElementById('sppdStatus');if(st)st.textContent='✅ Data Kunjungan '+i+' tersimpan. Nama dan Jabatan dapat berbeda untuk setiap kunjungan.'}
 function visitDates(){return loadVisitDates()}
 function loadSppdData(){let d={...SPPD_DEFAULT,...JSON.parse(localStorage.getItem('kerjadesa_sppd_editable')||'{}')};const map={sppdNIK:'nik',sppdNama:'nama',sppdKabupaten:'kabupaten',sppdProvinsi:'provinsi',sppdPosisi:'posisi',sppdJabatan:'jabatan',sppdBulan:'bulan',sppdTahun:'tahun',sppdTiba:'tiba',sppdBerangkat:'berangkat',sppdKedudukan:'kedudukan'};Object.entries(map).forEach(([id,k])=>sppdGet(id).value=d[k]||'');renderSppd()}
 function saveSppdIdentity(){const d=sppdData();localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(d));const st=document.getElementById('sppdIdentityStatus');if(st)st.textContent='✅ Nama, Jabatan, lokasi, dan Tiba di tersimpan di HP. Huruf besar/kecil dipertahankan.';document.getElementById('sppdStatus').textContent='Identitas SPPD tersimpan.';renderSppd()}
@@ -284,93 +285,73 @@ function insertSppdLogo(xml,pos){if(xml.includes('rIdLogoSppd'))return xml;const
 
 function replaceSppdParagraphValues(xml,d){
   let visit=0;
+  let berangkatCount=0;
   const visits=visitDates();
-  const monthTitle=capName(d.bulan);
+  const monthTitle=String(d.bulan||'').trim();
   const monthUpper=monthTitle.toUpperCase();
-  const firstVisit=visits.find(x=>x&&x.start)||{};
-  const firstDay=firstVisit.start?new Date(firstVisit.start+'T00:00:00').getDate():'';
   return xml.replace(/<w:p[\s\S]*?<\/w:p>/g,p=>{
     const texts=[...p.matchAll(/<w:t([^>]*)>([\s\S]*?)<\/w:t>/g)];
     if(!texts.length)return p;
     const plain=texts.map(m=>m[2]).join('');
-    if(/\b\d+\.\s*.*Tiba di/.test(plain)){visit++;if(visit>18)visit=18}
+    if(/\b\d+\.\s*[\u00a0 ]*.*Tiba di/i.test(plain)){visit++;if(visit>18)visit=18}
+    if(/Berangkat Dari/i.test(plain)) berangkatCount++;
+    const idx=Math.max(1, visit || berangkatCount);
+    const v=visits[idx-1]||{};
+    const st=v.start?formatDateLong(v.start):'';
+    const en=v.end?formatDateLong(v.end):'';
+    const vTiba=v.tiba||d.tiba||'';
+    const vNama=v.nama||d.nama||'';
+    const vJabatan=v.jabatan||d.jabatan||'';
+    const vBerangkat=v.berangkat||d.berangkat||'';
+    const vKedudukan=v.kedudukan||d.kedudukan||'';
     let out=p;
-    const v=visits[visit-1]||{};
-    const st=v.start?new Date(v.start+'T00:00:00').getDate():'';
-    const en=v.end?new Date(v.end+'T00:00:00').getDate():'';
-
-    // Judul: selalu HURUF BESAR.
     if(plain.includes('BULAN ')&&plain.includes('TAHUN')){
-      const m=plain.match(/BULAN\s+([^\s]+)\s+TAHUN/);
+      const m=plain.match(/BULAN\s+([^\s]+)\s+TAHUN/i);
       if(m)out=kdReplaceSppdTextNodes(out,m[1],monthUpper);
     }
-
-    // Tanggal rentang kunjungan: isi tanggal + bulan + tahun secara otomatis.
     if(plain.includes('Tanggal')&&plain.includes('s/d')){
-      const m=plain.match(/(Tanggal\s*:\s*)\s*s\/d\s*\s*(2026|2027)?/);
-      if(m){
-        const target=m[0];
-        const rep=`Tanggal : ${st||'....'} s/d ${en||'....'} ${monthTitle} ${d.tahun}`;
-        out=kdReplaceSppdTextNodes(out,target,rep);
-      } else {
-        const dots=[...plain.matchAll(/\.{5,}/g)];
-        if(dots.length>=2){
-          const target=plain.slice(plain.indexOf('Tanggal'), plain.indexOf('Tanggal')+plain.slice(plain.indexOf('Tanggal')).search(/\n/));
-          out=kdReplaceSppdTextNodes(out,plain.slice(plain.indexOf('Tanggal')),`Tanggal : ${st||'....'} s/d ${en||'....'} ${monthTitle} ${d.tahun}`);
-        }
-      }
+      const m=plain.match(/Tanggal[\s\S]*?2026/);
+      if(m)out=kdReplaceSppdTextNodes(out,m[0],`Tanggal : ${st||'....'} s/d ${en||'....'}`);
+      // Ensure the year at the end of the range is the selected year.
+      out=kdReplaceSppdTextNodes(out,'2026',String(d.tahun||'2026'));
     }
-
-    // Tanggal di bawah Berangkat Dari: tanggal pertama + bulan + tahun.
-    if(plain.includes('Tanggal')&&/\.{5,}\s*2026/.test(plain)&&!plain.includes('s/d')){
-      const m=plain.match(/\.{5,}\s*2026/);
-      if(m)out=kdReplaceSppdTextNodes(out,m[0],`${firstDay||'....'} ${monthTitle} ${d.tahun}`);
+    // The standalone date below Berangkat Dari belongs to THIS visit, never visit 1 globally.
+    if(plain.includes('Berangkat Dari')){
+      // The following date paragraph is handled by the next paragraph, so do not alter it here.
     }
-
-    // Tanggal pada baris kunjungan tunggal.
-    if(plain.includes('Tanggal')&&!plain.includes('s/d')&&/\.{5,}/.test(plain)&&!/\.{5,}\s*2026/.test(plain)){
-      const m=plain.match(/\.{5,}/);
-      if(m)out=kdReplaceSppdTextNodes(out,m[0],`${st||'....'} ${monthTitle} ${d.tahun}`);
+    if(plain.includes('Tanggal')&&!plain.includes('s/d')&&/\.{5,}/.test(plain)){
+      const m=plain.match(/\.{5,}(?:\s*2026)?/);
+      if(m)out=kdReplaceSppdTextNodes(out,m[0],st?st:`.... ${monthTitle} ${d.tahun}`);
+      if(st)out=out.replace(/(Tanggal[\s\S]*?:\s*)\s*2026/g,`$1${sppdXmlEsc(st)}`);
     }
-
-    // Tahun lain yang tersisa di template.
-    if(plain.includes('2026')&&d.tahun)out=kdReplaceSppdTextNodes(out,'2026',d.tahun);
-
-    // Identitas utama.
+    if(plain.includes('2026')&&d.tahun&&!plain.includes('Tanggal'))out=kdReplaceSppdTextNodes(out,'2026',String(d.tahun));
+    // General identity fields on the template.
     if(plain.includes('760503312910050'))out=kdReplaceSppdTextNodes(out,'760503312910050',d.nik);
     if(plain.includes('SUDARMIN ARIPUDDIN'))out=kdReplaceSppdTextNodes(out,'SUDARMIN ARIPUDDIN',d.nama);
     if(plain.includes('Sulawesi Barat'))out=kdReplaceSppdTextNodes(out,'Sulawesi Barat',d.provinsi);
     if(plain.includes('Pendamping Desa'))out=kdReplaceSppdTextNodes(out,'Pendamping Desa',d.posisi);
     if(plain.includes('Pendamping lokal Desa'))out=kdReplaceSppdTextNodes(out,'Pendamping lokal Desa',d.jabatan);
     if(plain.includes('Majene'))out=kdReplaceSppdTextNodes(out,'Majene',d.kabupaten);
-
-    // Tiba di pada setiap kunjungan.
+    // Per-visit editable fields.
     if(plain.includes('Tiba di')&&/\.{5,}/.test(plain)){
-      const m=plain.match(/:\s*\.{5,}/);
-      if(m)out=kdReplaceSppdTextNodes(out,m[0],`: ${sppdXmlEsc(d.tiba)}`);
+      const m=plain.match(/:\s*\.{5,}/);if(m)out=kdReplaceSppdTextNodes(out,m[0],`: ${sppdXmlEsc(vTiba)}`);
     }
-
-    // Jumlah hari otomatis.
     if(plain.includes('Jumlah Hari')&&/\.{5,}\s*Hari/.test(plain)){
-      const m=plain.match(/\.{5,}/);
-      if(m)out=kdReplaceSppdTextNodes(out,m[0],v.days?String(v.days):'.......................');
+      const m=plain.match(/\.{5,}/);if(m)out=kdReplaceSppdTextNodes(out,m[0],v.days?String(v.days):'.......................');
     }
-
-    // Berangkat dan tempat kedudukan.
-    if(plain.includes('Berangkat Dari')&&plain.includes('Paminggalan'))out=kdReplaceSppdTextNodes(out,'Paminggalan',d.berangkat);
-    if(plain.includes('Tempat Kedudukan')&&plain.includes('Paminggalan'))out=kdReplaceSppdTextNodes(out,'Paminggalan',d.kedudukan);
-
-    // Nama dan jabatan pada blok pengesahan: isi otomatis dari identitas SPPD.
-    if(plain.includes('Nama')&&/\.{5,}/.test(plain)){
-      const m=plain.match(/:\s*\.{5,}/);
-      if(m)out=kdReplaceSppdTextNodes(out,m[0],`: ${sppdXmlEsc(d.nama)}`);
-    }
-    if(plain.includes('Jabatan')&&/\.{5,}/.test(plain)){
-      const m=plain.match(/:\s*\.{5,}/);
-      if(m)out=kdReplaceSppdTextNodes(out,m[0],`: ${sppdXmlEsc(d.jabatan)}`);
-    }
+    if(plain.includes('Berangkat Dari')&&plain.includes('Paminggalan'))out=kdReplaceSppdTextNodes(out,'Paminggalan',vBerangkat);
+    if(plain.includes('Tempat Kedudukan')&&plain.includes('Paminggalan'))out=kdReplaceSppdTextNodes(out,'Paminggalan',vKedudukan);
+    if(plain.includes('Nama')&&/\.{5,}/.test(plain)){const m=plain.match(/:\s*\.{5,}/);if(m)out=kdReplaceSppdTextNodes(out,m[0],`: ${sppdXmlEsc(vNama)}`)}
+    if(plain.includes('Jabatan')&&/\.{5,}/.test(plain)){const m=plain.match(/:\s*\.{5,}/);if(m)out=kdReplaceSppdTextNodes(out,m[0],`: ${sppdXmlEsc(vJabatan)}`)}
     return out;
   })
+}
+function formatDateLong(iso){
+  if(!iso)return '';
+  const dt=new Date(iso+'T00:00:00');
+  if(Number.isNaN(dt.getTime()))return '';
+  const months=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  return `${dt.getDate()} ${months[dt.getMonth()]} ${dt.getFullYear()}`;
 }
 
 function sppdXmlEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}
