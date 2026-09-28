@@ -1,9 +1,2 @@
-KerjaDesa V10 Lengkap
-
-Gabungan KerjaDesa V7 DRP/Laporan/Foto/Monitoring dengan SPPD Editable.
-SPPD menggunakan template_sppd_asli.docx dan hanya mengganti identitas + bulan/tahun.
-Data identitas dapat diedit dan disimpan di perangkat.
-
-Demo login:
-Username: admin
-Password: admin123
+KerjaDesa V10.1
+SPPD menggunakan template Word asli. Identitas NIK, nama, kabupaten, provinsi, posisi, jabatan, bulan, dan tahun dapat diedit sebelum membuat DOCX. Data kunjungan tidak diisi otomatis.
