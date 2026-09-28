@@ -8,7 +8,7 @@
 @media(max-width:600px){.grid,.row,.actions{grid-template-columns:1fr}.nav button{font-size:11px}}
 @media print{body{background:#fff;padding:0}header,.nav,#app>div:not(#dokumen),#login,#dokumen>.card:not(.print-area),#docResult,.no-print{display:none!important}.report-print{display:block!important}.print-report{font-family:Arial,sans-serif;color:#000;line-height:1.45;font-size:11pt}.print-report h1{text-align:center;font-size:16pt}.print-report h2{text-align:center;font-size:13pt}.print-report h3{font-size:12pt;margin-top:18px}.print-report table{width:100%;border-collapse:collapse}.print-report th,.print-report td{border:1px solid #555;padding:5px;vertical-align:top}.print-report .center{text-align:center}.pagebreak{page-break-before:always}}
 </style></head><body>
-<header><h1>KerjaDesa</h1><small>Administrasi & Monitoring Desa • Offline • V4 DRP Otomatis</small></header>
+<header><h1>KerjaDesa</h1><small>Administrasi & Monitoring Desa • Offline • V5 DRP → Laporan Otomatis</small></header>
 <main>
 <section id="login" class="card"><h2>Masuk</h2><p class="muted">Gunakan akun demo.</p><input id="user" value="admin" placeholder="Username"><input id="pass" value="admin123" type="password" placeholder="Password"><button onclick="doLogin()">Masuk</button><p id="loginMsg" class="muted"></p></section>
 <section id="app">
@@ -179,12 +179,41 @@ function findLocations(t){let hits=[];for(const m of cleanText(t).matchAll(/(?:D
 function periodLabel(){const v=document.getElementById('rPeriode').value;if(v){const [y,m]=v.split('-');return new Date(Number(y),Number(m)-1,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'})}return new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'})}
 function makeReport(){
   const d=data.docs||{}, drp=d.drp?.parsed, h=drp?.header||{};
-  const nama=document.getElementById('rNama').value||h.nama||'-',pos=document.getElementById('rPosisi').value||h.posisi||'PLD',kec=document.getElementById('rKec').value||h.kecamatan||'-',kab=document.getElementById('rKab').value||h.kabupaten||'-',prov=document.getElementById('rProv').value||h.provinsi||'-',periode=periodLabel(),cat=document.getElementById('rCat').value||'';
+  const nama=document.getElementById('rNama').value||h.nama||'-';
+  const posisi=document.getElementById('rPosisi').value||h.posisi||'-';
+  const nik=h.nik||'-';
+  const jabatan=h.jabatan||posisi||'-';
+  const kec=document.getElementById('rKec').value||h.kecamatan||'-';
+  const kab=document.getElementById('rKab').value||h.kabupaten||'-';
+  const prov=document.getElementById('rProv').value||h.provinsi||'-';
+  const periode=h.periode||periodLabel();
   const acts=drp?.all||data.drpActivities||[];
-  const rows=acts.length?acts.map(x=>`<tr><td>${x.no}</td><td>${esc(x.tanggal)}</td><td>${esc(x.waktu)}</td><td>${esc(x.durasi)}</td><td>${esc(x.jenis)}</td><td>${x.kunjungan?'Kunjungan Lapangan':'Bukan Kunjungan Lapangan'}</td><td>${esc(x.lokasi)}</td><td>${esc(x.deskripsi)}</td></tr>`).join(''):`<tr><td colspan="8">Belum ada aktivitas DRP yang terbaca.</td></tr>`;
-  const summary=drp?`DRP terbaca ${drp.count} kegiatan: ${drp.aktivitas.length} aktivitas dan ${drp.kunlap.length} kunjungan lapangan.`:'Belum ada DRP yang terbaca.';
-  reportHtml=`<div class="print-report"><h1>LAPORAN DATA KEGIATAN BULANAN</h1><h2>KERJADESA — ${esc(periode).toUpperCase()}</h2><p class="center"><b>Nama:</b> ${esc(nama)}<br><b>Posisi/Jabatan:</b> ${esc(pos)}<br><b>Kecamatan:</b> ${esc(kec)}<br><b>Kabupaten:</b> ${esc(kab)}<br><b>Provinsi:</b> ${esc(prov)}</p><h3>A. Identitas dan Periode</h3><p>Periode: ${esc(periode)}<br>Nama: ${esc(nama)}<br>Posisi: ${esc(pos)}<br>Kecamatan: ${esc(kec)}<br>Kabupaten/Kota: ${esc(kab)}<br>Provinsi: ${esc(prov)}<br>Desa penugasan: ${esc(h.desa||'-')}</p><h3>B. Ringkasan Capaian dari DRP</h3><p>${esc(summary)}</p><p>Jam kerja: ${esc(h.jamKerja||'-')}<br>Hari kerja: ${esc(h.hariKerja||'-')}<br>Total laporan: ${esc(h.totalLaporan||'-')}<br>Capaian kinerja: ${esc(h.capaian||'-')}</p><h3>C. Daftar Aktivitas</h3><table><thead><tr><th>No</th><th>Tanggal</th><th>Waktu</th><th>Durasi</th><th>Jenis Kegiatan</th><th>Status</th><th>Lokasi</th><th>Deskripsi</th></tr></thead><tbody>${rows}</tbody></table>${cat?`<h3>D. Catatan Tambahan</h3><p>${esc(cat)}</p>`:''}<h3>Dokumen Sumber</h3><p>DRP: ${esc(d.drp?.name||'Belum diunggah')}<br>SPPD: ${esc(d.sppd?.name||'Belum diunggah')}</p><p class="small">Data di atas diambil dari dokumen sumber yang diproses oleh KerjaDesa. Data yang tidak ditemukan tidak diisi dengan asumsi.</p><p style="margin-top:50px;text-align:right">Penyusun Laporan<br><br><b>${esc(nama)}</b></p></div>`;
-  document.getElementById('reportPrint').innerHTML=reportHtml;document.getElementById('docResult2').innerHTML='<div class="card no-print"><h3>Pratinjau Laporan</h3>'+reportHtml+'</div>';document.getElementById('reportActions').classList.remove('hide');reportText=document.getElementById('reportPrint').innerText;window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})
+  const activityRows=acts.map(x=>`<tr><td>${x.no}</td><td>${esc(x.tanggal)}</td><td>${esc(x.waktu)}</td><td>${esc(x.durasi)}</td><td>${esc(x.jenis)}</td><td>${esc(x.kunjungan?'Kunjungan Lapangan':'Bukan Kunjungan Lapangan')}</td><td>${esc(x.lokasi)}</td><td>${esc(x.deskripsi)}</td></tr>`).join('');
+  const desa=h.desa||'-';
+  const sppd=d.sppd?.name||'Belum diunggah';
+  const summary=`${h.jamKerja||'-'} jam:menit · target 140 jam`;
+  reportHtml=`<div class="print-report">
+  <div style="text-align:center;font-size:10pt;line-height:1.25"><b>KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA</b><br><b>BADAN PENGEMBANGAN SUMBER DAYA MANUSIA DAN PEMBERDAYAAN</b><br><b>MASYARAKAT DESA DAN DAERAH TERTINGGAL</b><br>Jalan TMP. Kalibata Nomor 17 Jakarta Selatan 12750</div>
+  <h1 style="margin-bottom:2px">LAPORAN BULANAN AKTIVITAS HARIAN</h1><h2>TENAGA PENDAMPING PROFESIONAL</h2>
+  <p><b>Periode:</b> ${esc(periode)}</p>
+  <table><tr><th colspan="2">IDENTITAS TPP</th><th colspan="2">LOKASI PENUGASAN</th></tr>
+  <tr><td>Nama</td><td>${esc(nama)}</td><td>Provinsi</td><td>${esc(prov)}</td></tr>
+  <tr><td>NIK</td><td>${esc(nik)}</td><td>Kabupaten/Kota</td><td>${esc(kab)}</td></tr>
+  <tr><td>Posisi</td><td>${esc(posisi)}</td><td>Kecamatan</td><td>${esc(kec)}</td></tr>
+  <tr><td>Jabatan</td><td>${esc(jabatan)}</td><td>Desa</td><td>${esc(desa)}</td></tr></table>
+  <h3>RINGKASAN CAPAIAN BULAN INI</h3>
+  <table><tr><th>JAM KERJA</th><th>HARI KERJA</th><th>TOTAL LAPORAN</th><th>CAPAIAN KINERJA</th></tr>
+  <tr><td>${esc(h.jamKerja||'-')}<br><span class="small">${esc(summary)}</span></td><td>${esc(h.hariKerja||'-')}<br><span class="small">hari kerja efektif</span></td><td>${esc(h.totalLaporan||acts.length||'-')}<br><span class="small">Aktivitas + Kunlap</span></td><td>${esc(h.capaian||'-')}</td></tr></table>
+  <h3>DAFTAR LAPORAN AKTIVITAS</h3>
+  <table><thead><tr><th>No.</th><th>Tanggal</th><th>Waktu</th><th>Durasi</th><th>Jenis Kegiatan</th><th>Status</th><th>Lokasi</th><th>Deskripsi Kegiatan</th></tr></thead><tbody>${activityRows||'<tr><td colspan="8">Belum ada aktivitas DRP yang terbaca.</td></tr>'}</tbody></table>
+  <h3>DOKUMEN SUMBER</h3><p>DRP: ${esc(d.drp?.name||'Belum diunggah')}<br>SPPD: ${esc(sppd)}</p>
+  <p class="small">Data laporan dipetakan dari dokumen sumber oleh KerjaDesa. Data yang tidak ditemukan tidak diisi dengan asumsi.</p>
+  </div>`;
+  document.getElementById('reportPrint').innerHTML=reportHtml;
+  document.getElementById('docResult2').innerHTML='<div class="card no-print"><h3>Pratinjau Laporan Sesuai Format DRP</h3>'+reportHtml+'</div>';
+  document.getElementById('reportActions').classList.remove('hide');
+  reportText=document.getElementById('reportPrint').innerText;
+  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
 }
 function downloadWord(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}const html='<!doctype html><html><head><meta charset="utf-8"><title>Laporan Bulanan KerjaDesa</title><style>body{font-family:Arial;font-size:11pt;line-height:1.45}h1{text-align:center;font-size:16pt}h2{text-align:center;font-size:13pt}table{width:100%;border-collapse:collapse}th,td{border:1px solid #555;padding:5px;vertical-align:top}</style></head><body>'+reportHtml+'</body></html>';const blob=new Blob([html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Laporan_Bulanan_KerjaDesa.doc';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function printPdf(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}window.print()}
