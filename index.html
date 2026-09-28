@@ -256,7 +256,7 @@ function makeReport(){
 }
 function downloadWord(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}const html='<!doctype html><html><head><meta charset="utf-8"><title>Laporan Bulanan KerjaDesa</title><style>body{font-family:Arial;font-size:11pt;line-height:1.45}h1{text-align:center;font-size:16pt}h2{text-align:center;font-size:13pt}table{width:100%;border-collapse:collapse}th,td{border:1px solid #555;padding:5px;vertical-align:top}</style></head><body>'+reportHtml+'</body></html>';const blob=new Blob([html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Laporan_Bulanan_KerjaDesa.doc';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function printPdf(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}window.print()}
-const SPPD_DEFAULT={nik:'760503312910050',nama:'SUDARMIN ARIPUDDIN',kabupaten:'Majene',provinsi:'Sulawesi Barat',posisi:'Pendamping Desa',jabatan:'Pendamping lokal Desa',bulan:'SEPTEMBER',tahun:'2026',tiba:'Tallu Banua Utara',berangkat:'Paminggalan',kedudukan:'Paminggalan'};
+const SPPD_DEFAULT={nik:'760503312910050',nama:'SUDARMIN ARIPUDDIN',kabupaten:'Majene',provinsi:'Sulawesi Barat',posisi:'Pendamping Desa',jabatan:'Pendamping lokal Desa',bulan:'SEPTEMBER',tahun:'2027',tiba:'Tallu Banua Utara',berangkat:'Paminggalan',kedudukan:'Paminggalan'};
 const sppdIds=['sppdNIK','sppdNama','sppdKabupaten','sppdProvinsi','sppdPosisi','sppdJabatan','sppdBulan','sppdTahun','sppdTiba','sppdBerangkat','sppdKedudukan'];
 const sppdGet=id=>document.getElementById(id);
 function capName(v){return String(v||'').trim().toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())}
@@ -285,6 +285,7 @@ function replaceSppdParagraphValues(xml,d){
   const monthTitle=capName(d.bulan);
   const monthUpper=monthTitle.toUpperCase();
   const firstVisit=visits.find(x=>x&&x.start)||{};
+  const firstDay=firstVisit.start?new Date(firstVisit.start+'T00:00:00').getDate():'';
   return xml.replace(/<w:p[\s\S]*?<\/w:p>/g,p=>{
     const texts=[...p.matchAll(/<w:t([^>]*)>([\s\S]*?)<\/w:t>/g)];
     if(!texts.length)return p;
@@ -295,35 +296,75 @@ function replaceSppdParagraphValues(xml,d){
     const st=v.start?new Date(v.start+'T00:00:00').getDate():'';
     const en=v.end?new Date(v.end+'T00:00:00').getDate():'';
 
-    // Judul: selalu HURUF BESAR, walaupun input bulan ditulis kecil.
-    if(plain.includes('BULAN ')&&plain.includes('SEPTEMBER')&&plain.includes('TAHUN'))
-      out=kdReplaceSppdTextNodes(out,'SEPTEMBER',monthUpper);
-
-    // Tanggal kunjungan: 12 s/d 12 September 2027.
-    if(plain.includes('Tanggal')&&plain.includes('s/d')){
-      const rep=`Tanggal : ${st||'....'} s/d ${en||'....'} ${monthTitle} ${d.tahun}`;
-      out=kdReplaceSppdTextNodes(out,'Tanggal :         s/d                                   2026',rep);
-    } else if(plain.includes('Tanggal')&&plain.includes('.....................................................')){
-      const rep=`${st||'....'} ${monthTitle} ${d.tahun}`;
-      out=kdReplaceSppdTextNodes(out,'.....................................................',rep);
+    // Judul: selalu HURUF BESAR.
+    if(plain.includes('BULAN ')&&plain.includes('TAHUN')){
+      const m=plain.match(/BULAN\s+([^\s]+)\s+TAHUN/);
+      if(m)out=kdReplaceSppdTextNodes(out,m[1],monthUpper);
     }
 
+    // Tanggal rentang kunjungan: isi tanggal + bulan + tahun secara otomatis.
+    if(plain.includes('Tanggal')&&plain.includes('s/d')){
+      const m=plain.match(/(Tanggal\s*:\s*)\s*s\/d\s*\s*(2026|2027)?/);
+      if(m){
+        const target=m[0];
+        const rep=`Tanggal : ${st||'....'} s/d ${en||'....'} ${monthTitle} ${d.tahun}`;
+        out=kdReplaceSppdTextNodes(out,target,rep);
+      } else {
+        const dots=[...plain.matchAll(/\.{5,}/g)];
+        if(dots.length>=2){
+          const target=plain.slice(plain.indexOf('Tanggal'), plain.indexOf('Tanggal')+plain.slice(plain.indexOf('Tanggal')).search(/\n/));
+          out=kdReplaceSppdTextNodes(out,plain.slice(plain.indexOf('Tanggal')),`Tanggal : ${st||'....'} s/d ${en||'....'} ${monthTitle} ${d.tahun}`);
+        }
+      }
+    }
+
+    // Tanggal di bawah Berangkat Dari: tanggal pertama + bulan + tahun.
+    if(plain.includes('Tanggal')&&/\.{5,}\s*2026/.test(plain)&&!plain.includes('s/d')){
+      const m=plain.match(/\.{5,}\s*2026/);
+      if(m)out=kdReplaceSppdTextNodes(out,m[0],`${firstDay||'....'} ${monthTitle} ${d.tahun}`);
+    }
+
+    // Tanggal pada baris kunjungan tunggal.
+    if(plain.includes('Tanggal')&&!plain.includes('s/d')&&/\.{5,}/.test(plain)&&!/\.{5,}\s*2026/.test(plain)){
+      const m=plain.match(/\.{5,}/);
+      if(m)out=kdReplaceSppdTextNodes(out,m[0],`${st||'....'} ${monthTitle} ${d.tahun}`);
+    }
+
+    // Tahun lain yang tersisa di template.
     if(plain.includes('2026')&&d.tahun)out=kdReplaceSppdTextNodes(out,'2026',d.tahun);
-    if(plain.includes('NIK')&&plain.includes('760503312910050'))out=kdReplaceSppdTextNodes(out,'760503312910050',d.nik);
-    if(plain.includes('Nama Lengkap')&&plain.includes('SUDARMIN ARIPUDDIN'))out=kdReplaceSppdTextNodes(out,'SUDARMIN ARIPUDDIN',d.nama);
-    if(plain.includes('Kabupaten')&&plain.includes('Majene'))out=kdReplaceSppdTextNodes(out,'Majene',d.kabupaten);
-    if(plain.includes('Provinsi')&&plain.includes('Sulawesi Barat'))out=kdReplaceSppdTextNodes(out,'Sulawesi Barat',d.provinsi);
-    if(plain.includes('Posisi')&&plain.includes('Pendamping Desa'))out=kdReplaceSppdTextNodes(out,'Pendamping Desa',d.posisi);
-    if(plain.includes('Jabatan')&&plain.includes('Pendamping lokal Desa'))out=kdReplaceSppdTextNodes(out,'Pendamping lokal Desa',d.jabatan);
-    if(plain.includes('Tiba di')&&plain.includes(':....................................................'))out=kdReplaceSppdTextNodes(out,':....................................................',': '+sppdXmlEsc(d.tiba));
-    if(plain.includes('Jumlah Hari')&&plain.includes('....................... Hari'))out=kdReplaceSppdTextNodes(out,'.......................',v.days?String(v.days):'.......................');
+
+    // Identitas utama.
+    if(plain.includes('760503312910050'))out=kdReplaceSppdTextNodes(out,'760503312910050',d.nik);
+    if(plain.includes('SUDARMIN ARIPUDDIN'))out=kdReplaceSppdTextNodes(out,'SUDARMIN ARIPUDDIN',d.nama);
+    if(plain.includes('Sulawesi Barat'))out=kdReplaceSppdTextNodes(out,'Sulawesi Barat',d.provinsi);
+    if(plain.includes('Pendamping Desa'))out=kdReplaceSppdTextNodes(out,'Pendamping Desa',d.posisi);
+    if(plain.includes('Pendamping lokal Desa'))out=kdReplaceSppdTextNodes(out,'Pendamping lokal Desa',d.jabatan);
+    if(plain.includes('Majene'))out=kdReplaceSppdTextNodes(out,'Majene',d.kabupaten);
+
+    // Tiba di pada setiap kunjungan.
+    if(plain.includes('Tiba di')&&/\.{5,}/.test(plain)){
+      const m=plain.match(/:\.{5,}/);
+      if(m)out=kdReplaceSppdTextNodes(out,m[0],`: ${sppdXmlEsc(d.tiba)}`);
+    }
+
+    // Jumlah hari otomatis.
+    if(plain.includes('Jumlah Hari')&&/\.{5,}\s*Hari/.test(plain)){
+      const m=plain.match(/\.{5,}/);
+      if(m)out=kdReplaceSppdTextNodes(out,m[0],v.days?String(v.days):'.......................');
+    }
+
+    // Berangkat dan tempat kedudukan.
     if(plain.includes('Berangkat Dari')&&plain.includes('Paminggalan'))out=kdReplaceSppdTextNodes(out,'Paminggalan',d.berangkat);
     if(plain.includes('Tempat Kedudukan')&&plain.includes('Paminggalan'))out=kdReplaceSppdTextNodes(out,'Paminggalan',d.kedudukan);
 
-    // Tanggal pada bagian bawah halaman: 12 September 2027, bukan hanya bulan/tahun.
-    if(plain.includes('Tanggal')&&plain.includes('..................................... 2026')){
-      const day=firstVisit.start?new Date(firstVisit.start+'T00:00:00').getDate():'';
-      out=kdReplaceSppdTextNodes(out,'..................................... 2026',`${day||'....'} ${monthTitle} ${d.tahun}`);
+    // Nama dan jabatan pada blok pengesahan: isi otomatis dari identitas SPPD.
+    if(plain.includes('Nama')&&/\.{5,}/.test(plain)){
+      const m=plain.match(/:\.{5,}/);
+      if(m)out=kdReplaceSppdTextNodes(out,m[0],`: ${sppdXmlEsc(d.nama)}`);
+    }
+    if(plain.includes('Jabatan')&&/\.{5,}/.test(plain)){
+      const m=plain.match(/:\.{5,}/);
+      if(m)out=kdReplaceSppdTextNodes(out,m[0],`: ${sppdXmlEsc(d.jabatan)}`);
     }
     return out;
   })
