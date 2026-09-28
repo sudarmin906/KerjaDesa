@@ -1,16 +1,3 @@
-KERJADESA V20 FINAL — FILE UPLOAD GITHUB
-
-Upload/replace 3 file berikut di branch main, folder root repository:
-1. index.html
-2. sw.js
-3. manifest.json
-
-File lain yang sudah ada di repository tetap dipertahankan:
-- icon.svg
-- jszip.min.js
-- template_sppd_asli.docx
-- logo_sppd.jpg
-- foto_profil.jpg
-
-Setelah commit, buka GitHub Pages. Versi yang tampil harus:
-V20 Final • DRP + SPPD Editable + Pengaturan Identitas
+KerjaDesa V23 FINAL
+Replace index.html, sw.js, and manifest.json in the GitHub repository. Keep template_sppd_asli.docx, jszip.min.js, logo_sppd.jpg, foto_profil.jpg, and icon.svg.
+V23 preserves the original SPPD DOCX structure and edits only text inside the existing paragraphs/cells. It keeps 6 pages / 18 visits / 3 visits per page in the tested template.
