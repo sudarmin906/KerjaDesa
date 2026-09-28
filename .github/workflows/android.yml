@@ -1,10 +1,10 @@
-name: Build KerjaDesa Android
+name: Build KerjaDesa Android V27
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - "KerjaDesa_Android_V26.zip"
+      - "KerjaDesa_Android_V27.zip"
       - ".github/workflows/android.yml"
 
 jobs:
@@ -15,11 +15,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract Android V26
+      - name: Extract V27
         run: |
-          mkdir -p android_build
-          unzip -q KerjaDesa_Android_V26.zip -d android_build
-          ls -la android_build/KerjaDesa_Android_V26
+          unzip -q KerjaDesa_Android_V27.zip
+          ls -la KerjaDesa_Android_V27
+          test -f KerjaDesa_Android_V27/app/build.gradle
 
       - name: Setup Java 21
         uses: actions/setup-java@v4
@@ -28,34 +28,46 @@ jobs:
           java-version: "21"
 
       - name: Setup Android SDK
-        run: |
-          export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH
+        uses: android-actions/setup-android@v3
 
-          yes | sdkmanager --licenses || true
+      - name: Install Android SDK
+        run: |
           sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          yes | sdkmanager --licenses || true
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.13"
 
-      - name: Build APK and AAB
-        working-directory: android_build/KerjaDesa_Android_V26
+      - name: Build signed debug APK
+        working-directory: KerjaDesa_Android_V27
         run: |
-          gradle assembleDebug assembleRelease bundleRelease --stacktrace
+          gradle assembleDebug --stacktrace
+
+      - name: Verify APK
+        run: |
+          APK="KerjaDesa_Android_V27/app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK"
+          SIZE=$(stat -c%s "$APK")
+          echo "APK size: $SIZE bytes"
+          test "$SIZE" -gt 100000
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: KerjaDesa-APK
-          path: |
-            android_build/KerjaDesa_Android_V26/app/build/outputs/apk/debug/app-debug.apk
-            android_build/KerjaDesa_Android_V26/app/build/outputs/apk/release/*.apk
+          name: KerjaDesa-V27-APK
+          path: KerjaDesa_Android_V27/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Build Play Store AAB
+        working-directory: KerjaDesa_Android_V27
+        run: |
+          gradle bundleRelease --stacktrace
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: KerjaDesa-AAB-PlayStore
-          path: |
-            android_build/KerjaDesa_Android_V26/app/build/outputs/bundle/release/app-release.aab
+          name: KerjaDesa-V27-AAB
+          path: KerjaDesa_Android_V27/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
