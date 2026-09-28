@@ -145,8 +145,9 @@ async function autoProcessOne(kind){
   const st=document.getElementById(kind==='drp'?'drpStatus':'sppdStatus');st.innerHTML='<span class="loading">⏳ Memproses '+esc(f.name)+'...</span>';
   try{
     const txt=await readFile(f);data.docs=data.docs||{};
+    let parsed=null;
     if(kind==='drp'){
-      const parsed=parseDRP(txt);
+      parsed=parseDRP(txt);
       data.docs.drp={name:f.name,text:txt,parsed,processedAt:new Date().toISOString()};
       if(parsed.count){
         data.drpActivities=parsed.all;
@@ -156,7 +157,7 @@ async function autoProcessOne(kind){
       }
     } else data.docs.sppd={name:f.name,text:txt,summary:summarizeDoc(txt),processedAt:new Date().toISOString()};
     save();
-    st.innerHTML=kind==='drp'?`<span class="ok">✓ DRP selesai dibaca: ${parsed.count} kegiatan ditemukan.</span>`:`<span class="ok">✓ Selesai: ${esc(f.name)}</span>`;
+    st.innerHTML=kind==='drp'?`<span class="ok">✓ DRP selesai dibaca: ${parsed?.count||0} kegiatan ditemukan.</span>`:`<span class="ok">✓ Selesai: ${esc(f.name)}</span>`;
     if(kind==='drp')renderDrpPreview(parsed);
     updateDocStatus()
   }catch(e){st.innerHTML='<span class="warn">Gagal membaca: '+esc(e.message)+'</span>'}
