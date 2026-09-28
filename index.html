@@ -283,73 +283,99 @@ function addSppdLogoRelationship(zip){const f=zip.file('word/_rels/document.xml.
 function addSppdLogoContentType(zip){const f=zip.file('[Content_Types].xml');if(!f)return;return f.async('string').then(x=>{if(x.includes('Extension="jpg"'))return;x=x.replace('</Types>','<Default Extension="jpg" ContentType="image/jpeg"/></Types>');zip.file('[Content_Types].xml',x)})}
 function insertSppdLogo(xml,pos){if(xml.includes('rIdLogoSppd'))return xml;const x=pos==='right'?8200000:500000;const drawing=`<w:drawing><wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="251658240" behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1"><wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="page"><wp:posOffset>${x}</wp:posOffset></wp:positionH><wp:positionV relativeFrom="page"><wp:posOffset>180000</wp:posOffset></wp:positionV><wp:extent cx="650000" cy="650000"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/><wp:docPr id="9001" name="Logo SPPD"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="logo_sppd.jpg"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdLogoSppd"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="650000" cy="650000"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:anchor></w:drawing>`;return xml.replace(/<w:p[\s\S]*?<\/w:p>/,m=>m.replace('</w:pPr>',`</w:pPr>${drawing}`))}
 
+function kdParagraphSetText(p,text){
+  const ppr=(p.match(/<w:pPr>[\s\S]*?<\/w:pPr>/)||[''])[0];
+  const firstRpr=(p.match(/<w:rPr>[\s\S]*?<\/w:rPr>/)||[''])[0];
+  const safe=sppdXmlEsc(String(text??''));
+  return `<w:p>${ppr}<w:r>${firstRpr}<w:t xml:space="preserve">${safe}</w:t></w:r></w:p>`;
+}
+function kdParagraphSetLabelValue(p,label,value,numberPrefix=''){
+  const ppr=(p.match(/<w:pPr>[\s\S]*?<\/w:pPr>/)||[''])[0];
+  const firstRpr=(p.match(/<w:rPr>[\s\S]*?<\/w:rPr>/)||[''])[0];
+  const safeLabel=sppdXmlEsc(String(label||''));
+  const safeValue=sppdXmlEsc(String(value??''));
+  const prefix=numberPrefix?sppdXmlEsc(String(numberPrefix))+'   ':'';
+  return `<w:p>${ppr}<w:r>${firstRpr}<w:t xml:space="preserve">${prefix}${safeLabel}&#9;: ${safeValue}</w:t></w:r></w:p>`;
+}
 function replaceSppdParagraphValues(xml,d){
-  let visit=0;
-  let berangkatCount=0;
   const visits=visitDates();
-  const monthTitle=String(d.bulan||'').trim();
-  const monthUpper=monthTitle.toUpperCase();
+  const monthUpper=String(d.bulan||'').trim().toUpperCase();
+  let current=0;
+  let stage=0;
   return xml.replace(/<w:p[\s\S]*?<\/w:p>/g,p=>{
-    const texts=[...p.matchAll(/<w:t([^>]*)>([\s\S]*?)<\/w:t>/g)];
-    if(!texts.length)return p;
-    const plain=texts.map(m=>m[2]).join('');
-    if(/\b\d+\.\s*[\u00a0 ]*.*Tiba di/i.test(plain)){visit++;if(visit>18)visit=18}
-    if(/Berangkat Dari/i.test(plain)) berangkatCount++;
-    const idx=Math.max(1, visit || berangkatCount);
-    const v=visits[idx-1]||{};
+    const plain=[...p.matchAll(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)].map(m=>m[1]).join('').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&#160;/g,' ').trim();
+    if(!plain)return p;
+
+    // Header/title on every page.
+    if(/BULAN\s+SEPTEMBER\s+TAHUN\s+2026/i.test(plain)){
+      return kdParagraphSetText(p,`BULAN ${monthUpper} TAHUN ${d.tahun}`);
+    }
+
+    // Header identity fields in the original template.
+    if(/Nama Lengkap/i.test(plain)&&/SUDARMIN ARIPUDDIN/i.test(plain)){
+      return kdParagraphSetLabelValue(p,'Nama Lengkap',d.nama);
+    }
+    if(/Jabatan/i.test(plain)&&/Pendamping lokal Desa/i.test(plain)){
+      return kdParagraphSetLabelValue(p,'Jabatan',d.jabatan);
+    }
+    if(/NIK/i.test(plain)&&/760503312910050/.test(plain)){
+      return kdParagraphSetLabelValue(p,'NIK',d.nik);
+    }
+
+    const vm=plain.match(/^(\d+)\.\s*/);
+    if(vm && /Tiba di/i.test(plain)){
+      current=Math.min(18,Math.max(1,Number(vm[1])));
+      stage=1;
+      const v=visits[current-1]||{};
+      return kdParagraphSetLabelValue(p,'Tiba di',v.tiba||d.tiba||'',current+'.');
+    }
+    if(!current)return p;
+
+    const v=visits[current-1]||{};
     const st=v.start?formatDateLong(v.start):'';
     const en=v.end?formatDateLong(v.end):'';
-    const vTiba=v.tiba||d.tiba||'';
-    const vNama=v.nama||d.nama||'';
-    const vJabatan=v.jabatan||d.jabatan||'';
-    const vBerangkat=v.berangkat||d.berangkat||'';
-    const vKedudukan=v.kedudukan||d.kedudukan||'';
-    let out=p;
-    if(plain.includes('BULAN ')&&plain.includes('TAHUN')){
-      const m=plain.match(/BULAN\s+([^\s]+)\s+TAHUN/i);
-      if(m)out=kdReplaceSppdTextNodes(out,m[1],monthUpper);
+    const tiba=v.tiba||d.tiba||'';
+    const nama=v.nama||d.nama||'';
+    const jabatan=v.jabatan||d.jabatan||'';
+    const berangkat=v.berangkat||d.berangkat||'';
+    const kedudukan=v.kedudukan||d.kedudukan||'';
+
+    if(/Tanggal/i.test(plain) && /s\/d/i.test(plain)){
+      stage=3;
+      return kdParagraphSetLabelValue(p,'Tanggal',`${st||'....'} s/d ${en||'....'}`);
     }
-    if(plain.includes('Tanggal')&&plain.includes('s/d')){
-      // Replace the complete range text in this paragraph. This prevents
-      // leftover template fragments such as "1 2026 s/d" from remaining.
-      const pos=plain.search(/Tanggal/i);
-      const target=pos>=0?plain.slice(pos).trim():'';
-      if(target){
-        const rangeText=`Tanggal : ${st||'....'} s/d ${en||'....'}`;
-        out=kdReplaceSppdTextNodes(out,target,rangeText);
+    if(/Tanggal/i.test(plain) && stage===1){
+      stage=2;
+      return kdParagraphSetLabelValue(p,'Tanggal',st||'....');
+    }
+    if(/Jumlah Hari/i.test(plain)){
+      return kdParagraphSetLabelValue(p,'Jumlah Hari',v.days?`${v.days} Hari`:'....................... Hari');
+    }
+    if(/Berangkat Dari/i.test(plain)){
+      stage=4;
+      return kdParagraphSetLabelValue(p,'Berangkat Dari',berangkat);
+    }
+    if(/Tempat Kedudukan/i.test(plain)){
+      return kdParagraphSetLabelValue(p,'Tempat Kedudukan',kedudukan);
+    }
+    if(/^Tanggal/i.test(plain) || /Tanggal/.test(plain)){
+      if(stage>=4){
+        return kdParagraphSetLabelValue(p,'Tanggal',st||'....');
       }
     }
-    // The standalone date below Berangkat Dari belongs to THIS visit, never visit 1 globally.
-    if(plain.includes('Berangkat Dari')){
-      // The following date paragraph is handled by the next paragraph, so do not alter it here.
+    if(/Nama\s*:/.test(plain) || (/Nama/i.test(plain)&&/\.{5,}/.test(plain))){
+      return kdParagraphSetLabelValue(p,'Nama',nama);
     }
-    if(plain.includes('Tanggal')&&!plain.includes('s/d')&&/\.{5,}/.test(plain)){
-      const m=plain.match(/\.{5,}(?:\s*2026)?/);
-      if(m)out=kdReplaceSppdTextNodes(out,m[0],st?st:`.... ${monthTitle} ${d.tahun}`);
-      if(st)out=out.replace(/(Tanggal[\s\S]*?:\s*)\s*2026/g,`$1${sppdXmlEsc(st)}`);
+    if(/Jabatan/i.test(plain) && /\.{5,}/.test(plain)){
+      return kdParagraphSetLabelValue(p,'Jabatan',jabatan);
     }
-    if(plain.includes('2026')&&d.tahun&&!plain.includes('Tanggal'))out=kdReplaceSppdTextNodes(out,'2026',String(d.tahun));
-    // General identity fields on the template.
-    if(plain.includes('760503312910050'))out=kdReplaceSppdTextNodes(out,'760503312910050',d.nik);
-    if(plain.includes('SUDARMIN ARIPUDDIN'))out=kdReplaceSppdTextNodes(out,'SUDARMIN ARIPUDDIN',d.nama);
-    if(plain.includes('Sulawesi Barat'))out=kdReplaceSppdTextNodes(out,'Sulawesi Barat',d.provinsi);
-    if(plain.includes('Pendamping Desa'))out=kdReplaceSppdTextNodes(out,'Pendamping Desa',d.posisi);
-    if(plain.includes('Pendamping lokal Desa'))out=kdReplaceSppdTextNodes(out,'Pendamping lokal Desa',d.jabatan);
-    if(plain.includes('Majene'))out=kdReplaceSppdTextNodes(out,'Majene',d.kabupaten);
-    // Per-visit editable fields.
-    if(plain.includes('Tiba di')&&/\.{5,}/.test(plain)){
-      const m=plain.match(/:\s*\.{5,}/);if(m)out=kdReplaceSppdTextNodes(out,m[0],`: ${sppdXmlEsc(vTiba)}`);
+    if(/Tiba di/i.test(plain)&&/\.{5,}/.test(plain)){
+      return kdParagraphSetLabelValue(p,'Tiba di',tiba,current+'.');
     }
-    if(plain.includes('Jumlah Hari')&&/\.{5,}\s*Hari/.test(plain)){
-      const m=plain.match(/\.{5,}/);if(m)out=kdReplaceSppdTextNodes(out,m[0],v.days?String(v.days):'.......................');
-    }
-    if(plain.includes('Berangkat Dari')&&plain.includes('Paminggalan'))out=kdReplaceSppdTextNodes(out,'Paminggalan',vBerangkat);
-    if(plain.includes('Tempat Kedudukan')&&plain.includes('Paminggalan'))out=kdReplaceSppdTextNodes(out,'Paminggalan',vKedudukan);
-    if(plain.includes('Nama')&&/\.{5,}/.test(plain)){const m=plain.match(/:\s*\.{5,}/);if(m)out=kdReplaceSppdTextNodes(out,m[0],`: ${sppdXmlEsc(vNama)}`)}
-    if(plain.includes('Jabatan')&&/\.{5,}/.test(plain)){const m=plain.match(/:\s*\.{5,}/);if(m)out=kdReplaceSppdTextNodes(out,m[0],`: ${sppdXmlEsc(vJabatan)}`)}
-    return out;
-  })
+    return p;
+  });
 }
+
 function formatDateLong(iso){
   if(!iso)return '';
   const dt=new Date(iso+'T00:00:00');
