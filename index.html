@@ -1,65 +1,146 @@
 <!doctype html>
-<html lang="id"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0f766e"><link rel="manifest" href="manifest.json">
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#117c73">
+<link rel="manifest" href="manifest.json">
 <title>KerjaDesa</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f7f8;color:#17202a}
-header{background:#0f766e;color:white;padding:18px 16px;position:sticky;top:0;z-index:5}
-header h1{margin:0;font-size:24px}header small{opacity:.85}
-main{max-width:720px;margin:auto;padding:16px}.card{background:white;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 10px #00000010}
-input,textarea,select,button{width:100%;padding:13px;margin:6px 0;border-radius:10px;border:1px solid #ccd5d8;font-size:15px}
-button{background:#0f766e;color:white;border:0;font-weight:bold}.secondary{background:#e6f3f1;color:#0f766e}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{font-size:26px;font-weight:bold}.muted{color:#667}.item{border-left:4px solid #0f766e;padding:10px;background:#f8fbfb;margin:8px 0;border-radius:8px}
-#app{display:none}.hide{display:none}.nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #ddd;padding:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.nav button{margin:0;padding:10px}
-body{padding-bottom:70px}
-</style></head><body>
-<header><h1>KerjaDesa</h1><small>Administrasi & Monitoring Desa • Offline</small></header>
-<main>
-<section id="login" class="card">
-<h2>Masuk</h2><p class="muted">Gunakan akun demo untuk mencoba.</p>
-<input id="user" value="admin" placeholder="Username"><input id="pass" value="admin123" type="password" placeholder="Password">
-<button onclick="doLogin()">Masuk</button><p id="loginMsg" class="muted"></p>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f2f7f7;color:#17202a}
+header{background:#117c73;color:white;padding:28px 22px 24px}header h1{margin:0;font-size:34px}header p{margin:8px 0 0;font-size:18px}
+nav{display:flex;gap:8px;padding:10px;background:white;position:sticky;bottom:0;z-index:5}
+button{border:0;border-radius:14px;padding:14px 18px;background:#117c73;color:white;font-size:16px;font-weight:bold;cursor:pointer}
+nav button{flex:1}main{max-width:900px;margin:auto;padding:18px}.card{background:white;border-radius:22px;padding:22px;margin-bottom:18px;box-shadow:0 5px 18px #00000010}
+input,textarea,select{width:100%;padding:14px;margin:7px 0 12px;border:1px solid #ccd5d5;border-radius:12px;font-size:16px}
+textarea{min-height:110px}h2{margin-top:0}.muted{color:#687078}.hide{display:none}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.status{padding:12px;border-radius:12px;background:#e8f5f3;margin:10px 0}
+.list{border-top:1px solid #ddd;margin-top:14px}.item{padding:13px 0;border-bottom:1px solid #ddd}
+.badge{display:inline-block;padding:5px 9px;border-radius:20px;background:#e8f5f3;margin:2px}
+@media(max-width:600px){.row{grid-template-columns:1fr}header h1{font-size:30px}}
+</style>
+</head>
+<body>
+<header><h1>KerjaDesa</h1><p>Administrasi & Monitoring Desa • Offline</p></header>
+
+<section id="login" class="card" style="max-width:500px;margin:25px auto">
+<h2>Masuk</h2><p class="muted">Demo aplikasi KerjaDesa</p>
+<input id="user" value="admin" placeholder="Username">
+<input id="pass" value="admin123" type="password" placeholder="Password">
+<button onclick="doLogin()">Masuk</button>
+<p id="loginMsg" class="muted"></p>
 </section>
 
-<section id="app">
-<div id="home">
-<div class="grid"><div class="card"><div class="stat" id="jmlK">0</div><div class="muted">Kegiatan</div></div>
-<div class="card"><div class="stat" id="jmlM">0</div><div class="muted">Monitoring</div></div></div>
-<div class="card"><h3>Status Perangkat</h3><div id="online">Memeriksa...</div><button class="secondary" onclick="installApp()">Pasang ke Layar Utama</button></div>
-<div class="card"><h3>Kerja Desa</h3><p class="muted">Data tersimpan di perangkat dan dapat digunakan saat tidak ada internet.</p></div>
+<div id="app" class="hide">
+<main>
+<section id="home" class="card">
+<h2>Beranda</h2>
+<div class="row">
+<div class="card"><h2 id="kCount">0</h2><div>Kegiatan</div></div>
+<div class="card"><h2 id="mCount">0</h2><div>Monitoring</div></div>
 </div>
+<div class="status">🟢 Perangkat siap digunakan secara offline.</div>
+</section>
 
-<div id="kegiatan" class="hide"><div class="card"><h2>Data Kegiatan</h2>
-<input id="knama" placeholder="Nama kegiatan"><input id="kdesa" placeholder="Desa">
-<input id="ktgl" type="date"><textarea id="kcat" placeholder="Catatan"></textarea>
-<button onclick="addKegiatan()">Simpan Kegiatan</button></div><div id="klist"></div></div>
+<section id="kegiatan" class="card hide">
+<h2>Data Kegiatan</h2>
+<input id="kNama" placeholder="Nama kegiatan">
+<input id="kDesa" placeholder="Desa">
+<input id="kTanggal" type="date">
+<textarea id="kCatatan" placeholder="Catatan"></textarea>
+<button onclick="saveKegiatan()">Simpan Kegiatan</button>
+<div id="kList" class="list"></div>
+</section>
 
-<div id="monitoring" class="hide"><div class="card"><h2>Monitoring Lapangan</h2>
-<input id="mkeg" placeholder="ID kegiatan"><input id="mpet" placeholder="Nama petugas">
-<input id="mprog" type="number" min="0" max="100" placeholder="Progres 0-100">
-<textarea id="mcat" placeholder="Catatan hasil monitoring"></textarea>
-<button onclick="gps()">📍 Ambil Lokasi GPS</button><p id="gpsout" class="muted">Lokasi belum diambil</p>
-<button onclick="addMonitoring()">Simpan Monitoring</button></div><div id="mlist"></div></div>
+<section id="monitoring" class="card hide">
+<h2>Monitoring Lapangan</h2>
+<input id="mId" placeholder="ID kegiatan">
+<input id="mPetugas" placeholder="Nama petugas">
+<input id="mProgress" type="number" min="0" max="100" placeholder="Progres 0-100">
+<textarea id="mCatatan" placeholder="Catatan hasil monitoring"></textarea>
+<button onclick="getGPS()">📍 Ambil Lokasi GPS</button>
+<p id="gps" class="muted">Lokasi belum diambil</p>
+<button onclick="saveMonitoring()">Simpan Monitoring</button>
+<div id="mList" class="list"></div>
+</section>
+
+<section id="dokumen" class="card hide">
+<h2>📄 Dokumen & Laporan</h2>
+<p class="muted">Upload DRP dan SPPD. File diproses di perangkat untuk persiapan laporan bulanan.</p>
+<label><b>DRP</b></label>
+<input id="drpFile" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt">
+<label><b>SPPD</b></label>
+<input id="sppdFile" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt">
+<button onclick="processDocs()">⚙️ Proses Dokumen</button>
+<div id="docStatus" class="status">Belum ada dokumen diproses.</div>
+<div id="docPreview"></div>
+<button onclick="exportLaporan()" id="exportBtn" class="hide">📝 Buat Laporan Word</button>
 </section>
 </main>
-<div id="nav" class="nav hide"><button onclick="page('home')">🏠 Beranda</button><button onclick="page('kegiatan')">📋 Kegiatan</button><button onclick="page('monitoring')">📍 Monitoring</button></div>
+
+<nav>
+<button onclick="showPage('home')">🏠 Beranda</button>
+<button onclick="showPage('kegiatan')">📋 Kegiatan</button>
+<button onclick="showPage('monitoring')">📍 Monitoring</button>
+<button onclick="showPage('dokumen')">📄 Dokumen</button>
+</nav>
+</div>
+
 <script>
-let data=JSON.parse(localStorage.getItem('kerjadesa')||'{"kegiatan":[],"monitoring":[],"gps":null}');
-let deferred=null;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
-function save(){localStorage.setItem('kerjadesa',JSON.stringify(data));render()}
-function doLogin(){const u=document.getElementById('user').value.trim();const pw=document.getElementById('pass').value;if(u==='admin'&&pw==='admin123'){localStorage.setItem('kd_login','1');show()}else document.getElementById('loginMsg').textContent='Username atau password salah.'}
-function show(){document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';document.getElementById('nav').classList.remove('hide');render()}
-function page(x){['home','kegiatan','monitoring'].forEach(y=>document.getElementById(y).classList.toggle('hide',x!==y));render()}
-function addKegiatan(){let x={id:Date.now(),nama:knama.value,desa:kdesa.value,tanggal:ktgl.value,catatan:kcat.value};if(!x.nama)return alert('Nama kegiatan wajib diisi');data.kegiatan.push(x);[knama,kdesa,ktgl,kcat].forEach(e=>e.value='');save();page('kegiatan')}
-function addMonitoring(){let x={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),kegiatan:mkeg.value,petugas:mpet.value,progres:Number(mprog.value||0),catatan:mcat.value,tanggal:new Date().toLocaleString('id-ID'),gps:data.gps,synced:false};if(!x.petugas)return alert('Nama petugas wajib diisi');data.monitoring.push(x);[mkeg,mpet,mprog,mcat].forEach(e=>e.value='');save();page('monitoring')}
-function gps(){if(!navigator.geolocation)return gpsout.textContent='GPS tidak tersedia';navigator.geolocation.getCurrentPosition(p=>{data.gps={lat:p.coords.latitude,lon:p.coords.longitude};gpsout.textContent=`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`},e=>gpsout.textContent='GPS gagal: '+e.message,{enableHighAccuracy:true})}
-function render(){jmlK.textContent=data.kegiatan.length;jmlM.textContent=data.monitoring.length;
-klist.innerHTML=data.kegiatan.map(x=>`<div class="card item"><b>${x.nama}</b><br>${x.desa||'-'} • ${x.tanggal||'-'}<br><span class="muted">${x.catatan||''}</span></div>`).join('');
-mlist.innerHTML=data.monitoring.slice().reverse().map(x=>`<div class="card item"><b>Monitoring ${x.progres}%</b><br>Petugas: ${x.petugas}<br>${x.tanggal}<br>${x.catatan||''}<br><span class="muted">${x.gps?`GPS: ${x.gps.lat.toFixed(5)}, ${x.gps.lon.toFixed(5)}`:'GPS belum ada'} • ${x.synced?'Tersinkron':'Offline'}</span></div>`).join('');
-online.textContent=navigator.onLine?'🟢 Online':'🔴 Offline — data tetap tersimpan di HP'}
-async function installApp(){if(deferred){deferred.prompt();deferred=null}else alert('Jika browser mendukung PWA, buka menu Chrome ⋮ lalu pilih “Tambahkan ke layar utama”.')}
-window.addEventListener('online',render);window.addEventListener('offline',render);
-if(localStorage.getItem('kd_login')==='1')show();else render();
-navigator.serviceWorker?.register('./sw.js');</script></body></html>
+const K='kd_kegiatan_v2', M='kd_monitoring_v2', D='kd_dokumen_v2';
+let gpsData=null;
+const get=(k,d=[])=>JSON.parse(localStorage.getItem(k)||JSON.stringify(d));
+const set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+
+function doLogin(){
+ const u=document.getElementById('user').value.trim(), p=document.getElementById('pass').value;
+ if(u==='admin'&&p==='admin123'){localStorage.setItem('kd_login','1');show();}
+ else document.getElementById('loginMsg').textContent='Username atau password salah.';
+}
+function show(){document.getElementById('login').style.display='none';document.getElementById('app').classList.remove('hide');render();}
+function showPage(id){['home','kegiatan','monitoring','dokumen'].forEach(x=>document.getElementById(x).classList.toggle('hide',x!==id));render();}
+function saveKegiatan(){
+ let a=get(K);a.push({id:Date.now().toString(),nama:kNama.value,desa:kDesa.value,tanggal:kTanggal.value,catatan:kCatatan.value});
+ set(K,a);kNama.value=kDesa.value=kTanggal.value=kCatatan.value='';render();
+}
+function saveMonitoring(){
+ let a=get(M);a.push({id:Date.now().toString(),kegiatan:mId.value,petugas:mPetugas.value,progress:mProgress.value,catatan:mCatatan.value,gps:gpsData,tanggal:new Date().toLocaleString('id-ID')});
+ set(M,a);mId.value=mPetugas.value=mProgress.value=mCatatan.value='';gpsData=null;document.getElementById('gps').textContent='Lokasi belum diambil';render();
+}
+function getGPS(){
+ if(!navigator.geolocation){gps.textContent='GPS tidak tersedia';return}
+ navigator.geolocation.getCurrentPosition(p=>{gpsData={lat:p.coords.latitude,lng:p.coords.longitude};document.getElementById('gps').textContent='Latitude: '+gpsData.lat+' | Longitude: '+gpsData.lng},e=>document.getElementById('gps').textContent='GPS gagal diambil: '+e.message,{enableHighAccuracy:true,timeout:15000});
+}
+function render(){
+ const a=get(K),b=get(M);document.getElementById('kCount').textContent=a.length;document.getElementById('mCount').textContent=b.length;
+ kList.innerHTML=a.map(x=>`<div class="item"><b>${esc(x.nama)}</b><br>${esc(x.desa)} • ${esc(x.tanggal||'')}<br><span class="muted">${esc(x.catatan||'')}</span></div>`).join('');
+ mList.innerHTML=b.map(x=>`<div class="item"><b>${esc(x.kegiatan)}</b> — ${esc(x.progress)}%<br>${esc(x.petugas)}<br>${esc(x.tanggal)}<br>${esc(x.catatan||'')} ${x.gps?'<span class="badge">GPS</span>':''}</div>`).join('');
+ const d=get(D,{drp:null,sppd:null}); docStatus.textContent=(d.drp||d.sppd)?'Dokumen tersimpan di perangkat. Klik Proses Dokumen untuk memperbarui ringkasan.':'Belum ada dokumen diproses.';
+}
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+async function processDocs(){
+ const drp=document.getElementById('drpFile').files[0], sppd=document.getElementById('sppdFile').files[0];
+ if(!drp&&!sppd){docStatus.textContent='Pilih file DRP atau SPPD terlebih dahulu.';return}
+ const old=get(D,{});
+ const data={drp:drp?{name:drp.name,size:drp.size,type:drp.type}:old.drp,sppd:sppd?{name:sppd.name,size:sppd.size,type:sppd.type}:old.sppd,processedAt:new Date().toISOString()};
+ set(D,data);
+ docStatus.textContent='Memproses dokumen...';
+ let html='<div class="card"><h3>Hasil pemrosesan awal</h3>';
+ if(drp) html+=`<p>✅ DRP: <b>${esc(drp.name)}</b></p>`;
+ if(sppd) html+=`<p>✅ SPPD: <b>${esc(sppd.name)}</b></p>`;
+ html+='<p class="muted">File sudah tercatat. Pemetaan isi ke format laporan bulanan akan dilakukan pada tahap pengolahan dokumen.</p></div>';
+ docPreview.innerHTML=html;document.getElementById('exportBtn').classList.remove('hide');
+}
+function exportLaporan(){
+ const a=get(K),m=get(M),d=get(D,{});
+ let text='LAPORAN BULANAN PENDAMPINGAN\\n\\n';
+ text+='DOKUMEN SUMBER\\nDRP: '+(d.drp?.name||'-')+'\\nSPPD: '+(d.sppd?.name||'-')+'\\n\\n';
+ text+='DATA KEGIATAN\\n';a.forEach((x,i)=>text+=(i+1)+'. '+x.nama+' | '+x.desa+' | '+x.tanggal+'\\n');
+ text+='\\nDATA MONITORING\\n';m.forEach((x,i)=>text+=(i+1)+'. '+x.kegiatan+' | '+x.petugas+' | '+x.progress+'% | '+x.tanggal+'\\n');
+ const blob=new Blob([text],{type:'application/msword'}),url=URL.createObjectURL(blob),aEl=document.createElement('a');
+ aEl.href=url;aEl.download='Laporan_Bulanan_KerjaDesa.doc';aEl.click();URL.revokeObjectURL(url);
+}
+if(localStorage.getItem('kd_login')==='1')show();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body></html>
