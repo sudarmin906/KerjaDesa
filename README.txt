@@ -1,2 +1,1 @@
-KerjaDesa V10.8
-Perbaikan SPPD Word: menunggu relasi/logo selesai sebelum membuat DOCX, download lebih kompatibel di Chrome HP, validasi template/logo, dan cache V10.8.
+KerjaDesa V19 - SPPD: tanggal tiap blok disinkronkan dengan tanggal kunjungan masing-masing; Nama/Jabatan/Lokasi per kunjungan editable.
