@@ -277,7 +277,7 @@ function saveSppdData(){localStorage.setItem('kerjadesa_sppd_editable',JSON.stri
 function resetSppdData(){localStorage.removeItem('kerjadesa_sppd_editable');loadSppdData();document.getElementById('sppdStatus').textContent='Data SPPD dikembalikan ke data awal.'}
 sppdIds.forEach(id=>sppdGet(id).addEventListener('input',renderSppd));
 sppdGet('sppdBulan').addEventListener('change',renderSppd);
-function kdReplaceSppdTextNodes(p,target,replacement){const ms=[...p.matchAll(/<w:t([^>]*)>([\s\S]*?)<\/w:t>/g)];if(!ms.length)return p;const joined=ms.map(m=>m[2]).join('');const start=joined.indexOf(target);if(start<0)return p;const end=start+target.length;let cursor=0,inserted=false;return p.replace(/<w:t([^>]*)>([\s\S]*?)<\/w:t>/g,(m,attrs,t)=>{const a=cursor,b=cursor+t.length;cursor=b;if(b<=start||a>=end)return m;const left=t.slice(0,Math.max(0,start-a));const right=t.slice(Math.max(0,end-a));const rawMid=!inserted?String(replacement):'';const mid=!inserted?sppdXmlEsc(rawMid):'';let newAttrs=attrs;if(!/xml:space="preserve"/.test(newAttrs)&&(rawMid.startsWith(' ')||rawMid.endsWith(' ')))newAttrs+=' xml:space="preserve"';inserted=true;return `<w:t${newAttrs}>${left}${mid}${right}</w:t>`})}
+function kdReplaceSppdTextNodes(p,target,replacement){const ms=[...p.matchAll(/<w:t(?=[\s>])([^>]*)>([\s\S]*?)<\/w:t>/g)];if(!ms.length)return p;const joined=ms.map(m=>m[2]).join('');const start=joined.indexOf(target);if(start<0)return p;const end=start+target.length;let cursor=0,inserted=false;return p.replace(/<w:t(?=[\s>])([^>]*)>([\s\S]*?)<\/w:t>/g,(m,attrs,t)=>{const a=cursor,b=cursor+t.length;cursor=b;if(b<=start||a>=end)return m;const left=t.slice(0,Math.max(0,start-a));const right=t.slice(Math.max(0,end-a));const rawMid=!inserted?String(replacement):'';const mid=!inserted?sppdXmlEsc(rawMid):'';let newAttrs=attrs;if(!/xml:space="preserve"/.test(newAttrs)&&(rawMid.startsWith(' ')||rawMid.endsWith(' ')))newAttrs+=' xml:space="preserve"';inserted=true;return `<w:t${newAttrs}>${left}${mid}${right}</w:t>`})}
 async function makeSppdWord(){const st=document.getElementById('sppdStatus');try{st.textContent='Menyiapkan SPPD Word...';let d=sppdData();if(!d.nik||!d.nama||!d.bulan||!d.tahun)throw Error('NIK, Nama, Bulan, dan Tahun wajib diisi.');localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(d));saveVisitDates();const r=await fetch('./template_sppd_asli.docx',{cache:'no-store'});if(!r.ok)throw Error('Template SPPD tidak ditemukan (HTTP '+r.status+').');const ab=await r.arrayBuffer();if(!ab.byteLength)throw Error('Template SPPD kosong.');let zip=await JSZip.loadAsync(ab);const doc=zip.file('word/document.xml');if(!doc)throw Error('File Word tidak lengkap: word/document.xml tidak ditemukan.');let xml=await doc.async('string');xml=replaceSppdParagraphValues(xml,d);const logoPos=document.getElementById('sppdLogoPos')?.value||'left';if(logoPos!=='none'){const lr=await fetch('./logo_sppd.jpg',{cache:'no-store'});if(!lr.ok)throw Error('logo_sppd.jpg tidak ditemukan.');zip.file('word/media/logo_sppd.jpg',await lr.arrayBuffer());xml=insertSppdLogo(xml,logoPos);await addSppdLogoRelationship(zip);await addSppdLogoContentType(zip);}zip.file('word/document.xml',xml);st.textContent='Membuat file Word...';const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',compression:'DEFLATE'});if(!blob.size)throw Error('File Word hasil kosong.');const name='SPPD_'+String(d.bulan).trim()+'_'+String(d.tahun).trim()+'.docx';const url=URL.createObjectURL(blob);const a=document.createElement('a');a.style.display='none';a.href=url;a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(url)},10000);st.innerHTML='✅ SPPD berhasil dibuat: <b>'+esc(name)+'</b>. Jika belum muncul, buka menu Download pada Chrome.';}catch(e){console.error(e);st.textContent='❌ Gagal membuat SPPD: '+(e?.message||e);}}
 function addSppdLogoRelationship(zip){const f=zip.file('word/_rels/document.xml.rels');if(!f)return;return f.async('string').then(rel=>{if(rel.includes('logo_sppd.jpg'))return;rel=rel.replace('</Relationships>','<Relationship Id="rIdLogoSppd" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo_sppd.jpg"/></Relationships>');zip.file('word/_rels/document.xml.rels',rel)})}
 function addSppdLogoContentType(zip){const f=zip.file('[Content_Types].xml');if(!f)return;return f.async('string').then(x=>{if(x.includes('Extension="jpg"'))return;x=x.replace('</Types>','<Default Extension="jpg" ContentType="image/jpeg"/></Types>');zip.file('[Content_Types].xml',x)})}
@@ -316,53 +316,132 @@ function kdParagraphSetLabelValue(p,label,value,numberPrefix=''){
   const safe=sppdXmlEsc(prefix+label+gap+': '+String(value??''));
   return `<w:p>${ppr}<w:r>${rpr}<w:t xml:space="preserve">${safe}</w:t></w:r></w:p>`;
 }
-function kdReplaceTextKeepParagraph(p, regex, replacement){
-  const ppr=kdKeepPPr(p), rpr=kdKeepFirstRPr(p);
-  const plain=[...p.matchAll(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)].map(m=>m[1]).join('')
-    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#160;/g,' ');
-  const next=plain.replace(regex,replacement);
-  return kdParagraphSetText(p,next);
+
+function kdTextNodes(p){ return [...p.matchAll(/<w:t(?=[\s>])([^>]*)>([\s\S]*?)<\/w:t>/g)]; }
+function kdDecodeXml(s){ return String(s).replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#39;/g,"'").replace(/&#160;/g,'\u00a0'); }
+function kdEncodeXml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
+function kdReplaceDotsInParagraph(p,value){
+  let done=false;
+  return p.replace(/(<w:t(?=[\s>])[^>]*>)([\s\S]*?)(<\/w:t>)/g,(m,a,t,c)=>{
+    if(done || !/\.{5,}/.test(t)) return m;
+    done=true;
+    return a+t.replace(/\.{5,}/g,kdEncodeXml(value ? ' '+String(value) : ''))+c;
+  });
+}
+function kdReplaceKnownValue(p,oldValue,newValue){
+  let done=false;
+  const oldEsc=String(oldValue).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return p.replace(/(<w:t(?=[\s>])[^>]*>)([\s\S]*?)(<\/w:t>)/g,(m,a,t,c)=>{
+    if(done) return m;
+    const plain=kdDecodeXml(t);
+    if(!plain.includes(oldValue)) return m;
+    done=true;
+    return a+kdEncodeXml(plain.replace(new RegExp(oldEsc),String(newValue)))+c;
+  });
+}
+function kdReplaceMonthHeader(p,month,year){
+  return p.replace(/(<w:t(?=[\s>])[^>]*>)([\s\S]*?)(<\/w:t>)/g,(m,a,t,c)=>{
+    const plain=kdDecodeXml(t);
+    if(!/BULAN\s+SEPTEMBER\s+TAHUN\s+2026/i.test(plain)) return m;
+    const next=plain.replace(/SEPTEMBER/i,String(month).toUpperCase()).replace(/2026/g,String(year));
+    return a+kdEncodeXml(next)+c;
+  });
+}
+function kdReplaceRangeParagraph(p,start,end){
+  const nodes=kdTextNodes(p);
+  let target=-1;
+  for(let i=0;i<nodes.length;i++){
+    const plain=kdDecodeXml(nodes[i][2]);
+    if(/Tanggal/.test(plain)&&/s\/d/.test(plain)){target=i;break;}
+  }
+  if(target<0) return p;
+  const old=nodes[target][0], text=kdDecodeXml(nodes[target][2]);
+  const k=text.indexOf(':');
+  const prefix=k>=0?text.slice(0,k+1):'Tanggal :';
+  const sm=String(start).split(' '), em=String(end).split(' '); const replacement=prefix+' '+(sm[0]||'')+' s/d '+String(end);
+  let out=p.replace(old,old.replace(nodes[target][2],kdEncodeXml(replacement)));
+  const nodes2=kdTextNodes(out);
+  // Clear the separate old year run (e.g. 2026) and any leftover year-only run immediately after.
+  for(let i=target+1;i<nodes2.length;i++){
+    const q=kdDecodeXml(nodes2[i][2]).trim();
+    if(/^\d{4}$/.test(q) || q===''){
+      const tag=nodes2[i][0];
+      out=out.replace(tag,tag.replace(nodes2[i][2],''));
+      if(/^\d{4}$/.test(q)) break;
+    } else break;
+  }
+  return out;
+}
+function kdReplaceRightDateParagraph(p,value){
+  const nodes=kdTextNodes(p);
+  let target=-1;
+  for(let i=0;i<nodes.length;i++){
+    if(/Tanggal/.test(kdDecodeXml(nodes[i][2]))){target=i;break;}
+  }
+  if(target<0) return p;
+  const old=nodes[target][0], text=kdDecodeXml(nodes[target][2]);
+  const k=text.indexOf(':');
+  const prefix=k>=0?text.slice(0,k+1):'Tanggal :';
+  let out=p.replace(old,old.replace(nodes[target][2],kdEncodeXml(prefix+' '+String(value))));
+  const nodes2=kdTextNodes(out);
+  for(let i=target+1;i<nodes2.length;i++){
+    const q=kdDecodeXml(nodes2[i][2]).trim();
+    if(/^\d{4}$/.test(q)){
+      const tag=nodes2[i][0];
+      out=out.replace(tag,tag.replace(nodes2[i][2],''));
+      break;
+    }
+    if(q) break;
+  }
+  return out;
 }
 function replaceSppdParagraphValues(xml,d){
   const visits=visitDates();
   const monthUpper=String(d.bulan||'').trim().toUpperCase();
-  let current=0;
-  let stage=0;
-  return xml.replace(/<w:p[\s\S]*?<\/w:p>/g,p=>{
-    const plain=[...p.matchAll(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)].map(m=>m[1]).join('')
-      .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#39;/g,"'").replace(/&#160;/g,' ').trim();
+  let tableIndex=0;
+  xml=xml.replace(/<w:tbl(?:\s[^>]*)?>[\s\S]*?<\/w:tbl>/g,tbl=>{
+    const rows=[...tbl.matchAll(/<w:tr(?:\s[^>]*)?>[\s\S]*?<\/w:tr>/g)];
+    let newTbl=tbl;
+    rows.slice(0,3).forEach((rm,ri)=>{
+      const cells=[...rm[0].matchAll(/<w:tc(?:\s[^>]*)?>[\s\S]*?<\/w:tc>/g)];
+      if(cells.length<2)return;
+      const no=tableIndex*3+ri+1, v=visits[no-1]||{};
+      const st=v.start?formatDateLong(v.start):'', en=v.end?formatDateLong(v.end):'';
+      const days=v.days?String(v.days):'';
+      const left=cells[0][0], right=cells[1][0];
+      const leftNew=left.replace(/<w:p(?:\s[^>]*)?>[\s\S]*?<\/w:p>/g,p=>{
+        const plain=kdDecodeXml(kdTextNodes(p).map(x=>x[2]).join('')).trim();
+        if(new RegExp(`^${no}\\.\\s*`).test(plain)&&/Tiba di/i.test(plain)) return kdReplaceDotsInParagraph(p,v.tiba||d.tiba||'');
+        if(/Tanggal/i.test(plain)&&/s\/d/i.test(plain)) return kdReplaceRangeParagraph(p,st||'....',en||'....');
+        if(/Tanggal/i.test(plain)&&/\.{5,}/.test(plain)&&!/Jumlah Hari/i.test(plain)) return kdReplaceDotsInParagraph(p,st||'');
+        if(/Jumlah Hari/i.test(plain)) return kdReplaceDotsInParagraph(p,days);
+        return p;
+      });
+      const rightNew=right.replace(/<w:p(?:\s[^>]*)?>[\s\S]*?<\/w:p>/g,p=>{
+        const plain=kdDecodeXml(kdTextNodes(p).map(x=>x[2]).join('')).trim();
+        if(/^Berangkat Dari/i.test(plain)) return kdReplaceKnownValue(p,'Paminggalan',v.berangkat||d.berangkat||'');
+        if(/^Tempat Kedudukan/i.test(plain)) return kdReplaceKnownValue(p,'Paminggalan',v.kedudukan||d.kedudukan||'');
+        if(/^Tanggal/i.test(plain)) return kdReplaceRightDateParagraph(p,st||'');
+        if(/^Nama/i.test(plain)) return kdReplaceDotsInParagraph(p,v.nama||d.nama||'');
+        if(/^Jabatan/i.test(plain)) return kdReplaceDotsInParagraph(p,v.jabatan||d.jabatan||'');
+        return p;
+      });
+      newTbl=newTbl.replace(left,leftNew).replace(right,rightNew);
+    });
+    tableIndex++;
+    return newTbl;
+  });
+  // Header/identity paragraphs are outside the visit tables. Modify only their text nodes.
+  return xml.replace(/<w:p(?:\s[^>]*)?>[\s\S]*?<\/w:p>/g,p=>{
+    const plain=kdDecodeXml(kdTextNodes(p).map(x=>x[2]).join('')).trim();
     if(!plain)return p;
-
-    if(/BULAN\s+SEPTEMBER\s+TAHUN\s+2026/i.test(plain)) return kdParagraphSetText(p,`BULAN ${monthUpper} TAHUN ${d.tahun}`);
-    if(/Nama Lengkap/i.test(plain)&&/SUDARMIN ARIPUDDIN/i.test(plain)) return kdParagraphSetLabelValue(p,'Nama Lengkap',d.nama);
-    if(/Jabatan/i.test(plain)&&/Pendamping lokal Desa/i.test(plain)) return kdParagraphSetLabelValue(p,'Jabatan',d.jabatan);
-    if(/NIK/i.test(plain)&&/760503312910050/.test(plain)) return kdParagraphSetLabelValue(p,'NIK',d.nik);
-
-    const vm=plain.match(/^(\d+)\.\s*/);
-    if(vm && /Tiba di/i.test(plain)){
-      current=Math.min(18,Math.max(1,Number(vm[1]))); stage=1;
-      const v=visits[current-1]||{};
-      return kdParagraphSetLabelValue(p,'Tiba di',v.tiba||d.tiba||'',current+'.');
-    }
-    if(!current)return p;
-    const v=visits[current-1]||{};
-    const st=v.start?formatDateLong(v.start):'';
-    const en=v.end?formatDateLong(v.end):'';
-    const nama=v.nama||d.nama||'';
-    const jabatan=v.jabatan||d.jabatan||'';
-    const berangkat=v.berangkat||d.berangkat||'';
-    const kedudukan=v.kedudukan||d.kedudukan||'';
-
-    if(/Tanggal/i.test(plain) && /s\/d/i.test(plain)){
-      stage=3; return kdParagraphSetLabelValue(p,'Tanggal',`${st||'....'} s/d ${en||'....'} ${en?String(en).split(' ').slice(1).join(' '):monthUpper+' '+d.tahun}`);
-    }
-    if(/Tanggal/i.test(plain) && stage===1){ stage=2; return kdParagraphSetLabelValue(p,'Tanggal',st||'....'); }
-    if(/Jumlah Hari/i.test(plain)) return kdParagraphSetLabelValue(p,'Jumlah Hari',v.days?`${v.days} Hari`:'....................... Hari');
-    if(/Berangkat Dari/i.test(plain)){stage=4;return kdParagraphSetLabelValue(p,'Berangkat Dari',berangkat);}
-    if(/Tempat Kedudukan/i.test(plain)) return kdParagraphSetLabelValue(p,'Tempat Kedudukan',kedudukan);
-    if(/^Tanggal/i.test(plain) || /Tanggal/.test(plain)){ if(stage>=4) return kdParagraphSetLabelValue(p,'Tanggal',st||'....'); }
-    if(/^Nama\s*:/.test(plain) || /Nama/i.test(plain)) return kdParagraphSetLabelValue(p,'Nama',nama);
-    if(/^Jabatan/i.test(plain) || (/Jabatan/i.test(plain)&&/\.{5,}/.test(plain))) return kdParagraphSetLabelValue(p,'Jabatan',jabatan);
+    if(/BULAN/i.test(plain)&&/SEPTEMBER/i.test(plain)&&/TAHUN/i.test(plain)){ let q=p; q=q.replace(/(<w:t(?=[\s>])[^>]*>)([\s\S]*?)(<\/w:t>)/g,(m,a,t,c)=>a+kdEncodeXml(kdDecodeXml(t).replace(/SEPTEMBER/i,monthUpper).replace(/2026/g,String(d.tahun)))+c); return q; }
+    if(/^NIK\s*:/i.test(plain))return kdReplaceKnownValue(p,'760503312910050',d.nik||'');
+    if(/^Nama Lengkap/i.test(plain))return kdReplaceKnownValue(p,'SUDARMIN ARIPUDDIN',d.nama||'');
+    if(/^Kabupaten/i.test(plain))return kdReplaceKnownValue(p,'Majene',d.kabupaten||'');
+    if(/^Provinsi/i.test(plain))return kdReplaceKnownValue(p,'Sulawesi Barat',d.provinsi||'');
+    if(/^Posisi/i.test(plain))return kdReplaceKnownValue(p,'Pendamping Desa',d.posisi||'');
+    if(/^Jabatan\s*:/i.test(plain)&&/Pendamping lokal Desa/i.test(plain))return kdReplaceKnownValue(p,'Pendamping lokal Desa',d.jabatan||'');
     return p;
   });
 }
