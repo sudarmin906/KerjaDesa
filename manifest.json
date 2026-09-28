@@ -1,15 +1,10 @@
 {
-  "name": "KerjaDesa V24",
-  "short_name": "KerjaDesa V24",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#f4f7f8",
-  "theme_color": "#0f766e",
-  "icons": [
-    {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
-    }
-  ]
+  "name":"KerjaDesa - Sistem Kerja Pendamping Desa",
+  "short_name":"KerjaDesa",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#f4f7fb",
+  "theme_color":"#0b3158",
+  "description":"Aplikasi administrasi, monitoring, DRP, laporan dan SPPD Pendamping Desa.",
+  "icons":[{"src":"foto_profil.jpg","sizes":"192x192","type":"image/jpeg"}]
 }
