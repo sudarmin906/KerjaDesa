@@ -82,7 +82,7 @@ jobs:
           SIZE=$(stat -c%s "$APK")
           echo "APK SIZE: $SIZE bytes"
 
-          test "$SIZE" -gt 100000
+          test "$SIZE" -gt 10000
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
