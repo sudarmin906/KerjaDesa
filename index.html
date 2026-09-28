@@ -2,13 +2,17 @@
 <html lang="id"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f766e"><link rel="manifest" href="manifest.json">
-<title>KerjaDesa V4 - DRP Otomatis</title>
+<title>KerjaDesa V7 - Laporan Otomatis Lengkap</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f7f8;color:#17202a}header{background:#0f766e;color:#fff;padding:18px 16px;position:sticky;top:0;z-index:5}header h1{margin:0;font-size:24px}header small{opacity:.9}main{max-width:900px;margin:auto;padding:16px}.card{background:#fff;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 10px #00000010}input,textarea,select,button{width:100%;padding:13px;margin:6px 0;border-radius:10px;border:1px solid #ccd5d8;font-size:15px}button{background:#0f766e;color:#fff;border:0;font-weight:bold}.secondary{background:#e6f3f1;color:#0f766e}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{font-size:26px;font-weight:bold}.muted{color:#667}.item{border-left:4px solid #0f766e;padding:10px;background:#f8fbfb;margin:8px 0;border-radius:8px}#app{display:none}.hide{display:none}.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;padding:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;z-index:10}.nav button{margin:0;padding:10px 4px;font-size:13px}body{padding-bottom:82px}.drop{border:2px dashed #a8c8c4;padding:14px;border-radius:12px;background:#f7fbfb;margin:8px 0}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e6f3f1;color:#0f766e;font-size:12px}.ok{color:#137333}.warn{color:#9a6700}.small{font-size:12px}.report{white-space:pre-wrap;background:#f8fafb;border-radius:10px;padding:14px;font-size:13px;line-height:1.5;max-height:500px;overflow:auto}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pill{padding:10px;border-radius:10px;background:#eef7f5;margin:6px 0}.loading{padding:10px;border-radius:10px;background:#fff8e6}.tablewrap{overflow:auto}.simpletable{width:100%;border-collapse:collapse;font-size:12px}.simpletable th,.simpletable td{border:1px solid #cdd7d9;padding:7px;vertical-align:top}.simpletable th{background:#eef7f5}.report-print{display:none}
 @media(max-width:600px){.grid,.row,.actions{grid-template-columns:1fr}.nav button{font-size:11px}}
 @media print{body{background:#fff;padding:0}header,.nav,#app>div:not(#dokumen),#login,#dokumen>.card:not(.print-area),#docResult,.no-print{display:none!important}.report-print{display:block!important}.print-report{font-family:Arial,sans-serif;color:#000;line-height:1.45;font-size:11pt}.print-report h1{text-align:center;font-size:16pt}.print-report h2{text-align:center;font-size:13pt}.print-report h3{font-size:12pt;margin-top:18px}.print-report table{width:100%;border-collapse:collapse}.print-report th,.print-report td{border:1px solid #555;padding:5px;vertical-align:top}.print-report .center{text-align:center}.pagebreak{page-break-before:always}}
+
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.photo-card{border:1px solid #d7e0e2;border-radius:10px;padding:6px;background:#fff}.photo-card img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:7px}.profile-preview{width:110px;height:140px;object-fit:cover;border-radius:8px;border:1px solid #ccd5d8}.logo-preview{max-width:180px;max-height:70px;object-fit:contain;border:1px solid #ccd5d8;border-radius:8px;padding:5px;background:#fff}.photo-meta{font-size:11px;color:#667;margin-top:4px}
+@media(max-width:600px){.photo-grid{grid-template-columns:repeat(2,1fr)}}
+.print-report .report-head{display:grid;grid-template-columns:90px 1fr 90px;gap:10px;align-items:center;text-align:center}.print-report .report-head img{max-width:85px;max-height:80px;object-fit:contain}.print-report .profile-box{width:95px;height:125px;object-fit:cover}.print-report .doc-photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.print-report .doc-photo-grid img{width:100%;max-height:220px;object-fit:contain;border:1px solid #777}.print-report .signature{margin-top:30px;text-align:center}.print-report .signature img{width:90px;height:115px;object-fit:cover}
 </style></head><body>
-<header><h1>KerjaDesa</h1><small>Administrasi & Monitoring Desa • Offline • V6 DRP + SPPD → Laporan Otomatis</small></header>
+<header><h1>KerjaDesa</h1><small>Administrasi & Monitoring Desa • Offline • V7 DRP + SPPD + Foto → Word/PDF Lengkap</small></header>
 <main>
 <section id="login" class="card"><h2>Masuk</h2><p class="muted">Gunakan akun demo.</p><input id="user" value="admin" placeholder="Username"><input id="pass" value="admin123" type="password" placeholder="Password"><button onclick="doLogin()">Masuk</button><p id="loginMsg" class="muted"></p></section>
 <section id="app">
@@ -22,6 +26,7 @@
 <div class="pill"><b>Status:</b> <span id="docStatus">Belum ada dokumen yang diproses.</span></div>
 <button onclick="processDocs()">⚙️ Proses Ulang Semua Dokumen</button></div>
 <div id="docResult"></div><div id="drpPreview"></div>
+<div class="card no-print"><h3>🖼️ Foto & Identitas Laporan</h3><p class="small muted">Foto profil sudah disiapkan. Anda dapat mengganti foto kapan saja. Upload juga logo Kemendesa dan foto dokumentasi kegiatan.</p><div class="grid"><div><label><b>Foto Profil</b></label><input id="profileFile" type="file" accept="image/*" onchange="loadProfilePhoto(this)"><div id="profilePreview"></div></div><div><label><b>Logo Kemendesa</b></label><input id="logoFile" type="file" accept="image/*" onchange="loadLogo(this)"><div id="logoPreview"></div></div></div><label><b>Foto Dokumentasi Kegiatan</b></label><input id="photoFiles" type="file" accept="image/*" multiple onchange="loadActivityPhotos(this)"><div id="photoPreview" class="photo-grid"></div></div>
 <div class="card no-print"><h3>Identitas Laporan</h3><div class="row"><input id="rNama" placeholder="Nama Pendamping"><input id="rPosisi" value="PLD" placeholder="Posisi"></div><div class="row"><input id="rKec" placeholder="Kecamatan"><input id="rKab" placeholder="Kabupaten"></div><div class="row"><input id="rProv" placeholder="Provinsi"><input id="rPeriode" type="month"></div><textarea id="rCat" placeholder="Catatan tambahan laporan (opsional)"></textarea><button onclick="makeReport()">📑 Buat Laporan Bulanan</button></div>
 <div id="reportActions" class="card no-print hide"><h3>Output Laporan</h3><div class="actions"><button onclick="downloadWord()">⬇️ Word</button><button onclick="printPdf()">🖨️ Cetak / PDF</button></div><p class="small muted">Untuk PDF di HP/Chrome, pilih menu cetak lalu pilih “Simpan sebagai PDF”.</p></div>
 <div id="docResult2"></div>
@@ -30,7 +35,7 @@
 <div id="nav" class="nav hide"><button onclick="page('home')">🏠 Beranda</button><button onclick="page('kegiatan')">📋 Kegiatan</button><button onclick="page('monitoring')">📍 Monitoring</button><button onclick="page('dokumen')">📄 Dokumen</button></div>
 <div id="reportPrint" class="report-print"></div>
 <script>
-let data=JSON.parse(localStorage.getItem('kerjadesa')||'{"kegiatan":[],"monitoring":[],"gps":null,"docs":{}}');let deferred=null;let reportHtml='';let reportText='';
+let data=JSON.parse(localStorage.getItem('kerjadesa')||'{"kegiatan":[],"monitoring":[],"gps":null,"docs":{}}');let deferred=null;let reportHtml='';let reportText='';let profilePhoto='foto_profil.jpg';let logoPhoto='';let activityPhotos=[];
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
 function save(){localStorage.setItem('kerjadesa',JSON.stringify(data));render()}
 function doLogin(){const u=document.getElementById('user').value.trim(),pw=document.getElementById('pass').value;if(u==='admin'&&pw==='admin123'){localStorage.setItem('kd_login','1');show()}else document.getElementById('loginMsg').textContent='Username atau password salah.'}
@@ -197,6 +202,13 @@ function parseSPPD(text){
 function findDate(t){let m=cleanText(t).match(/\b(\d{1,2})[\/-](\d{1,2})[\/-](20\d{2})\b/);if(m)return `${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;m=cleanText(t).match(/\b(\d{1,2})\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+(20\d{2})/i);return m?m[0]:''}
 function findLocations(t){let hits=[];for(const m of cleanText(t).matchAll(/(?:Desa|Kelurahan)\s+[A-Za-zÀ-ÿ0-9' -]{2,60}/gi))hits.push(m[0].trim().replace(/[,.].*$/,''));return [...new Set(hits)].slice(0,10)}
 function periodLabel(){const v=document.getElementById('rPeriode').value;if(v){const [y,m]=v.split('-');return new Date(Number(y),Number(m)-1,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'})}return new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'})}
+function readAsDataURL(file){return new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=reject;fr.readAsDataURL(file)})}
+async function loadProfilePhoto(input){const f=input.files[0];if(!f)return;profilePhoto=await readAsDataURL(f);data.docs=data.docs||{};data.docs.profilePhoto=profilePhoto;save();renderMediaPreviews()}
+async function loadLogo(input){const f=input.files[0];if(!f)return;logoPhoto=await readAsDataURL(f);data.docs=data.docs||{};data.docs.logoPhoto=logoPhoto;save();renderMediaPreviews()}
+async function loadActivityPhotos(input){const files=[...input.files];activityPhotos=[];for(const f of files){activityPhotos.push({name:f.name,url:await readAsDataURL(f),date:extractPhotoDate(f.name)})}data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;save();renderMediaPreviews()}
+function extractPhotoDate(name){let m=name.match(/(20\d{2})[-_](\d{1,2})[-_](\d{1,2})/);if(m)return `${m[3].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[1]}`;m=name.match(/(\d{1,2})[-_](\d{1,2})[-_](20\d{2})/);if(m)return `${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;return ''}
+function renderMediaPreviews(){const d=data.docs||{};profilePhoto=d.profilePhoto||profilePhoto;logoPhoto=d.logoPhoto||'';activityPhotos=d.activityPhotos||[];document.getElementById('profilePreview').innerHTML=profilePhoto?`<img class="profile-preview" src="${profilePhoto}" alt="Foto profil">`:'';document.getElementById('logoPreview').innerHTML=logoPhoto?`<img class="logo-preview" src="${logoPhoto}" alt="Logo Kemendesa">`:'<span class="small muted">Belum ada logo. Upload logo resmi Kemendesa.</span>';document.getElementById('photoPreview').innerHTML=activityPhotos.map((p,i)=>`<div class="photo-card"><img src="${p.url}" alt="Foto ${i+1}"><div class="photo-meta">${esc(p.name)}${p.date?`<br>Tanggal terdeteksi: ${esc(p.date)}`:''}</div></div>`).join('')}
+function photosForDate(date){const arr=activityPhotos.filter(p=>p.date&&p.date===date);return arr.length?arr:[]}
 function makeReport(){
   const d=data.docs||{}, drp=d.drp?.parsed, h=drp?.header||{};
   const nama=document.getElementById('rNama').value||h.nama||'-';
@@ -214,8 +226,9 @@ function makeReport(){
   const sp=d.sppd?.parsed||{};
   const sppdInfo=`<table><tr><th colspan="2">PEMETAAN DOKUMEN SPPD</th></tr><tr><td>Nomor</td><td>${esc(sp.nomor||'Tidak ditemukan')}</td></tr><tr><td>Tanggal</td><td>${esc((sp.tanggalList||[]).join(', ')||sp.tanggal||'Tidak ditemukan')}</td></tr><tr><td>Nama/Pelaksana</td><td>${esc(sp.nama||'Tidak ditemukan')}</td></tr><tr><td>Tujuan</td><td>${esc(sp.tujuan||'Tidak ditemukan')}</td></tr><tr><td>Maksud/Keperluan</td><td>${esc(sp.maksud||'Tidak ditemukan')}</td></tr><tr><td>Berangkat</td><td>${esc(sp.berangkat||'Tidak ditemukan')}</td></tr><tr><td>Kembali</td><td>${esc(sp.kembali||'Tidak ditemukan')}</td></tr></table>`;
   const summary=`${h.jamKerja||'-'} jam:menit · target 140 jam`;
+  const logoHtml=logoPhoto?`<img src="${logoPhoto}" alt="Logo Kemendesa">`:'<div style="font-size:9pt;border:1px solid #aaa;padding:8px">LOGO<br>KEMENDESA PDT</div>';const profileHtml=profilePhoto?`<img class="profile-box" src="${profilePhoto}" alt="Foto Pendamping">`:'';
   reportHtml=`<div class="print-report">
-  <div style="text-align:center;font-size:10pt;line-height:1.25"><b>KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA</b><br><b>BADAN PENGEMBANGAN SUMBER DAYA MANUSIA DAN PEMBERDAYAAN</b><br><b>MASYARAKAT DESA DAN DAERAH TERTINGGAL</b><br>Jalan TMP. Kalibata Nomor 17 Jakarta Selatan 12750</div>
+  <div class="report-head"><div>${logoHtml}</div><div style="font-size:10pt;line-height:1.25"><b>KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA</b><br><b>BADAN PENGEMBANGAN SUMBER DAYA MANUSIA DAN PEMBERDAYAAN</b><br><b>MASYARAKAT DESA DAN DAERAH TERTINGGAL</b><br>Jalan TMP. Kalibata Nomor 17 Jakarta Selatan 12750</div><div>${profileHtml}</div></div>
   <h1 style="margin-bottom:2px">LAPORAN BULANAN AKTIVITAS HARIAN</h1><h2>TENAGA PENDAMPING PROFESIONAL</h2>
   <p><b>Periode:</b> ${esc(periode)}</p>
   <table><tr><th colspan="2">IDENTITAS TPP</th><th colspan="2">LOKASI PENUGASAN</th></tr>
@@ -229,8 +242,10 @@ function makeReport(){
   <h3>DAFTAR LAPORAN AKTIVITAS</h3>
   <table><thead><tr><th>No.</th><th>Tanggal</th><th>Waktu</th><th>Durasi</th><th>Jenis Kegiatan</th><th>Status</th><th>Lokasi</th><th>Deskripsi Kegiatan</th></tr></thead><tbody>${activityRows||'<tr><td colspan="8">Belum ada aktivitas DRP yang terbaca.</td></tr>'}</tbody></table>
   <h3>PEMETAAN SPPD</h3>${sppdInfo}
+  <h3>DOKUMENTASI FOTO KEGIATAN</h3>${activityPhotos.length?`<div class="doc-photo-grid">${activityPhotos.map((p,i)=>`<div><img src="${p.url}" alt="Dokumentasi ${i+1}"><div class="small"><b>${esc(p.date||'Tanggal tidak terdeteksi')}</b><br>${esc(p.name)}</div></div>`).join('')}</div>`:'<p>Tidak ada foto dokumentasi yang diunggah.</p>'}
   <h3>DOKUMEN SUMBER</h3><p>DRP: ${esc(d.drp?.name||'Belum diunggah')}<br>SPPD: ${esc(sppd)}</p>
   <p class="small">Data laporan dipetakan dari dokumen sumber oleh KerjaDesa. Data yang tidak ditemukan tidak diisi dengan asumsi.</p>
+  <div class="signature"><p>Yang membuat laporan,</p>${profilePhoto?`<img src="${profilePhoto}" alt="Foto penyusun"><br>`:''}<b>${esc(nama)}</b><br>${esc(posisi)}</div>
   </div>`;
   document.getElementById('reportPrint').innerHTML=reportHtml;
   document.getElementById('docResult2').innerHTML='<div class="card no-print"><h3>Pratinjau Laporan Sesuai Format DRP</h3>'+reportHtml+'</div>';
@@ -240,5 +255,5 @@ function makeReport(){
 }
 function downloadWord(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}const html='<!doctype html><html><head><meta charset="utf-8"><title>Laporan Bulanan KerjaDesa</title><style>body{font-family:Arial;font-size:11pt;line-height:1.45}h1{text-align:center;font-size:16pt}h2{text-align:center;font-size:13pt}table{width:100%;border-collapse:collapse}th,td{border:1px solid #555;padding:5px;vertical-align:top}</style></head><body>'+reportHtml+'</body></html>';const blob=new Blob([html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Laporan_Bulanan_KerjaDesa.doc';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function printPdf(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}window.print()}
-if(localStorage.getItem('kd_login')==='1')show();else render();navigator.serviceWorker?.register('./sw.js');updateDocStatus();if(data.docs?.drp?.parsed)renderDrpPreview(data.docs.drp.parsed);
+if(localStorage.getItem('kd_login')==='1')show();else render();navigator.serviceWorker?.register('./sw.js');updateDocStatus();renderMediaPreviews();if(data.docs?.drp?.parsed)renderDrpPreview(data.docs.drp.parsed);
 </script></body></html>
