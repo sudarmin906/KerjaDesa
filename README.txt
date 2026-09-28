@@ -1,2 +1,2 @@
-KerjaDesa V10.1
-SPPD menggunakan template Word asli. Identitas NIK, nama, kabupaten, provinsi, posisi, jabatan, bulan, dan tahun dapat diedit sebelum membuat DOCX. Data kunjungan tidak diisi otomatis.
+KerjaDesa V10.4
+SPPD editable: identitas, Tiba di, Berangkat Dari, Tempat Kedudukan, bulan dan tahun. Tanggal kunjungan otomatis menampilkan bulan dan tahun; rentang s/d otomatis menampilkan bulan dan tahun. Template Word asli tetap digunakan.
