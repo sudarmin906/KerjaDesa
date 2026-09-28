@@ -1,82 +1,276 @@
 <!doctype html>
-<html lang="id">
-<head>
+<html lang="id"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0b5cab"><link rel="manifest" href="manifest.json">
-<title>KerjaDesa V10 — SPPD</title>
+<meta name="theme-color" content="#0f766e"><link rel="manifest" href="manifest.json">
+<title>KerjaDesa V7 - Laporan Otomatis Lengkap</title>
 <style>
-*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0;background:#f3f6fa;color:#17202a}.top{background:#0b5cab;color:#fff;padding:18px 16px}.top h1{margin:0;font-size:22px}.top p{margin:5px 0 0;font-size:13px;opacity:.9}.wrap{max-width:820px;margin:auto;padding:14px}.card{background:#fff;border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 2px 10px #00000012}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:650px){.grid{grid-template-columns:1fr}}label{font-size:13px;font-weight:700;display:block;margin-bottom:5px}input,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;font-size:15px;background:#fff}button{border:0;border-radius:10px;padding:12px 15px;font-weight:700;cursor:pointer}.primary{background:#0b5cab;color:white}.secondary{background:#e8eef6;color:#123}.danger{background:#fee2e2;color:#991b1b}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.hint{font-size:12px;color:#64748b;line-height:1.5}.ok{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;padding:10px;border-radius:9px;display:none}.preview{background:#f8fafc;border:1px dashed #94a3b8;padding:12px;border-radius:9px;line-height:1.7;font-size:14px}.badge{display:inline-block;background:#e0f2fe;color:#075985;border-radius:99px;padding:4px 9px;font-size:12px;font-weight:700}
-</style></head>
-<body>
-<div class="top"><div class="wrap"><h1>KerjaDesa V10 — SPPD</h1><p>Template Word SPPD asli • Identitas & periode dapat diganti</p></div></div>
-<div class="wrap">
-<div class="card"><span class="badge">TEMPLATE ASLI</span><h2>Pengaturan SPPD</h2><p class="hint">Data di bawah tidak dikunci. Anda dapat menggantinya setiap kali membuat SPPD.</p>
-<div class="grid">
-<div><label>NIK</label><input id="nik"></div><div><label>Nama Lengkap</label><input id="nama"></div>
-<div><label>Kabupaten</label><input id="kabupaten"></div><div><label>Provinsi</label><input id="provinsi"></div>
-<div><label>Posisi</label><input id="posisi"></div><div><label>Jabatan</label><input id="jabatan"></div>
-<div><label>Bulan</label><select id="bulan"></select></div><div><label>Tahun</label><input id="tahun" type="number" min="2000" max="2100"></div>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f7f8;color:#17202a}header{background:#0f766e;color:#fff;padding:18px 16px;position:sticky;top:0;z-index:5}header h1{margin:0;font-size:24px}header small{opacity:.9}main{max-width:900px;margin:auto;padding:16px}.card{background:#fff;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 10px #00000010}input,textarea,select,button{width:100%;padding:13px;margin:6px 0;border-radius:10px;border:1px solid #ccd5d8;font-size:15px}button{background:#0f766e;color:#fff;border:0;font-weight:bold}.secondary{background:#e6f3f1;color:#0f766e}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{font-size:26px;font-weight:bold}.muted{color:#667}.item{border-left:4px solid #0f766e;padding:10px;background:#f8fbfb;margin:8px 0;border-radius:8px}#app{display:none}.hide{display:none}.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;padding:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;z-index:10}.nav button{margin:0;padding:10px 4px;font-size:13px}body{padding-bottom:82px}.drop{border:2px dashed #a8c8c4;padding:14px;border-radius:12px;background:#f7fbfb;margin:8px 0}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e6f3f1;color:#0f766e;font-size:12px}.ok{color:#137333}.warn{color:#9a6700}.small{font-size:12px}.report{white-space:pre-wrap;background:#f8fafb;border-radius:10px;padding:14px;font-size:13px;line-height:1.5;max-height:500px;overflow:auto}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pill{padding:10px;border-radius:10px;background:#eef7f5;margin:6px 0}.loading{padding:10px;border-radius:10px;background:#fff8e6}.tablewrap{overflow:auto}.simpletable{width:100%;border-collapse:collapse;font-size:12px}.simpletable th,.simpletable td{border:1px solid #cdd7d9;padding:7px;vertical-align:top}.simpletable th{background:#eef7f5}.report-print{display:none}
+@media(max-width:600px){.grid,.row,.actions{grid-template-columns:1fr}.nav button{font-size:11px}}
+@media print{body{background:#fff;padding:0}header,.nav,#app>div:not(#dokumen),#login,#dokumen>.card:not(.print-area),#docResult,.no-print{display:none!important}.report-print{display:block!important}.print-report{font-family:Arial,sans-serif;color:#000;line-height:1.45;font-size:11pt}.print-report h1{text-align:center;font-size:16pt}.print-report h2{text-align:center;font-size:13pt}.print-report h3{font-size:12pt;margin-top:18px}.print-report table{width:100%;border-collapse:collapse}.print-report th,.print-report td{border:1px solid #555;padding:5px;vertical-align:top}.print-report .center{text-align:center}.pagebreak{page-break-before:always}}
+
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.photo-card{border:1px solid #d7e0e2;border-radius:10px;padding:6px;background:#fff}.photo-card img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:7px}.profile-preview{width:110px;height:140px;object-fit:cover;border-radius:8px;border:1px solid #ccd5d8}.logo-preview{max-width:180px;max-height:70px;object-fit:contain;border:1px solid #ccd5d8;border-radius:8px;padding:5px;background:#fff}.photo-meta{font-size:11px;color:#667;margin-top:4px}
+@media(max-width:600px){.photo-grid{grid-template-columns:repeat(2,1fr)}}
+.print-report .report-head{display:grid;grid-template-columns:90px 1fr 90px;gap:10px;align-items:center;text-align:center}.print-report .report-head img{max-width:85px;max-height:80px;object-fit:contain}.print-report .profile-box{width:95px;height:125px;object-fit:cover}.print-report .doc-photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.print-report .doc-photo-grid img{width:100%;max-height:220px;object-fit:contain;border:1px solid #777}.print-report .signature{margin-top:30px;text-align:center}.print-report .signature img{width:90px;height:115px;object-fit:cover}
+</style></head><body>
+<header><h1>KerjaDesa</h1><small>Administrasi & Monitoring Desa • Offline • V7 DRP + SPPD + Foto → Word/PDF Lengkap</small></header>
+<main>
+<section id="login" class="card"><h2>Masuk</h2><p class="muted">Gunakan akun demo.</p><input id="user" value="admin" placeholder="Username"><input id="pass" value="admin123" type="password" placeholder="Password"><button onclick="doLogin()">Masuk</button><p id="loginMsg" class="muted"></p></section>
+<section id="app">
+<div id="home"><div class="grid"><div class="card"><div class="stat" id="jmlK">0</div><div class="muted">Kegiatan</div></div><div class="card"><div class="stat" id="jmlM">0</div><div class="muted">Monitoring</div></div></div><div class="card"><h3>Status Perangkat</h3><div id="online">Memeriksa...</div><button class="secondary" onclick="installApp()">Pasang ke Layar Utama</button></div><div class="card"><h3>Kerja Desa</h3><p class="muted">Data tersimpan di perangkat dan dapat digunakan saat tidak ada internet.</p></div></div>
+<div id="kegiatan" class="hide"><div class="card"><h2>Data Kegiatan</h2><input id="knama" placeholder="Nama kegiatan"><input id="kdesa" placeholder="Desa"><input id="ktgl" type="date"><textarea id="kcat" placeholder="Catatan"></textarea><button onclick="addKegiatan()">Simpan Kegiatan</button></div><div id="klist"></div></div>
+<div id="monitoring" class="hide"><div class="card"><h2>Monitoring Lapangan</h2><input id="mkeg" placeholder="ID / nama kegiatan"><input id="mpet" placeholder="Nama petugas"><input id="mprog" type="number" min="0" max="100" placeholder="Progres 0-100"><textarea id="mcat" placeholder="Catatan hasil monitoring"></textarea><button onclick="gps()">📍 Ambil Lokasi GPS</button><p id="gpsout" class="muted">Lokasi belum diambil</p><button onclick="addMonitoring()">Simpan Monitoring</button></div><div id="mlist"></div></div>
+<div id="dokumen" class="hide">
+<div class="card print-area"><h2>📄 Dokumen & Laporan Bulanan</h2><p class="muted">Upload DRP dan SPPD. Setelah file dipilih, KerjaDesa otomatis mencoba membaca isi file di perangkat. Data yang tidak ditemukan tidak akan diisi dengan tebakan.</p>
+<div class="drop"><b>1. Upload DRP Bulanan</b><input id="drpFile" type="file" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt" onchange="autoProcessOne('drp')"><div id="drpStatus" class="small muted">Belum ada DRP.</div></div>
+<div class="drop"><b>2. Upload SPPD</b><input id="sppdFile" type="file" accept=".docx,.pdf,.txt" onchange="autoProcessOne('sppd')"><div id="sppdStatus" class="small muted">Belum ada SPPD.</div></div>
+<div class="pill"><b>Status:</b> <span id="docStatus">Belum ada dokumen yang diproses.</span></div>
+<button onclick="processDocs()">⚙️ Proses Ulang Semua Dokumen</button></div>
+<div id="docResult"></div><div id="drpPreview"></div>
+<div class="card no-print"><h3>🖼️ Foto & Identitas Laporan</h3><p class="small muted">Foto profil sudah disiapkan. Anda dapat mengganti foto kapan saja. Upload juga logo Kemendesa dan foto dokumentasi kegiatan.</p><div class="grid"><div><label><b>Foto Profil</b></label><input id="profileFile" type="file" accept="image/*" onchange="loadProfilePhoto(this)"><div id="profilePreview"></div></div><div><label><b>Logo Kemendesa</b></label><input id="logoFile" type="file" accept="image/*" onchange="loadLogo(this)"><div id="logoPreview"></div></div></div><label><b>Foto Dokumentasi Kegiatan</b></label><input id="photoFiles" type="file" accept="image/*" multiple onchange="loadActivityPhotos(this)"><div id="photoPreview" class="photo-grid"></div></div>
+<div class="card no-print" id="sppdEditorCard"><h3>🧾 SPPD — Template Asli & Editable</h3><p class="small muted">Template Word SPPD asli digunakan apa adanya. Anda hanya mengubah identitas serta bulan/tahun; data kunjungan tidak diisi otomatis dari DRP.</p><div class="grid"><input id="sppdNIK" placeholder="NIK"><input id="sppdNama" placeholder="Nama Lengkap"><input id="sppdKabupaten" placeholder="Kabupaten"><input id="sppdProvinsi" placeholder="Provinsi"><input id="sppdPosisi" placeholder="Posisi"><input id="sppdJabatan" placeholder="Jabatan"><select id="sppdBulan"><option>JANUARI</option><option>FEBRUARI</option><option>MARET</option><option>APRIL</option><option>MEI</option><option>JUNI</option><option>JULI</option><option>AGUSTUS</option><option>SEPTEMBER</option><option>OKTOBER</option><option>NOVEMBER</option><option>DESEMBER</option></select><input id="sppdTahun" type="number" min="2000" max="2100" placeholder="Tahun"></div><div class="actions"><button class="secondary" onclick="saveSppdData()">💾 Simpan Data SPPD</button><button class="secondary" onclick="resetSppdData()">↩️ Data Awal</button></div><div class="pill"><b>Preview:</b><div id="sppdPreview" class="small"></div></div><button onclick="makeSppdWord()">⬇️ Buat SPPD Word Asli</button><div id="sppdStatus" class="small muted"></div></div>
+<div class="card no-print"><h3>Identitas Laporan</h3><div class="row"><input id="rNama" placeholder="Nama Pendamping"><input id="rPosisi" value="PLD" placeholder="Posisi"></div><div class="row"><input id="rKec" placeholder="Kecamatan"><input id="rKab" placeholder="Kabupaten"></div><div class="row"><input id="rProv" placeholder="Provinsi"><input id="rPeriode" type="month"></div><textarea id="rCat" placeholder="Catatan tambahan laporan (opsional)"></textarea><button onclick="makeReport()">📑 Buat Laporan Bulanan</button></div>
+<div id="reportActions" class="card no-print hide"><h3>Output Laporan</h3><div class="actions"><button onclick="downloadWord()">⬇️ Word</button><button onclick="printPdf()">🖨️ Cetak / PDF</button></div><p class="small muted">Untuk PDF di HP/Chrome, pilih menu cetak lalu pilih “Simpan sebagai PDF”.</p></div>
+<div id="docResult2"></div>
 </div>
-<div class="row"><button class="secondary" id="save">Simpan Data Ini</button><button class="danger" id="reset">Kembalikan Data Awal</button></div></div>
-<div class="card"><h2>Yang akan diubah</h2><div class="preview" id="preview"></div><p class="hint">Bagian nomor kunjungan, garis/titik, susunan halaman, dan format template Word asli tidak dibuat ulang oleh aplikasi.</p></div>
-<div class="card"><h2>Hasil</h2><div class="ok" id="status"></div><div class="row"><button class="primary" id="make">Buat SPPD Word</button></div><p class="hint">File yang dihasilkan tetap berformat .docx. Setelah diunduh, buka di Microsoft Word/WPS Office lalu cetak pada ukuran A4.</p></div>
-</div>
+</section></main>
+<div id="nav" class="nav hide"><button onclick="page('home')">🏠 Beranda</button><button onclick="page('kegiatan')">📋 Kegiatan</button><button onclick="page('monitoring')">📍 Monitoring</button><button onclick="page('dokumen')">📄 Dokumen</button></div>
+<div id="reportPrint" class="report-print"></div>
 <script src="jszip.min.js"></script>
 <script>
-const DEFAULT={nik:'760503312910050',nama:'SUDARMIN ARIPUDDIN',kabupaten:'Majene',provinsi:'Sulawesi Barat',posisi:'Pendamping Desa',jabatan:'Pendamping lokal Desa',bulan:'SEPTEMBER',tahun:'2026'};
-const MONTHS=['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
-const ids=['nik','nama','kabupaten','provinsi','posisi','jabatan','bulan','tahun'];
-const $=id=>document.getElementById(id);
-MONTHS.forEach(m=>{let o=document.createElement('option');o.value=m;o.textContent=m;$('bulan').appendChild(o)});
-function load(){let d={...DEFAULT,...JSON.parse(localStorage.getItem('kerjadesa_v10_sppd')||'{}')};ids.forEach(id=>$(id).value=d[id]||'');updatePreview()}
-function data(){let d={};ids.forEach(id=>d[id]=$(id).value.trim());return d}
-function updatePreview(){let d=data();$('preview').innerHTML=`<b>BULAN ${esc(d.bulan)} TAHUN ${esc(d.tahun)}</b><br>NIK : ${esc(d.nik)}<br>Nama Lengkap : ${esc(d.nama)}<br>Kabupaten : ${esc(d.kabupaten)}<br>Provinsi : ${esc(d.provinsi)}<br>Posisi : ${esc(d.posisi)}<br>Jabatan : ${esc(d.jabatan)}`}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-ids.forEach(id=>$(id).addEventListener('input',updatePreview));$('bulan').addEventListener('change',updatePreview);
-$('save').onclick=()=>{localStorage.setItem('kerjadesa_v10_sppd',JSON.stringify(data()));show('Data disimpan di perangkat ini.')};
-$('reset').onclick=()=>{localStorage.removeItem('kerjadesa_v10_sppd');load();show('Data dikembalikan ke data awal.')};
-function show(t){$('status').textContent=t;$('status').style.display='block';setTimeout(()=>{$('status').style.display='none'},4000)}
-async function fetchTemplate(){let r=await fetch('template_sppd_asli.docx');if(!r.ok)throw Error('Template SPPD tidak ditemukan.');return await r.arrayBuffer()}
-function replaceAcrossTextNodes(p,target,replacement){
-  const ms=[...p.matchAll(/<w:t([^>]*)>([\s\S]*?)<\/w:t>/g)];
-  if(!ms.length)return p;
-  const texts=ms.map(m=>m[2]);
-  const joined=texts.join('');
-  const start=joined.indexOf(target);
-  if(start<0)return p;
-  const end=start+target.length;
-  let cursor=0, inserted=false;
-  return p.replace(/<w:t([^>]*)>([\s\S]*?)<\/w:t>/g,(m,attrs,t)=>{
-    const a=cursor,b=cursor+t.length; cursor=b;
-    if(b<=start || a>=end)return m;
-    const left=t.slice(0,Math.max(0,start-a));
-    const right=t.slice(Math.max(0,end-a));
-    const mid=(!inserted ? xmlEsc(replacement) : ''); inserted=true;
-    return `<w:t${attrs}>${left}${mid}${right}</w:t>`;
-  });
-}
-function replaceParagraphValues(xml,d){
-  return xml.replace(/<w:p[\s\S]*?<\/w:p>/g,p=>{
-    const texts=[...p.matchAll(/<w:t([^>]*)>([\s\S]*?)<\/w:t>/g)];
-    if(!texts.length)return p;
-    const plain=texts.map(m=>m[2]).join('');
-    let out=p;
-    if(plain.includes('BULAN ') && plain.includes('SEPTEMBER') && plain.includes('TAHUN') && plain.includes('2026')){
-      out=replaceAcrossTextNodes(out,'SEPTEMBER',d.bulan);
-      out=replaceAcrossTextNodes(out,'2026',d.tahun);
+let data=JSON.parse(localStorage.getItem('kerjadesa')||'{"kegiatan":[],"monitoring":[],"gps":null,"docs":{}}');let deferred=null;let reportHtml='';let reportText='';let profilePhoto='foto_profil.jpg';let logoPhoto='';let activityPhotos=[];
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
+function save(){localStorage.setItem('kerjadesa',JSON.stringify(data));render()}
+function doLogin(){const u=document.getElementById('user').value.trim(),pw=document.getElementById('pass').value;if(u==='admin'&&pw==='admin123'){localStorage.setItem('kd_login','1');show()}else document.getElementById('loginMsg').textContent='Username atau password salah.'}
+function show(){document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';document.getElementById('nav').classList.remove('hide');render()}
+function page(x){['home','kegiatan','monitoring','dokumen'].forEach(y=>document.getElementById(y).classList.toggle('hide',x!==y));render()}
+function addKegiatan(){let x={id:Date.now(),nama:document.getElementById('knama').value,desa:document.getElementById('kdesa').value,tanggal:document.getElementById('ktgl').value,catatan:document.getElementById('kcat').value};if(!x.nama)return alert('Nama kegiatan wajib diisi');data.kegiatan.push(x);['knama','kdesa','ktgl','kcat'].forEach(id=>document.getElementById(id).value='');save();page('kegiatan')}
+function addMonitoring(){let x={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),kegiatan:document.getElementById('mkeg').value,petugas:document.getElementById('mpet').value,progres:Number(document.getElementById('mprog').value||0),catatan:document.getElementById('mcat').value,tanggal:new Date().toLocaleString('id-ID'),gps:data.gps,synced:false};if(!x.petugas)return alert('Nama petugas wajib diisi');data.monitoring.push(x);['mkeg','mpet','mprog','mcat'].forEach(id=>document.getElementById(id).value='');save();page('monitoring')}
+function gps(){if(!navigator.geolocation)return document.getElementById('gpsout').textContent='GPS tidak tersedia';navigator.geolocation.getCurrentPosition(p=>{data.gps={lat:p.coords.latitude,lon:p.coords.longitude};document.getElementById('gpsout').textContent=`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`},e=>document.getElementById('gpsout').textContent='GPS gagal: '+e.message,{enableHighAccuracy:true})}
+function render(){document.getElementById('jmlK').textContent=data.kegiatan.length;document.getElementById('jmlM').textContent=data.monitoring.length;document.getElementById('klist').innerHTML=data.kegiatan.map(x=>`<div class="card item"><b>${esc(x.nama)}</b><br>${esc(x.desa||'-')} • ${esc(x.tanggal||'-')}<br><span class="muted">${esc(x.catatan||'')}</span></div>`).join('');document.getElementById('mlist').innerHTML=data.monitoring.slice().reverse().map(x=>`<div class="card item"><b>Monitoring ${x.progres}%</b><br>Petugas: ${esc(x.petugas)}<br>${esc(x.tanggal)}<br>${esc(x.catatan||'')}<br><span class="muted">${x.gps?`GPS: ${x.gps.lat.toFixed(5)}, ${x.gps.lon.toFixed(5)}`:'GPS belum ada'} • ${x.synced?'Tersinkron':'Offline'}</span></div>`).join('');document.getElementById('online').textContent=navigator.onLine?'🟢 Online':'🔴 Offline — data tetap tersimpan di HP'}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+async function installApp(){if(deferred){deferred.prompt();deferred=null}else alert('Buka menu Chrome ⋮ lalu pilih “Tambahkan ke layar utama”.')}
+window.addEventListener('online',render);window.addEventListener('offline',render);
+async function readFile(f){if(!f)return '';let n=f.name.toLowerCase();if(n.endsWith('.txt')||n.endsWith('.csv'))return await f.text();if(n.endsWith('.docx')||n.endsWith('.xlsx'))return await readZipOffice(f,n.endsWith('.docx')?'docx':'xlsx');if(n.endsWith('.pdf'))return await readPdfBasic(f);return ''}
+async function readZipOffice(file,type){const b=new Uint8Array(await file.arrayBuffer());const entries=parseZip(b);if(type==='docx'){const e=entries['word/document.xml'];if(!e)return '';return stripXml(new TextDecoder().decode(await unzipEntry(b,e)));}let out='';for(const k of Object.keys(entries).filter(x=>/^xl\/worksheets\/sheet\d+\.xml$/.test(x)).sort()){out+='\n'+stripXml(new TextDecoder().decode(await unzipEntry(b,entries[k])))}return out.replace(/\s+/g,' ').trim()}
+function parseZip(b){let p=-1;for(let i=b.length-22;i>=0;i--){if(b[i]===80&&b[i+1]===75&&b[i+2]===5&&b[i+3]===6){p=i;break}}if(p<0)throw Error('ZIP tidak dikenali');const dv=new DataView(b.buffer,b.byteOffset,b.byteLength);const count=dv.getUint16(p+10,true),off=dv.getUint32(p+16,true);let pos=off,o={};for(let i=0;i<count;i++){if(dv.getUint32(pos,true)!==0x02014b50)break;const method=dv.getUint16(pos+10,true),cs=dv.getUint32(pos+20,true),ns=dv.getUint16(pos+28,true),es=dv.getUint16(pos+30,true),com=dv.getUint16(pos+32,true),lo=dv.getUint32(pos+42,true);const name=new TextDecoder().decode(b.slice(pos+46,pos+46+ns));o[name]={method,cs,lo};pos+=46+ns+es+com}return o}
+async function unzipEntry(b,e){const dv=new DataView(b.buffer,b.byteOffset,b.byteLength),p=e.lo;if(dv.getUint32(p,true)!==0x04034b50)throw Error('ZIP entry error');const ns=dv.getUint16(p+26,true),es=dv.getUint16(p+28,true),start=p+30+ns+es,raw=b.slice(start,start+e.cs);if(e.method===0)return raw;if(e.method===8){const ds=new DecompressionStream('deflate-raw');return new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer())}throw Error('Kompresi dokumen belum didukung')}
+function stripXml(x){return x.replace(/<w:tab[^>]*\/>/g,'\t').replace(/<[^>]+>/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\s+/g,' ').trim()}
+async function readPdfBasic(file){
+  // Primary PDF reader: PDF.js in the browser. This handles compressed/hex-encoded
+  // PDF text used by the official DRP PDF. It is loaded only when a PDF is uploaded.
+  try{
+    if(!window.pdfjsLib){
+      const mod=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.mjs');
+      window.pdfjsLib=mod;
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.mjs';
     }
-    if(plain.includes('NIK') && plain.includes('760503312910050')) out=replaceAcrossTextNodes(out,'760503312910050',d.nik);
-    if(plain.includes('Nama Lengkap') && plain.includes('SUDARMIN ARIPUDDIN')) out=replaceAcrossTextNodes(out,'SUDARMIN ARIPUDDIN',d.nama);
-    if(plain.includes('Kabupaten') && plain.includes('Majene')) out=replaceAcrossTextNodes(out,'Majene',d.kabupaten);
-    if(plain.includes('Provinsi') && plain.includes('Sulawesi Barat')) out=replaceAcrossTextNodes(out,'Sulawesi Barat',d.provinsi);
-    if(plain.includes('Posisi') && plain.includes('Pendamping Desa')) out=replaceAcrossTextNodes(out,'Pendamping Desa',d.posisi);
-    if(plain.includes('Jabatan') && plain.includes('Pendamping lokal Desa')) out=replaceAcrossTextNodes(out,'Pendamping lokal Desa',d.jabatan);
-    return out;
-  });
+    const buf=await file.arrayBuffer();
+    const pdf=await window.pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+    let pages=[];
+    for(let i=1;i<=pdf.numPages;i++){
+      const page=await pdf.getPage(i);
+      const c=await page.getTextContent({normalizeWhitespace:true,disableCombineTextItems:false});
+      pages.push(c.items.map(x=>x.str||'').join(' '));
+    }
+    const text=pages.join('\n');
+    if(text && /LAPORAN BULANAN|DAFTAR LAPORAN AKTIVITAS|DAFTAR LAPORAN KUNJUNGAN LAPANGAN/i.test(text)) return text;
+  }catch(e){
+    console.warn('PDF.js gagal, mencoba pembaca cadangan',e);
+  }
+  // Fallback for simple text PDFs.
+  const b=new Uint8Array(await file.arrayBuffer());
+  const rawPdf=new TextDecoder('latin1').decode(b);
+  let out='',pos=0;
+  while((pos=rawPdf.indexOf('stream',pos))>=0){
+    let a=pos+6;if(rawPdf[a]==='\r')a++;if(rawPdf[a]==='\n')a++;
+    let end=rawPdf.indexOf('endstream',a);if(end<0)break;
+    let raw=b.slice(a,end),head=rawPdf.slice(Math.max(0,pos-1200),pos);
+    try{
+      if(/\/FlateDecode/.test(head)){
+        const ds=new DecompressionStream('deflate');
+        raw=new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer());
+      }
+      const chunk=extractPdfText(new TextDecoder('latin1').decode(raw));
+      if(chunk) out+='\n'+chunk;
+    }catch(e){}
+    pos=end+9;
+  }
+  return (out||'').replace(/\u0000/g,' ').replace(/[ \t]+/g,' ').replace(/\n+/g,'\n').trim();
 }
-function escapeReg(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
-function xmlEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}
-$('make').onclick=async()=>{try{let d=data();if(!d.nik||!d.nama||!d.bulan||!d.tahun)throw Error('NIK, Nama, Bulan, dan Tahun wajib diisi.');localStorage.setItem('kerjadesa_v10_sppd',JSON.stringify(d));let zip=await JSZip.loadAsync(await fetchTemplate());let xml=await zip.file('word/document.xml').async('string');xml=replaceParagraphValues(xml,d);zip.file('word/document.xml',xml);let blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SPPD_${d.bulan}_${d.tahun}.docx`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);show('SPPD berhasil dibuat: '+a.download)}catch(e){console.error(e);show('Gagal membuat SPPD: '+e.message)}};
-load();
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+function cleanText(t){return String(t||'').replace(/\u0000/g,' ').replace(/\r/g,'\n').replace(/\b\d+\s*\/\s*\d+\s+No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim()}
+function normText(t){return cleanText(t).replace(/\s+/g,' ').trim()}
+function escReg(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+function parseDateShort(s){const m=s.match(/^(\d{2})\/(\d{2})\/(\d{2})$/);return m?`${m[1]}/${m[2]}/20${m[3]}`:s}
+function parseDrpHeader(t){
+  const x=normText(t);
+  const get=(label,next)=>{const re=new RegExp(label+'\\s*([^]+?)(?=\\s+(?:'+next.join('|')+')|$)','i');const m=x.match(re);return m?m[1].trim():''};
+  const h={};
+  h.periode=get('Periode:', ['IDENTITAS TPP']);
+  h.nama=get('Nama:', ['NIK:','Posisi:','Jabatan:','Provinsi:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
+  h.nik=get('NIK:', ['Nama:','Posisi:','Jabatan:','Provinsi:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
+  h.posisi=get('Posisi:', ['Nama:','NIK:','Jabatan:','Provinsi:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
+  h.jabatan=get('Jabatan:', ['Nama:','NIK:','Posisi:','Provinsi:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
+  h.provinsi=get('Provinsi:', ['Nama:','NIK:','Posisi:','Jabatan:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
+  h.kabupaten=get('Kabupaten/Kota:', ['Nama:','NIK:','Posisi:','Jabatan:','Provinsi:','Kecamatan:','Desa:','RINGKASAN']);
+  h.kecamatan=get('Kecamatan:', ['Nama:','NIK:','Posisi:','Jabatan:','Provinsi:','Kabupaten/Kota:','Desa:','RINGKASAN']);
+  h.desa=get('Desa:', ['Nama:','NIK:','Posisi:','Jabatan:','Provinsi:','Kabupaten/Kota:','Kecamatan:','RINGKASAN']);
+  h.jamKerja=(x.match(/JAM KERJA[^]*?(\d{1,3}:\d{2})/i)||[])[1]||'';
+  h.hariKerja=(x.match(/HARI KERJA[^]*?(\d+\s*\/\s*\d+)/i)||[])[1]||'';
+  h.totalLaporan=(x.match(/TOTAL LAPORAN[^]*?(\d+)\s+[\d.]+%/i)||[])[1]||'';
+  h.capaian=(x.match(/CAPAIAN KINERJA[^]*?([\d.]+%)/i)||[])[1]||'';
+  return h;
+}
+function parseDrpActivities(text, sectionTitle, totalTitle, kunlap){
+  const raw=normText(text);
+  const a=raw.indexOf(sectionTitle); if(a<0)return [];
+  const b=raw.indexOf(totalTitle,a+sectionTitle.length); const sec=raw.slice(a+sectionTitle.length,b>0?b:raw.length);
+  const re=/(\d+)\s+(\d{2}\/\d{2}\/\d{2})\s+(\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2})\s+(\d+)\s+Jam,\s*(\d+)\s+Menit\s+(.+?)\s+Deskripsi kegiatan:\s*\(([^)]*)\)\s+Lokasi:\s*(SULAWESI BARAT\s*\/\s*[^]+?)(?=\s+(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.?\s)/g;
+  const out=[];let m;
+  while((m=re.exec(sec))){
+    const type=m[6].trim(); const loc=m[8].replace(/\s+/g,' ').trim();
+    let end=sec.length; const nm=sec.slice(re.lastIndex).match(/\s+\d+\s+\d{2}\/\d{2}\/\d{2}\s+\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2}\s+\d+\s+Jam,/); if(nm) end=re.lastIndex+nm.index;
+    let desc=sec.slice(re.lastIndex,end).trim();
+    desc=desc.replace(/^(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.\s*/i,'');
+    out.push({no:Number(m[1]),tanggal:parseDateShort(m[2]),waktu:m[3].replace(/\s+/g,' '),durasi:`${m[4]} Jam, ${m[5]} Menit`,jenis:type,kunjungan:kunlap,jenisKunjungan:m[7].trim(),lokasi:loc,deskripsi:desc});
+  }
+  return out;
+}
+function parseDRP(text){
+  const header=parseDrpHeader(text);
+  const aktivitas=parseDrpActivities(text,'DAFTAR LAPORAN AKTIVITAS','Total Laporan Aktivitas',false);
+  const kunlap=parseDrpActivities(text,'DAFTAR LAPORAN KUNJUNGAN LAPANGAN','Total Laporan Kunjungan Lapangan',true);
+  const all=aktivitas.concat(kunlap).sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no).map((x,i)=>({...x,no:i+1,deskripsi:cleanText(x.deskripsi)}));
+  const cleanGroup=(arr)=>arr.map(x=>all.find(y=>y.tanggal===x.tanggal&&y.deskripsi===x.deskripsi)||x);
+  return {header,aktivitas:cleanGroup(aktivitas),kunlap:cleanGroup(kunlap),all,count:all.length,source:'DRP'}
+}
+function renderDrpPreview(drp){
+  if(!drp)return;
+  const h=drp.header||{};
+  document.getElementById('drpPreview').innerHTML=`<div class="card"><h3>✅ Hasil Pembacaan DRP</h3><p class="small"><b>${esc(h.nama||'-')}</b> • ${esc(h.posisi||'-')} • ${esc(h.periode||'-')}</p><p class="small">${esc(h.provinsi||'-')} / ${esc(h.kabupaten||'-')} / ${esc(h.kecamatan||'-')}<br>Desa: ${esc(h.desa||'-')}</p><p><span class="badge">${drp.count} kegiatan terbaca</span> <span class="badge">${drp.aktivitas.length} aktivitas</span> <span class="badge">${drp.kunlap.length} kunjungan lapangan</span></p><div class="tablewrap"><table class="simpletable"><thead><tr><th>No</th><th>Tanggal</th><th>Waktu</th><th>Jenis</th><th>Status</th><th>Lokasi</th><th>Deskripsi</th></tr></thead><tbody>${drp.all.map(x=>`<tr><td>${x.no}</td><td>${esc(x.tanggal)}</td><td>${esc(x.waktu)}</td><td>${esc(x.jenis)}</td><td>${x.kunjungan?'Kunjungan Lapangan':'Bukan Kunjungan Lapangan'}</td><td>${esc(x.lokasi)}</td><td>${esc(x.deskripsi)}</td></tr>`).join('')}</tbody></table></div></div>`
+}
+async function autoProcessOne(kind){
+  const f=document.getElementById(kind==='drp'?'drpFile':'sppdFile').files[0];if(!f)return;
+  const st=document.getElementById(kind==='drp'?'drpStatus':'sppdStatus');st.innerHTML='<span class="loading">⏳ Memproses '+esc(f.name)+'...</span>';
+  try{
+    const txt=await readFile(f);data.docs=data.docs||{};
+    let parsed=null;
+    if(kind==='drp'){
+      parsed=parseDRP(txt);
+      data.docs.drp={name:f.name,text:txt,parsed,processedAt:new Date().toISOString()};
+      if(parsed.count){
+        data.drpActivities=parsed.all;
+        data.kegiatan=parsed.all.map((x,i)=>({id:`drp-${i+1}-${x.tanggal}`,nome:x.no,nama:x.deskripsi.split(' ').slice(0,18).join(' '),desa:x.lokasi,tanggal:x.tanggal,catatan:x.deskripsi,waktu:x.waktu,durasi:x.durasi,jenis:x.jenis,kunjungan:x.kunjungan,source:'DRP'}));
+        document.getElementById('rNama').value=parsed.header.nama||'';document.getElementById('rPosisi').value=parsed.header.posisi||'PLD';document.getElementById('rKec').value=parsed.header.kecamatan||'';document.getElementById('rKab').value=parsed.header.kabupaten||'';document.getElementById('rProv').value=parsed.header.provinsi||'';
+        const pm=(parsed.header.periode||'').match(/(\d{4})/);const months={'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05','Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12'};const mm=Object.keys(months).find(k=>(parsed.header.periode||'').toLowerCase().includes(k.toLowerCase()));if(pm&&mm)document.getElementById('rPeriode').value=`${pm[1]}-${months[mm]}`;
+      }
+    } else {
+      const summary=summarizeDoc(txt);
+      data.docs.sppd={name:f.name,text:txt,summary,parsed:parseSPPD(txt),processedAt:new Date().toISOString()};
+    }
+    save();
+    st.innerHTML=kind==='drp'?`<span class="ok">✓ DRP selesai dibaca: ${parsed?.count||0} kegiatan ditemukan.</span>`:`<span class="ok">✓ Selesai: ${esc(f.name)}</span>`;
+    if(kind==='drp')renderDrpPreview(parsed);
+    updateDocStatus()
+  }catch(e){st.innerHTML='<span class="warn">Gagal membaca: '+esc(e.message)+'</span>'}
+}
+async function processDocs(){document.getElementById('docStatus').textContent='Memproses dokumen...';const a=document.getElementById('drpFile').files[0],b=document.getElementById('sppdFile').files[0];if(a)await autoProcessOne('drp');if(b)await autoProcessOne('sppd');updateDocStatus()}
+function updateDocStatus(){
+  const d=data.docs||{};
+  const n=[d.drp?.name,d.sppd?.name].filter(Boolean).length;
+  document.getElementById('docStatus').textContent=n?`${n} dokumen tersimpan di perangkat dan siap menjadi sumber laporan.`:'Belum ada dokumen yang diproses.';
+  if(d.drp?.parsed){
+    document.getElementById('docResult').innerHTML=`<div class="card"><span class="badge">DRP ${d.drp.parsed.count} kegiatan</span><p class="small">${esc(d.drp.name)}<br>Aktivitas: ${d.drp.parsed.aktivitas.length} • Kunjungan Lapangan: ${d.drp.parsed.kunlap.length}</p></div>`;
+  }else if(n){
+    document.getElementById('docResult').innerHTML=`<div class="card"><span class="badge">${n} dokumen siap</span><p class="small">DRP: ${esc(d.drp?.name||'Belum ada')}<br>SPPD: ${esc(d.sppd?.name||'Belum ada')}</p></div>`;
+  }else document.getElementById('docResult').innerHTML='';
+}
+function summarizeDoc(t){let x=cleanText(t);return {tanggal:findDate(x),lokasi:findLocations(x),panjang:x.length,cuplikan:x.slice(0,1800)}}
+function parseSPPD(text){
+  const x=normText(text);
+  const pick=(patterns)=>{for(const p of patterns){const m=x.match(p);if(m&&m[1])return m[1].trim()}return ''};
+  const dates=[...x.matchAll(/\b(\d{1,2}[\/-]\d{1,2}[\/-]20\d{2})\b/g)].map(m=>m[1]);
+  return {
+    nomor:pick([/(?:Nomor|No\.?)\s*[:.]?\s*([A-Za-z0-9\/-]{3,50})/i]),
+    tanggal:dates[0]||findDate(x),
+    tanggalList:[...new Set(dates)],
+    nama:pick([/(?:Nama|Pegawai|Yang melakukan perjalanan)\s*[:.]\s*([^\n;]{3,100})/i]),
+    tujuan:pick([/(?:Tujuan|Tempat Tujuan|Ke)\s*[:.]\s*([^\n;]{3,150})/i]),
+    maksud:pick([/(?:Maksud|Keperluan|Dalam rangka)\s*[:.]\s*([^\n;]{3,250})/i]),
+    berangkat:pick([/(?:Berangkat dari|Tanggal berangkat|Berangkat)\s*[:.]\s*([^\n;]{3,100})/i]),
+    kembali:pick([/(?:Kembali|Tanggal kembali)\s*[:.]\s*([^\n;]{3,100})/i]),
+    cuplikan:x.slice(0,1600)
+  };
+}
+function findDate(t){let m=cleanText(t).match(/\b(\d{1,2})[\/-](\d{1,2})[\/-](20\d{2})\b/);if(m)return `${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;m=cleanText(t).match(/\b(\d{1,2})\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+(20\d{2})/i);return m?m[0]:''}
+function findLocations(t){let hits=[];for(const m of cleanText(t).matchAll(/(?:Desa|Kelurahan)\s+[A-Za-zÀ-ÿ0-9' -]{2,60}/gi))hits.push(m[0].trim().replace(/[,.].*$/,''));return [...new Set(hits)].slice(0,10)}
+function periodLabel(){const v=document.getElementById('rPeriode').value;if(v){const [y,m]=v.split('-');return new Date(Number(y),Number(m)-1,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'})}return new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'})}
+function readAsDataURL(file){return new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=reject;fr.readAsDataURL(file)})}
+async function loadProfilePhoto(input){const f=input.files[0];if(!f)return;profilePhoto=await readAsDataURL(f);data.docs=data.docs||{};data.docs.profilePhoto=profilePhoto;save();renderMediaPreviews()}
+async function loadLogo(input){const f=input.files[0];if(!f)return;logoPhoto=await readAsDataURL(f);data.docs=data.docs||{};data.docs.logoPhoto=logoPhoto;save();renderMediaPreviews()}
+async function loadActivityPhotos(input){const files=[...input.files];activityPhotos=[];for(const f of files){activityPhotos.push({name:f.name,url:await readAsDataURL(f),date:extractPhotoDate(f.name)})}data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;save();renderMediaPreviews()}
+function extractPhotoDate(name){let m=name.match(/(20\d{2})[-_](\d{1,2})[-_](\d{1,2})/);if(m)return `${m[3].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[1]}`;m=name.match(/(\d{1,2})[-_](\d{1,2})[-_](20\d{2})/);if(m)return `${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;return ''}
+function renderMediaPreviews(){const d=data.docs||{};profilePhoto=d.profilePhoto||profilePhoto;logoPhoto=d.logoPhoto||'';activityPhotos=d.activityPhotos||[];document.getElementById('profilePreview').innerHTML=profilePhoto?`<img class="profile-preview" src="${profilePhoto}" alt="Foto profil">`:'';document.getElementById('logoPreview').innerHTML=logoPhoto?`<img class="logo-preview" src="${logoPhoto}" alt="Logo Kemendesa">`:'<span class="small muted">Belum ada logo. Upload logo resmi Kemendesa.</span>';document.getElementById('photoPreview').innerHTML=activityPhotos.map((p,i)=>`<div class="photo-card"><img src="${p.url}" alt="Foto ${i+1}"><div class="photo-meta">${esc(p.name)}${p.date?`<br>Tanggal terdeteksi: ${esc(p.date)}`:''}</div></div>`).join('')}
+function photosForDate(date){const arr=activityPhotos.filter(p=>p.date&&p.date===date);return arr.length?arr:[]}
+function makeReport(){
+  const d=data.docs||{}, drp=d.drp?.parsed, h=drp?.header||{};
+  const nama=document.getElementById('rNama').value||h.nama||'-';
+  const posisi=document.getElementById('rPosisi').value||h.posisi||'-';
+  const nik=h.nik||'-';
+  const jabatan=h.jabatan||posisi||'-';
+  const kec=document.getElementById('rKec').value||h.kecamatan||'-';
+  const kab=document.getElementById('rKab').value||h.kabupaten||'-';
+  const prov=document.getElementById('rProv').value||h.provinsi||'-';
+  const periode=h.periode||periodLabel();
+  const acts=(drp?.all||data.drpActivities||[]).map((x,i)=>({...x,no:i+1}));
+  const activityRows=acts.map(x=>`<tr><td>${x.no}</td><td>${esc(x.tanggal)}</td><td>${esc(x.waktu)}</td><td>${esc(x.durasi)}</td><td>${esc(x.jenis)}</td><td>${esc(x.kunjungan?'Kunjungan Lapangan':'Bukan Kunjungan Lapangan')}</td><td>${esc(x.lokasi)}</td><td>${esc(x.deskripsi)}</td></tr>`).join('');
+  const desa=h.desa||'-';
+  const sppd=d.sppd?.name||'Belum diunggah';
+  const sp=d.sppd?.parsed||{};
+  const sppdInfo=`<table><tr><th colspan="2">PEMETAAN DOKUMEN SPPD</th></tr><tr><td>Nomor</td><td>${esc(sp.nomor||'Tidak ditemukan')}</td></tr><tr><td>Tanggal</td><td>${esc((sp.tanggalList||[]).join(', ')||sp.tanggal||'Tidak ditemukan')}</td></tr><tr><td>Nama/Pelaksana</td><td>${esc(sp.nama||'Tidak ditemukan')}</td></tr><tr><td>Tujuan</td><td>${esc(sp.tujuan||'Tidak ditemukan')}</td></tr><tr><td>Maksud/Keperluan</td><td>${esc(sp.maksud||'Tidak ditemukan')}</td></tr><tr><td>Berangkat</td><td>${esc(sp.berangkat||'Tidak ditemukan')}</td></tr><tr><td>Kembali</td><td>${esc(sp.kembali||'Tidak ditemukan')}</td></tr></table>`;
+  const summary=`${h.jamKerja||'-'} jam:menit · target 140 jam`;
+  const logoHtml=logoPhoto?`<img src="${logoPhoto}" alt="Logo Kemendesa">`:'<div style="font-size:9pt;border:1px solid #aaa;padding:8px">LOGO<br>KEMENDESA PDT</div>';const profileHtml=profilePhoto?`<img class="profile-box" src="${profilePhoto}" alt="Foto Pendamping">`:'';
+  reportHtml=`<div class="print-report">
+  <div class="report-head"><div>${logoHtml}</div><div style="font-size:10pt;line-height:1.25"><b>KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA</b><br><b>BADAN PENGEMBANGAN SUMBER DAYA MANUSIA DAN PEMBERDAYAAN</b><br><b>MASYARAKAT DESA DAN DAERAH TERTINGGAL</b><br>Jalan TMP. Kalibata Nomor 17 Jakarta Selatan 12750</div><div>${profileHtml}</div></div>
+  <h1 style="margin-bottom:2px">LAPORAN BULANAN AKTIVITAS HARIAN</h1><h2>TENAGA PENDAMPING PROFESIONAL</h2>
+  <p><b>Periode:</b> ${esc(periode)}</p>
+  <table><tr><th colspan="2">IDENTITAS TPP</th><th colspan="2">LOKASI PENUGASAN</th></tr>
+  <tr><td>Nama</td><td>${esc(nama)}</td><td>Provinsi</td><td>${esc(prov)}</td></tr>
+  <tr><td>NIK</td><td>${esc(nik)}</td><td>Kabupaten/Kota</td><td>${esc(kab)}</td></tr>
+  <tr><td>Posisi</td><td>${esc(posisi)}</td><td>Kecamatan</td><td>${esc(kec)}</td></tr>
+  <tr><td>Jabatan</td><td>${esc(jabatan)}</td><td>Desa</td><td>${esc(desa)}</td></tr></table>
+  <h3>RINGKASAN CAPAIAN BULAN INI</h3>
+  <table><tr><th>JAM KERJA</th><th>HARI KERJA</th><th>TOTAL LAPORAN</th><th>CAPAIAN KINERJA</th></tr>
+  <tr><td>${esc(h.jamKerja||'-')}<br><span class="small">${esc(summary)}</span></td><td>${esc(h.hariKerja||'-')}<br><span class="small">hari kerja efektif</span></td><td>${esc(h.totalLaporan||acts.length||'-')}<br><span class="small">Aktivitas + Kunlap</span></td><td>${esc(h.capaian||'-')}</td></tr></table>
+  <h3>DAFTAR LAPORAN AKTIVITAS</h3>
+  <table><thead><tr><th>No.</th><th>Tanggal</th><th>Waktu</th><th>Durasi</th><th>Jenis Kegiatan</th><th>Status</th><th>Lokasi</th><th>Deskripsi Kegiatan</th></tr></thead><tbody>${activityRows||'<tr><td colspan="8">Belum ada aktivitas DRP yang terbaca.</td></tr>'}</tbody></table>
+  <h3>PEMETAAN SPPD</h3>${sppdInfo}
+  <h3>DOKUMENTASI FOTO KEGIATAN</h3>${activityPhotos.length?`<div class="doc-photo-grid">${activityPhotos.map((p,i)=>`<div><img src="${p.url}" alt="Dokumentasi ${i+1}"><div class="small"><b>${esc(p.date||'Tanggal tidak terdeteksi')}</b><br>${esc(p.name)}</div></div>`).join('')}</div>`:'<p>Tidak ada foto dokumentasi yang diunggah.</p>'}
+  <h3>DOKUMEN SUMBER</h3><p>DRP: ${esc(d.drp?.name||'Belum diunggah')}<br>SPPD: ${esc(sppd)}</p>
+  <p class="small">Data laporan dipetakan dari dokumen sumber oleh KerjaDesa. Data yang tidak ditemukan tidak diisi dengan asumsi.</p>
+  <div class="signature"><p>Yang membuat laporan,</p>${profilePhoto?`<img src="${profilePhoto}" alt="Foto penyusun"><br>`:''}<b>${esc(nama)}</b><br>${esc(posisi)}</div>
+  </div>`;
+  document.getElementById('reportPrint').innerHTML=reportHtml;
+  document.getElementById('docResult2').innerHTML='<div class="card no-print"><h3>Pratinjau Laporan Sesuai Format DRP</h3>'+reportHtml+'</div>';
+  document.getElementById('reportActions').classList.remove('hide');
+  reportText=document.getElementById('reportPrint').innerText;
+  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+}
+function downloadWord(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}const html='<!doctype html><html><head><meta charset="utf-8"><title>Laporan Bulanan KerjaDesa</title><style>body{font-family:Arial;font-size:11pt;line-height:1.45}h1{text-align:center;font-size:16pt}h2{text-align:center;font-size:13pt}table{width:100%;border-collapse:collapse}th,td{border:1px solid #555;padding:5px;vertical-align:top}</style></head><body>'+reportHtml+'</body></html>';const blob=new Blob([html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Laporan_Bulanan_KerjaDesa.doc';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function printPdf(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}window.print()}
+const SPPD_DEFAULT={nik:'760503312910050',nama:'SUDARMIN ARIPUDDIN',kabupaten:'Majene',provinsi:'Sulawesi Barat',posisi:'Pendamping Desa',jabatan:'Pendamping lokal Desa',bulan:'SEPTEMBER',tahun:'2026'};
+const sppdIds=['sppdNIK','sppdNama','sppdKabupaten','sppdProvinsi','sppdPosisi','sppdJabatan','sppdBulan','sppdTahun'];
+const sppdGet=id=>document.getElementById(id);
+function sppdData(){let d={};sppdIds.forEach(id=>{d[id.replace('sppdNIK','nik').replace('sppdNama','nama').replace('sppdKabupaten','kabupaten').replace('sppdProvinsi','provinsi').replace('sppdPosisi','posisi').replace('sppdJabatan','jabatan').replace('sppdBulan','bulan').replace('sppdTahun','tahun')]=sppdGet(id).value.trim()});return d}
+function renderSppd(){let d=sppdData();document.getElementById('sppdPreview').innerHTML=`BULAN ${esc(d.bulan)} TAHUN ${esc(d.tahun)}<br>NIK: ${esc(d.nik)} • Nama: ${esc(d.nama)}<br>Kabupaten: ${esc(d.kabupaten)} • Provinsi: ${esc(d.provinsi)}<br>Posisi: ${esc(d.posisi)} • Jabatan: ${esc(d.jabatan)}`}
+function loadSppdData(){let d={...SPPD_DEFAULT,...JSON.parse(localStorage.getItem('kerjadesa_sppd_editable')||'{}')};const map={sppdNIK:'nik',sppdNama:'nama',sppdKabupaten:'kabupaten',sppdProvinsi:'provinsi',sppdPosisi:'posisi',sppdJabatan:'jabatan',sppdBulan:'bulan',sppdTahun:'tahun'};Object.entries(map).forEach(([id,k])=>sppdGet(id).value=d[k]||'');renderSppd()}
+function saveSppdData(){localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(sppdData()));document.getElementById('sppdStatus').textContent='Data SPPD tersimpan di perangkat.';renderSppd()}
+function resetSppdData(){localStorage.removeItem('kerjadesa_sppd_editable');loadSppdData();document.getElementById('sppdStatus').textContent='Data SPPD dikembalikan ke data awal.'}
+sppdIds.forEach(id=>sppdGet(id).addEventListener('input',renderSppd));
+sppdGet('sppdBulan').addEventListener('change',renderSppd);
+async function makeSppdWord(){try{let d=sppdData();if(!d.nik||!d.nama||!d.bulan||!d.tahun)throw Error('NIK, Nama, Bulan, dan Tahun wajib diisi.');localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(d));let r=await fetch('template_sppd_asli.docx');if(!r.ok)throw Error('template_sppd_asli.docx tidak ditemukan.');let zip=await JSZip.loadAsync(await r.arrayBuffer());let xml=await zip.file('word/document.xml').async('string');xml=replaceSppdParagraphValues(xml,d);zip.file('word/document.xml',xml);let blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`SPPD_${d.bulan}_${d.tahun}.docx`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),3000);document.getElementById('sppdStatus').textContent='SPPD berhasil dibuat: '+a.download}catch(e){console.error(e);document.getElementById('sppdStatus').textContent='Gagal membuat SPPD: '+e.message}}
+function replaceSppdAcrossTextNodes(p,target,replacement){const ms=[...p.matchAll(/<w:t([^>]*)>([\s\S]*?)<\/w:t>/g)];if(!ms.length)return p;const joined=ms.map(m=>m[2]).join('');const start=joined.indexOf(target);if(start<0)return p;const end=start+target.length;let cursor=0,inserted=false;return p.replace(/<w:t([^>]*)>([\s\S]*?)<\/w:t>/g,(m,attrs,t)=>{const a=cursor,b=cursor+t.length;cursor=b;if(b<=start||a>=end)return m;const left=t.slice(0,Math.max(0,start-a));const right=t.slice(Math.max(0,end-a));const mid=!inserted?sppdXmlEsc(replacement):'';inserted=true;return `<w:t${attrs}>${left}${mid}${right}</w:t>`})}
+function replaceSppdParagraphValues(xml,d){return xml.replace(/<w:p[\s\S]*?<\/w:p>/g,p=>{const texts=[...p.matchAll(/<w:t([^>]*)>([\s\S]*?)<\/w:t>/g)];if(!texts.length)return p;const plain=texts.map(m=>m[2]).join('');let out=p;if(plain.includes('BULAN ')&&plain.includes('SEPTEMBER')&&plain.includes('TAHUN')&&plain.includes('2026')){out=replaceSppdAcrossTextNodes(out,'SEPTEMBER',d.bulan);out=replaceSppdAcrossTextNodes(out,'2026',d.tahun)}if(plain.includes('NIK')&&plain.includes('760503312910050'))out=replaceSppdAcrossTextNodes(out,'760503312910050',d.nik);if(plain.includes('Nama Lengkap')&&plain.includes('SUDARMIN ARIPUDDIN'))out=replaceSppdAcrossTextNodes(out,'SUDARMIN ARIPUDDIN',d.nama);if(plain.includes('Kabupaten')&&plain.includes('Majene'))out=replaceSppdAcrossTextNodes(out,'Majene',d.kabupaten);if(plain.includes('Provinsi')&&plain.includes('Sulawesi Barat'))out=replaceSppdAcrossTextNodes(out,'Sulawesi Barat',d.provinsi);if(plain.includes('Posisi')&&plain.includes('Pendamping Desa'))out=replaceSppdAcrossTextNodes(out,'Pendamping Desa',d.posisi);if(plain.includes('Jabatan')&&plain.includes('Pendamping lokal Desa'))out=replaceSppdAcrossTextNodes(out,'Pendamping lokal Desa',d.jabatan);return out})}
+function sppdXmlEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}
+loadSppdData();
+if(localStorage.getItem('kd_login')==='1')show();else render();navigator.serviceWorker?.register('./sw.js');updateDocStatus();renderMediaPreviews();if(data.docs?.drp?.parsed)renderDrpPreview(data.docs.drp.parsed);
 </script></body></html>

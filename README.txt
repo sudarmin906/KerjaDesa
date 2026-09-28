@@ -1,8 +1,9 @@
-KerjaDesa V10 — SPPD Editable
-- Menggunakan template Word SPPD asli sebagai sumber.
-- Identitas NIK, Nama, Kabupaten, Provinsi, Posisi, Jabatan dapat diedit.
-- Bulan dan Tahun dapat diedit.
-- Tidak mengisi nomor kunjungan/tujuan/tanggal kunjungan dari DRP.
-- Hasil berupa DOCX agar layout template asli tetap digunakan oleh Word/WPS.
-- Cetak dengan ukuran A4.
-- Data terakhir disimpan lokal di browser dan dapat dikembalikan ke data awal.
+KerjaDesa V10 Lengkap
+
+Gabungan KerjaDesa V7 DRP/Laporan/Foto/Monitoring dengan SPPD Editable.
+SPPD menggunakan template_sppd_asli.docx dan hanya mengganti identitas + bulan/tahun.
+Data identitas dapat diedit dan disimpan di perangkat.
+
+Demo login:
+Username: admin
+Password: admin123
