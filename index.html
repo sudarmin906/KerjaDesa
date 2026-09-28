@@ -310,10 +310,14 @@ function replaceSppdParagraphValues(xml,d){
       if(m)out=kdReplaceSppdTextNodes(out,m[1],monthUpper);
     }
     if(plain.includes('Tanggal')&&plain.includes('s/d')){
-      const m=plain.match(/Tanggal[\s\S]*?2026/);
-      if(m)out=kdReplaceSppdTextNodes(out,m[0],`Tanggal : ${st||'....'} s/d ${en||'....'}`);
-      // Ensure the year at the end of the range is the selected year.
-      out=kdReplaceSppdTextNodes(out,'2026',String(d.tahun||'2026'));
+      // Replace the complete range text in this paragraph. This prevents
+      // leftover template fragments such as "1 2026 s/d" from remaining.
+      const pos=plain.search(/Tanggal/i);
+      const target=pos>=0?plain.slice(pos).trim():'';
+      if(target){
+        const rangeText=`Tanggal : ${st||'....'} s/d ${en||'....'}`;
+        out=kdReplaceSppdTextNodes(out,target,rangeText);
+      }
     }
     // The standalone date below Berangkat Dari belongs to THIS visit, never visit 1 globally.
     if(plain.includes('Berangkat Dari')){
