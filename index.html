@@ -279,7 +279,55 @@ function addSppdLogoRelationship(zip){const f=zip.file('word/_rels/document.xml.
 function addSppdLogoContentType(zip){const f=zip.file('[Content_Types].xml');if(!f)return;return f.async('string').then(x=>{if(x.includes('Extension="jpg"'))return;x=x.replace('</Types>','<Default Extension="jpg" ContentType="image/jpeg"/></Types>');zip.file('[Content_Types].xml',x)})}
 function insertSppdLogo(xml,pos){if(xml.includes('rIdLogoSppd'))return xml;const x=pos==='right'?8200000:500000;const drawing=`<w:drawing><wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="251658240" behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1"><wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="page"><wp:posOffset>${x}</wp:posOffset></wp:positionH><wp:positionV relativeFrom="page"><wp:posOffset>180000</wp:posOffset></wp:positionV><wp:extent cx="650000" cy="650000"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/><wp:docPr id="9001" name="Logo SPPD"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="logo_sppd.jpg"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdLogoSppd"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="650000" cy="650000"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:anchor></w:drawing>`;return xml.replace(/<w:p[\s\S]*?<\/w:p>/,m=>m.replace('</w:pPr>',`</w:pPr>${drawing}`))}
 
-function replaceSppdParagraphValues(xml,d){let visit=0;return xml.replace(/<w:p[\s\S]*?<\/w:p>/g,p=>{const texts=[...p.matchAll(/<w:t([^>]*)>([\s\S]*?)<\/w:t>/g)];if(!texts.length)return p;const plain=texts.map(m=>m[2]).join('');if(/\b\d+\.\s*.*Tiba di/.test(plain)){visit++;if(visit>18)visit=18}let out=p;const v=visitDates()[visit-1]||{};const st=v.start?new Date(v.start+'T00:00:00').getDate():'';const en=v.end?new Date(v.end+'T00:00:00').getDate():'';if(plain.includes('BULAN ')&&plain.includes('SEPTEMBER')&&plain.includes('TAHUN'))out=kdReplaceSppdTextNodes(out,'SEPTEMBER',d.bulan);if(plain.includes('Tanggal')&&plain.includes('s/d')){const rep=`Tanggal : ${st||'....'} s/d ${en||'....'} ${d.bulan} ${d.tahun}`;out=kdReplaceSppdTextNodes(out,'Tanggal :         s/d                                   2026',rep)}else if(plain.includes('Tanggal')&&plain.includes('.....................................................')){out=kdReplaceSppdTextNodes(out,'.....................................................',`${st||'....'} ${d.bulan} ${d.tahun}`)}if(plain.includes('2026')&&d.tahun)out=kdReplaceSppdTextNodes(out,'2026',d.tahun);if(plain.includes('NIK')&&plain.includes('760503312910050'))out=kdReplaceSppdTextNodes(out,'760503312910050',d.nik);if(plain.includes('Nama Lengkap')&&plain.includes('SUDARMIN ARIPUDDIN'))out=kdReplaceSppdTextNodes(out,'SUDARMIN ARIPUDDIN',d.nama);if(plain.includes('Kabupaten')&&plain.includes('Majene'))out=kdReplaceSppdTextNodes(out,'Majene',d.kabupaten);if(plain.includes('Provinsi')&&plain.includes('Sulawesi Barat'))out=kdReplaceSppdTextNodes(out,'Sulawesi Barat',d.provinsi);if(plain.includes('Posisi')&&plain.includes('Pendamping Desa'))out=kdReplaceSppdTextNodes(out,'Pendamping Desa',d.posisi);if(plain.includes('Jabatan')&&plain.includes('Pendamping lokal Desa'))out=kdReplaceSppdTextNodes(out,'Pendamping lokal Desa',d.jabatan);if(plain.includes('Tiba di')&&plain.includes(':....................................................'))out=kdReplaceSppdTextNodes(out,':....................................................',': '+sppdXmlEsc(d.tiba));if(plain.includes('Jumlah Hari')&&plain.includes('....................... Hari'))out=kdReplaceSppdTextNodes(out,'.......................',v.days?String(v.days):'.......................');if(plain.includes('Berangkat Dari')&&plain.includes('Paminggalan'))out=kdReplaceSppdTextNodes(out,'Paminggalan',d.berangkat);if(plain.includes('Tempat Kedudukan')&&plain.includes('Paminggalan'))out=kdReplaceSppdTextNodes(out,'Paminggalan',d.kedudukan);if(plain.includes('Tanggal')&&plain.includes('..................................... 2026'))out=kdReplaceSppdTextNodes(out,'..................................... 2026',`${d.bulan} ${d.tahun}`);return out})}
+function replaceSppdParagraphValues(xml,d){
+  let visit=0;
+  const visits=visitDates();
+  const monthTitle=capName(d.bulan);
+  const monthUpper=monthTitle.toUpperCase();
+  const firstVisit=visits.find(x=>x&&x.start)||{};
+  return xml.replace(/<w:p[\s\S]*?<\/w:p>/g,p=>{
+    const texts=[...p.matchAll(/<w:t([^>]*)>([\s\S]*?)<\/w:t>/g)];
+    if(!texts.length)return p;
+    const plain=texts.map(m=>m[2]).join('');
+    if(/\b\d+\.\s*.*Tiba di/.test(plain)){visit++;if(visit>18)visit=18}
+    let out=p;
+    const v=visits[visit-1]||{};
+    const st=v.start?new Date(v.start+'T00:00:00').getDate():'';
+    const en=v.end?new Date(v.end+'T00:00:00').getDate():'';
+
+    // Judul: selalu HURUF BESAR, walaupun input bulan ditulis kecil.
+    if(plain.includes('BULAN ')&&plain.includes('SEPTEMBER')&&plain.includes('TAHUN'))
+      out=kdReplaceSppdTextNodes(out,'SEPTEMBER',monthUpper);
+
+    // Tanggal kunjungan: 12 s/d 12 September 2027.
+    if(plain.includes('Tanggal')&&plain.includes('s/d')){
+      const rep=`Tanggal : ${st||'....'} s/d ${en||'....'} ${monthTitle} ${d.tahun}`;
+      out=kdReplaceSppdTextNodes(out,'Tanggal :         s/d                                   2026',rep);
+    } else if(plain.includes('Tanggal')&&plain.includes('.....................................................')){
+      const rep=`${st||'....'} ${monthTitle} ${d.tahun}`;
+      out=kdReplaceSppdTextNodes(out,'.....................................................',rep);
+    }
+
+    if(plain.includes('2026')&&d.tahun)out=kdReplaceSppdTextNodes(out,'2026',d.tahun);
+    if(plain.includes('NIK')&&plain.includes('760503312910050'))out=kdReplaceSppdTextNodes(out,'760503312910050',d.nik);
+    if(plain.includes('Nama Lengkap')&&plain.includes('SUDARMIN ARIPUDDIN'))out=kdReplaceSppdTextNodes(out,'SUDARMIN ARIPUDDIN',d.nama);
+    if(plain.includes('Kabupaten')&&plain.includes('Majene'))out=kdReplaceSppdTextNodes(out,'Majene',d.kabupaten);
+    if(plain.includes('Provinsi')&&plain.includes('Sulawesi Barat'))out=kdReplaceSppdTextNodes(out,'Sulawesi Barat',d.provinsi);
+    if(plain.includes('Posisi')&&plain.includes('Pendamping Desa'))out=kdReplaceSppdTextNodes(out,'Pendamping Desa',d.posisi);
+    if(plain.includes('Jabatan')&&plain.includes('Pendamping lokal Desa'))out=kdReplaceSppdTextNodes(out,'Pendamping lokal Desa',d.jabatan);
+    if(plain.includes('Tiba di')&&plain.includes(':....................................................'))out=kdReplaceSppdTextNodes(out,':....................................................',': '+sppdXmlEsc(d.tiba));
+    if(plain.includes('Jumlah Hari')&&plain.includes('....................... Hari'))out=kdReplaceSppdTextNodes(out,'.......................',v.days?String(v.days):'.......................');
+    if(plain.includes('Berangkat Dari')&&plain.includes('Paminggalan'))out=kdReplaceSppdTextNodes(out,'Paminggalan',d.berangkat);
+    if(plain.includes('Tempat Kedudukan')&&plain.includes('Paminggalan'))out=kdReplaceSppdTextNodes(out,'Paminggalan',d.kedudukan);
+
+    // Tanggal pada bagian bawah halaman: 12 September 2027, bukan hanya bulan/tahun.
+    if(plain.includes('Tanggal')&&plain.includes('..................................... 2026')){
+      const day=firstVisit.start?new Date(firstVisit.start+'T00:00:00').getDate():'';
+      out=kdReplaceSppdTextNodes(out,'..................................... 2026',`${day||'....'} ${monthTitle} ${d.tahun}`);
+    }
+    return out;
+  })
+}
 
 function sppdXmlEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}
 loadSppdData();
