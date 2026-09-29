@@ -174,11 +174,11 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
 <div id="monitoring" class="hide"><div class="card"><h2>Monitoring Lapangan</h2><input id="mkeg" placeholder="ID / nama kegiatan"><input id="mpet" placeholder="Nama petugas"><input id="mprog" type="number" min="0" max="100" placeholder="Progres 0-100"><textarea id="mcat" placeholder="Catatan hasil monitoring"></textarea><button onclick="gps()">📍 Ambil Lokasi GPS</button><p id="gpsout" class="muted">Lokasi belum diambil</p><button onclick="addMonitoring()">Simpan Monitoring</button></div><input id="mSearch" placeholder="🔎 Cari monitoring, petugas, atau kegiatan..." oninput="kdFilterLists()"><div id="mlist"></div></div>
 <div id="dokumen" class="hide">
 <div id="drpPanel" class="card print-area"><h2>📄 Dokumen & Laporan Bulanan</h2><p class="muted">Upload DRP Bulanan untuk membuat laporan. Untuk SPPD, gunakan template Word asli di bawah; tidak perlu mengunggah SPPD setiap kali.</p>
-<div class="drop"><b>1. Upload DRP Bulanan</b><input id="drpFile" type="file" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt" onchange="autoProcessOne('drp')"><div id="drpStatus" class="small muted">Belum ada DRP.</div></div>
+<div class="drop"><b>1. Upload DRP Bulanan</b><input id="drpFile" type="file" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt" onchange="autoProcessOne('drp')"><div id="drpStatus" class="small muted">Belum ada DRP.</div><div class="actions" style="margin-top:8px"><button type="button" class="secondary" onclick="clearDrpData()">🗑️ Hapus / Kosongkan DRP</button></div></div>
 <div class="pill"><b>Status:</b> <span id="docStatus">Belum ada dokumen yang diproses.</span></div>
 <button onclick="processDocs()">⚙️ Proses Ulang Semua Dokumen</button></div>
 <div id="docResult"></div><div id="drpPreview"></div>
-<div id="dokumentasiPanel" class="card no-print"><h3>🖼️ Dokumentasi Kunjungan Lapangan</h3><p class="small muted">Foto profil sudah disiapkan. Anda dapat mengganti foto kapan saja. Upload juga logo Kemendesa dan foto dokumentasi kegiatan.</p><div class="grid"><div><label><b>Foto Profil</b></label><input id="profileFile" type="file" accept="image/*" onchange="loadProfilePhoto(this)"><div id="profilePreview"></div></div><div><label><b>Logo Kemendesa</b></label><input id="logoFile" type="file" accept="image/*" onchange="loadLogo(this)"><div id="logoPreview"></div></div></div><label><b>Foto Dokumentasi Kegiatan</b></label><input id="photoFiles" type="file" accept="image/*" multiple onchange="loadActivityPhotos(this)"><div id="photoOcrStatus" class="small muted">Foto akan dibaca otomatis untuk mencari tanggal/keterangan dan dicocokkan dengan DRP.</div><div id="photoPreview" class="photo-grid"></div></div>
+<div id="dokumentasiPanel" class="card no-print"><h3>🖼️ Dokumentasi Kunjungan Lapangan</h3><p class="small muted">Foto profil sudah disiapkan. Anda dapat mengganti foto kapan saja. Upload juga logo Kemendesa dan foto dokumentasi kegiatan.</p><div class="grid"><div><label><b>Foto Profil</b></label><input id="profileFile" type="file" accept="image/*" onchange="loadProfilePhoto(this)"><div id="profilePreview"></div></div><div><label><b>Logo Kemendesa</b></label><input id="logoFile" type="file" accept="image/*" onchange="loadLogo(this)"><div id="logoPreview"></div></div></div><label><b>Foto Dokumentasi Kegiatan</b></label><input id="photoFiles" type="file" accept="image/*" multiple onchange="loadActivityPhotos(this)"><div class="actions" style="margin:6px 0"><button type="button" class="secondary" onclick="clearActivityPhotos()">🗑️ Kosongkan Foto Dokumentasi</button></div><div id="photoOcrStatus" class="small muted">Foto akan dibaca otomatis untuk mencari tanggal/keterangan dan dicocokkan dengan DRP.</div><div id="photoPreview" class="photo-grid"></div></div>
 <div class="card no-print" id="sppdPanel"><div id="sppdEditorCard"><h3>🧾 SPPD — Template Word Asli & Editable</h3><p class="small muted">Template Word SPPD asli digunakan apa adanya. Identitas dapat diubah melalui Pengaturan Identitas SPPD. Huruf besar/kecil pada Nama dan Jabatan dipertahankan persis seperti yang Anda ketik.</p>
 <div class="card" style="margin:10px 0;border:2px solid #0f766e;background:#f7fbfb"><h3 style="margin-top:0">⚙️ Pengaturan Identitas SPPD</h3><p class="small muted">Gunakan bagian ini khusus untuk mengganti identitas. Setelah menekan Simpan Identitas, data akan tersimpan di HP dan otomatis dipakai saat membuat SPPD berikutnya.</p><div class="grid"><div><label><b>Nama Lengkap</b></label><input id="sppdNama" placeholder="Contoh: SUDARMIN ARIPUDDIN" autocomplete="off"></div><div><label><b>Jabatan</b></label><input id="sppdJabatan" placeholder="Contoh: Pendamping lokal Desa" autocomplete="off"></div><div><label><b>Berangkat Dari</b></label><input id="sppdBerangkat" placeholder="Contoh: Paminggalan"></div><div><label><b>Tempat Kedudukan</b></label><input id="sppdKedudukan" placeholder="Contoh: Paminggalan"></div><div><label><b>Tiba di</b></label><input id="sppdTiba" placeholder="Contoh: Tallu Banua Utara"></div></div><button type="button" onclick="saveSppdIdentity()">💾 Simpan Identitas SPPD</button><div id="sppdIdentityStatus" class="small muted"></div></div>
 <div class="grid"><input id="sppdNIK" placeholder="NIK"><input id="sppdKabupaten" placeholder="Kabupaten"><input id="sppdProvinsi" placeholder="Provinsi"><input id="sppdPosisi" placeholder="Posisi"><input id="sppdBulan" placeholder="Bulan, misalnya September" autocomplete="off"><span class="small muted" style="grid-column:1/-1">Bulan bebas ditulis huruf kecil/besar. Untuk judul Word, bulan otomatis menjadi HURUF BESAR.</span><input id="sppdTahun" type="number" min="2000" max="2100" placeholder="Tahun"><label>Logo SPPD <select id="sppdLogoPos"><option value="none" selected>Tanpa logo</option><option value="left">Kiri atas</option><option value="right">Kanan atas</option></select></label></div><p class="small muted">Logo SPPD dapat ditempatkan di kiri atau kanan atas halaman pertama.</p><div class="pill"><b>📅 Tanggal & Jumlah Hari per Kunjungan</b><p class="small muted">Isi tanggal mulai dan selesai untuk setiap kunjungan. Jumlah hari dihitung otomatis secara inklusif (tanggal mulai dan selesai dihitung).</p><div id="sppdVisits" class="small"></div></div><div class="actions"><button class="secondary" onclick="saveSppdData()">💾 Simpan Data SPPD</button><button class="secondary" onclick="resetSppdData()">↩️ Data Awal</button></div><div class="pill"><b>Preview:</b><div id="sppdPreview" class="small"></div></div><button onclick="makeSppdWord()">⬇️ Buat SPPD Word Asli</button><div id="sppdStatus" class="small muted"></div><p class="small muted">Template: <b>template_sppd_asli.docx</b> • Format asli dipertahankan.</p></div></div>
@@ -391,6 +391,36 @@ function renderDrpPreview(drp){
   if(!drp)return;
   const h=drp.header||{};
   document.getElementById('drpPreview').innerHTML=`<div class="card"><h3>✅ Hasil Pembacaan DRP</h3><p class="small"><b>${esc(h.nama||'-')}</b> • ${esc(h.posisi||'-')} • ${esc(h.periode||'-')}</p><p class="small">${esc(h.provinsi||'-')} / ${esc(h.kabupaten||'-')} / ${esc(h.kecamatan||'-')}<br>Desa: ${esc(h.desa||'-')}</p><p><span class="badge">${drp.count} kegiatan terbaca</span> <span class="badge">${drp.aktivitas.length} aktivitas</span> <span class="badge">${drp.kunlap.length} kunjungan lapangan</span></p><div class="tablewrap"><table class="simpletable"><thead><tr><th>No</th><th>Tanggal</th><th>Waktu</th><th>Jenis</th><th>Status</th><th>Lokasi</th><th>Deskripsi</th></tr></thead><tbody>${drp.all.map(x=>`<tr><td>${x.no}</td><td>${esc(x.tanggal)}</td><td>${esc(x.waktu)}</td><td>${esc(x.jenis)}</td><td>${x.kunjungan?'Kunjungan Lapangan':'Bukan Kunjungan Lapangan'}</td><td>${esc(x.lokasi)}</td><td>${esc(x.deskripsi)}</td></tr>`).join('')}</tbody></table></div></div>`
+}
+function clearDrpData(){
+ if(!confirm('Hapus DRP yang tersimpan dan data kegiatan yang berasal dari DRP? Data kegiatan manual tidak akan dihapus.'))return;
+ data.docs=data.docs||{};
+ delete data.docs.drp;
+ data.drpActivities=[];
+ data.kegiatan=(data.kegiatan||[]).filter(x=>x.source!=='DRP');
+ activityPhotos=(data.docs.activityPhotos||[]).map(p=>({...p,matchedActivityIndex:null,matchedActivityNo:null,matchScore:0}));
+ data.docs.activityPhotos=activityPhotos;
+ reportHtml='';reportText='';
+ const f=document.getElementById('drpFile');if(f)f.value='';
+ const st=document.getElementById('drpStatus');if(st)st.textContent='DRP dikosongkan.';
+ const pv=document.getElementById('drpPreview');if(pv)pv.innerHTML='';
+ const rs=document.getElementById('reportPrint');if(rs)rs.innerHTML='';
+ save();updateDocStatus();renderMediaPreviews();
+}
+function clearActivityPhotos(){
+ if(!confirm('Kosongkan semua foto dokumentasi yang tersimpan di aplikasi?'))return;
+ activityPhotos=[];
+ data.docs=data.docs||{};data.docs.activityPhotos=[];
+ const f=document.getElementById('photoFiles');if(f)f.value='';
+ const st=document.getElementById('photoOcrStatus');if(st)st.textContent='Foto dokumentasi dikosongkan.';
+ save();renderMediaPreviews();
+}
+function clearSppdDocument(){
+ if(!confirm('Hapus dokumen SPPD yang tersimpan?'))return;
+ data.docs=data.docs||{};delete data.docs.sppd;
+ const f=document.getElementById('sppdFile');if(f)f.value='';
+ const st=document.getElementById('sppdStatus');if(st)st.textContent='Dokumen SPPD dikosongkan.';
+ save();updateDocStatus();
 }
 async function autoProcessOne(kind){
   const f=document.getElementById(kind==='drp'?'drpFile':'sppdFile').files[0];if(!f)return;
