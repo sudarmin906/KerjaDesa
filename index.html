@@ -136,6 +136,22 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
   break-inside:auto;
   page-break-inside:auto;
 }
+</style><style id="kd-master-documentation">
+.master-doc-table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:4mm;font-family:Arial,sans-serif;font-size:9pt}
+.master-doc-cell{width:50%;vertical-align:top;border:1px solid #333;padding:0;height:auto;break-inside:avoid;page-break-inside:avoid}
+.master-doc-cell.empty{border:0}
+.master-doc-info{padding:3mm 3mm 2mm;line-height:1.35;min-height:22mm;box-sizing:border-box}
+.master-doc-info div{margin-bottom:2mm}
+.master-doc-photos{border-top:1px solid #333;padding:3mm;display:flex;flex-direction:column;align-items:center;gap:3mm}
+.master-doc-photo{width:100%;display:flex;justify-content:center;align-items:center;overflow:hidden}
+.master-doc-photo img{display:block;width:auto;max-width:100%;height:auto;max-height:58mm;object-fit:contain}
+@media print{
+ .master-doc-table{font-size:9pt;margin-top:3mm}
+ .master-doc-cell{vertical-align:top}
+ .master-doc-info{min-height:22mm;padding:3mm}
+ .master-doc-photo img{max-width:92%;max-height:58mm}
+ .master-doc-photos{gap:3mm}
+}
 </style></style></head><body>
 <header><div class="brandbar"><div class="brand-left"><img class="brand-logo" src="foto_profil.jpg" alt="Profil"><div><div class="brand-name">Kerja<span>Desa</span></div><div class="brand-sub">Sistem Kerja Pendamping Desa • Kecamatan Sendana • Kabupaten Majene</div></div></div><div class="profile-chip"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"><div><b>SUDARMIN ARIPUDDIN</b><small>Pendamping Lokal Desa</small></div></div></div></header>
 <main>
@@ -496,10 +512,25 @@ function shortActivityTitle(x){
 function buildVisitRows(acts){return acts.map((x,i)=>'<tr><td>'+ (i+1) +'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(locationVillage(x.lokasi))+'</td><td>'+esc(x.deskripsi||x.judul||'-')+'</td></tr>').join('')}
 function buildVisitDays(acts){const u=[],s=new Set();acts.forEach(x=>{const k=dateKey(x.tanggal);if(k&&!s.has(k)){s.add(k);u.push(x)}});return u.map((x,i)=>{const p=String(x.lokasi||'').split('/').map(v=>v.trim()).filter(Boolean);const kec=p.length>=3?p[2]:(p[1]||'-');return '<tr><td>Hari ke-'+(i+1)+'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(kec)+'</td><td>'+esc(locationVillage(x.lokasi))+'</td></tr>'}).join('')}
 function buildDocumentation(acts){
- const groups=[],by={};activityPhotos.forEach(p=>{if(!p.date)return;(by[dateKey(p.date)]??=[]).push(p)});
- Object.keys(by).forEach(k=>by[k].forEach(p=>groups.push({photo:p,act:acts.find(x=>dateKey(x.tanggal)===k)||{tanggal:p.date,lokasi:'',deskripsi:''}})));
+ const by={};
+ activityPhotos.forEach(p=>{if(!p.date)return;(by[dateKey(p.date)]??=[]).push(p)});
+ const groups=Object.keys(by).sort().map(k=>({key:k,photos:by[k],act:acts.find(x=>dateKey(x.tanggal)===k)||{tanggal:k,lokasi:'',deskripsi:''}}));
  if(!groups.length)return '<p>Belum ada foto yang tanggalnya dapat dicocokkan dengan D. Hasil Kunjungan Lapangan.</p>';
- return '<div class="doc-landscape-grid">'+groups.map((g,i)=>'<div class="doc-roll"><div class="doc-note"><b>Lokasi :</b> '+esc(locationVillage(g.act.lokasi))+'<br><br><b>Tanggal :</b> '+esc(dateLongId(g.act.tanggal||g.photo.date))+'<br><br><b>Kegiatan :</b> '+esc(shortActivityTitle(g.act))+'</div><div class="doc-photo-frame"><img src="'+g.photo.url+'" alt="Dokumentasi '+(i+1)+'"></div></div>').join('')+'</div>';
+ const cells=groups.map((g,i)=>{
+   const photos=g.photos.map((p,j)=>'<div class="master-doc-photo"><img src="'+p.url+'" alt="Dokumentasi '+(i+1)+'-'+(j+1)+'"></div>').join('');
+   return '<td class="master-doc-cell"><div class="master-doc-info"><div><b>Lokasi:</b> '+esc(locationVillage(g.act.lokasi))+'</div><div><b>Tanggal:</b> '+esc(g.key)+'</div><div><b>Kegiatan:</b> '+esc(shortActivityTitle(g.act))+'</div></div><div class="master-doc-photos">'+photos+'</div></td>';
+ }).join('');
+ const rows=[];for(let i=0;i<groups.length;i+=2)rows.push('<tr>'+cellsFor(i,groups)+'</tr>');
+ return '<table class="master-doc-table"><tbody>'+rows.join('')+'</tbody></table>';
+}
+function cellsFor(start,groups){
+ let html='';
+ for(let j=start;j<start+2;j++){
+   if(j>=groups.length){html+='<td class="master-doc-cell empty"></td>';continue}
+   const g=groups[j],photos=g.photos.map((p,k)=>'<div class="master-doc-photo"><img src="'+p.url+'" alt="Dokumentasi '+(j+1)+'-'+(k+1)+'"></div>').join('');
+   html+='<td class="master-doc-cell"><div class="master-doc-info"><div>Lokasi: <b>'+esc(locationVillage(g.act.lokasi))+'</b></div><div>Tanggal: <b>'+esc(g.key)+'</b></div><div>Kegiatan: <b>'+esc(shortActivityTitle(g.act))+'</b></div></div><div class="master-doc-photos">'+photos+'</div></td>';
+ }
+ return html;
 }
 let reportContext=null;
 function renderReportFromNarratives(nar){
