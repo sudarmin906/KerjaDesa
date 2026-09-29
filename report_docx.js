@@ -208,6 +208,12 @@
 
   window.downloadWord=async function(){
     try{
+      if(window.kdHasMasterTemplate && await window.kdHasMasterTemplate()){
+        const zip=await window.kdExportMasterReport();
+        const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',compression:'DEFLATE'});
+        const d=data.docs||{},period=d.drp?.parsed?.header?.periode||periodLabel(),month=monthNameFromPeriod(period);
+        const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Laporan_Kunjungan_Lapangan_'+month+'_'+yearFromPeriod(period)+'.docx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000);return;
+      }
       const zip=await exporter();
       const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',compression:'DEFLATE'});
       const d=data.docs||{},period=d.drp?.parsed?.header?.periode||periodLabel(),month=monthNameFromPeriod(period);
