@@ -291,14 +291,27 @@ function parseDrpActivities(text, sectionTitle, totalTitle, kunlap){
  }
  return out.sort((x,y)=>x.tanggal.localeCompare(y.tanggal)||x.no-y.no);
 }
+function drpRecordKey(x){
+ const d=String(x.deskripsi||'').replace(/\s+/g,' ').trim().toLowerCase();
+ const loc=String(x.lokasi||'').replace(/\s+/g,' ').trim().toLowerCase();
+ return [x.tanggal||'',loc,d].join('|');
+}
+function mergeDrpRecords(aktivitas,kunlap){
+ const map=new Map();
+ [...aktivitas.map(x=>({...x,kunjungan:false})),...kunlap.map(x=>({...x,kunjungan:true}))].forEach(x=>{
+   const k=drpRecordKey(x),old=map.get(k);
+   if(!old || (x.kunjungan&&!old.kunjungan)) map.set(k,x);
+ });
+ return [...map.values()].sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no).map((x,i)=>({...x,no:i+1}));
+}
 function parseDRP(text){
  const header=parseDrpHeader(text);
- const aktivitas=parseDrpActivities(text,"DAFTAR LAPORAN AKTIVITAS","Total Laporan Aktivitas",false);
- const kunlap=parseDrpActivities(text,"DAFTAR LAPORAN KUNJUNGAN LAPANGAN","Total Laporan Kunjungan Lapangan",true);
- const all=aktivitas.concat(kunlap).sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no).map((x,i)=>({...x,no:i+1,deskripsi:cleanText(x.deskripsi)}));
- const cleanGroup=(arr)=>arr.map(x=>all.find(y=>y.tanggal===x.tanggal&&y.deskripsi===x.deskripsi)||x);
+ const aktivitasRaw=parseDrpActivities(text,"DAFTAR LAPORAN AKTIVITAS","Total Laporan Aktivitas",false);
+ const kunlapRaw=parseDrpActivities(text,"DAFTAR LAPORAN KUNJUNGAN LAPANGAN","Total Laporan Kunjungan Lapangan",true);
+ const all=mergeDrpRecords(aktivitasRaw,kunlapRaw);
+ const aktivitas=all.filter(x=>!x.kunjungan),kunlap=all.filter(x=>x.kunjungan);
  const expected=Number(header.totalLaporan||0);
- return {header,aktivitas:cleanGroup(aktivitas),kunlap:cleanGroup(kunlap),all,count:all.length,source:"DRP",expected:expected,complete:expected===all.length};
+ return {header,aktivitas,kunlap,all,count:all.length,source:"DRP",expected:expected,complete:expected===all.length};
 }
 function renderDrpPreview(drp){
   if(!drp)return;
@@ -472,7 +485,29 @@ function deriveNarratives(acts){
  return {tujuan,hasil,follow,recs};
 }
 function uniqueVisitDays(acts){return new Set(acts.map(x=>dateKey(x.tanggal)).filter(Boolean)).size}
-function buildVisitRows(acts){return acts.map((x,i)=>'<tr><td>'+ (i+1) +'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(locationVillage(x.lokasi))+'</td><td>'+esc(String(x.deskripsi||'').replace(/\s+/g,' ').trim())+'</td></tr>').join('')}
+function activityBrief(desc){
+ const d=String(desc||'').replace(/\s+/g,' ').trim(),l=d.toLowerCase();
+ const rules=[
+  [/gedung koperasi|koperasi desa merah putih/,'Monitoring progres pembangunan Gedung Koperasi Desa Merah Putih, termasuk perkembangan pekerjaan struktur dan kebutuhan penyelesaian lanjutan.'],
+  [/rabat beton.*jalan.*paminggalan|jalan poros paminggalan.*limbua/,'Monitoring progres lanjutan pekerjaan rabat beton Jalan Poros Paminggalan menuju Desa Limbua untuk memastikan pekerjaan berjalan sesuai rencana.'],
+  [/jembatan dekker/,'Monitoring progres pembangunan Jembatan Dekker Dusun Palla-Pallang untuk melihat perkembangan pekerjaan dan kesesuaian tahapan pelaksanaan.'],
+  [/drainase/,'Monitoring progres pembangunan drainase untuk melihat perkembangan pekerjaan dan kondisi saluran di lapangan.'],
+  [/titik nol|rehabilitasi jalan setapak/,'Monitoring titik nol rehabilitasi jalan setapak sebagai bahan perencanaan dan penganggaran Tahun 2027.'],
+  [/pra[- ]?musrenbang/,'Koordinasi persiapan Pra-Musrenbang Dusun untuk pemantapan usulan, prioritas kegiatan, dan kelengkapan administrasi.'],
+  [/musrenbangdes|musrenbang desa/,'Pelaksanaan Musrenbang Desa dalam rangka penyusunan RKPDes dan DU-RKPDes Tahun 2027.'],
+  [/perubahan apbdes/,'Koordinasi persiapan Perubahan APBDes Tahun Anggaran 2026 dan penyelarasan program pembangunan desa.'],
+  [/rancangan apbdes/,'Koordinasi penyusunan Rancangan APBDes sesuai ketentuan dan prioritas penggunaan Dana Desa.'],
+  [/monev.*dana desa|monitoring dan evaluasi dana desa/,'Rapat koordinasi TPP P3MD terkait percepatan penginputan Monitoring dan Evaluasi Dana Desa (Monev DD).'],
+  [/sembako|pkh|blt dana desa|penerima bantuan/,'Pendampingan dan verifikasi data penerima bantuan sembako/PKH dan BLT Dana Desa untuk memastikan kesesuaian data.'],
+  [/indeks desa|verifikasi-validasi|verval|pemutakhiran data/,'Perbaikan, verifikasi, dan pemutakhiran Data Indeks Desa Tahun 2026 untuk memastikan data lebih akurat dan sesuai kondisi aktual.'],
+  [/baliho|infografis.*apbdes/,'Koordinasi percepatan pemasangan baliho/infografis APBDes sebagai bagian dari transparansi informasi desa.']
+ ];
+ for(const [re,txt] of rules) if(re.test(l)) return txt;
+ const clean=d.replace(/^(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.\s*/i,'').trim();
+ const first=clean.split(/[.!?](?:\s|$)/)[0].trim();
+ return first.length>180?first.slice(0,177).replace(/\s+\S*$/,'')+'…':first;
+}
+function buildVisitRows(acts){return acts.map((x,i)=>'<tr><td>'+ (i+1) +'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(locationVillage(x.lokasi))+'</td><td>'+esc(activityBrief(x.deskripsi))+'</td></tr>').join('')}
 function buildVisitDays(acts){const u=[],s=new Set();acts.forEach(x=>{const k=dateKey(x.tanggal);if(k&&!s.has(k)){s.add(k);u.push(x)}});return u.map((x,i)=>'<tr><td>Hari ke-'+(i+1)+'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>SENDANA</td><td>'+esc(locationVillage(x.lokasi))+'</td></tr>').join('')}
 function docActivityTitle(desc){
  const d=String(desc||'').replace(/\s+/g,' ').trim();
