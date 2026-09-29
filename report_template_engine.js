@@ -135,6 +135,7 @@
     await dbPut(new Blob([await f.arrayBuffer()],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}));
     const st=document.getElementById('masterReportStatus');if(st)st.innerHTML='✅ Master tersimpan: <b>'+esc(f.name)+'</b>. Format Word asli akan dipertahankan saat membuat laporan.';
   }
+  async function hasMaster(){try{return !!(await dbGet())}catch(e){return false}}
   async function initStatus(){
     try{const x=await dbGet();const st=document.getElementById('masterReportStatus');if(st)st.innerHTML=x?'✅ Master tersimpan: <b>'+esc(x.name)+'</b>.':'Template master belum disimpan.'}catch(e){}
   }
@@ -162,7 +163,7 @@
     const vals=['NIK : '+nik,'Nama Lengkap : '+nama,'Kecamatan : '+titleCase(kec),'Kabupaten : '+titleCase(kab),'Provinsi : '+titleCase(prov),'Posisi : PLD','Jabatan : Pendamping Lokal Desa'];
     idPrefixes.forEach((p,i)=>{const el=paras.find(x=>textOf(x).trim().startsWith(p));if(el)setParagraphText(el,vals[i])});
     const bTitle=paras.find(p=>/Waktu Pelaksanaan Kunjungan Lapangan/i.test(textOf(p))); if(bTitle)setParagraphText(bTitle,'Waktu Pelaksanaan Kunjungan Lapangan');
-    const b= tables[0], br=tableRows(b), slots=[3,5,...Array.from({length:19},(_,i)=>6+i)]; 
+    const b= tables[0], br=tableRows(b), slots=[3,...Array.from({length:19},(_,i)=>5+i)]; 
     const visit=uniqDates(drp.kunlap?.length?drp.kunlap:acts).slice(0,20);
     slots.forEach((ri,idx)=>{const r=br[ri];if(!r)return;const cs=rowCells(r);if(idx<visit.length){setCellText(cs[0],'Harike'+(idx+1));setCellText(cs[1],dateLong(visit[idx].tanggal));setCellText(cs[2],titleCase(kec));setCellText(cs[3],locVillage(visit[idx].lokasi));}else cs.forEach(c=>setCellText(c,''));});
     const tot=br[br.length-1]; if(tot)setCellText(rowCells(tot)[0],'Total Hari Kunjungan Lapangan Bulan '+month+' Tahun '+year+' : '+visit.length+' Hari');
@@ -195,9 +196,15 @@
           let dataUrl=null;
           if(item)dataUrl=item.url;
           const m=String(dataUrl||'').match(/^data:image\\/([^;]+);base64,(.+)$/);
-          if(m){const ext=(target.split('.').pop()||'jpeg').toLowerCase();let useUrl=dataUrl;
-            if((ext==='jpeg'||ext==='jpg') && m[1].toLowerCase()!=='jpeg'&&m[1].toLowerCase()!=='jpg') useUrl=dataUrl;
-            if(useUrl){const b64=useUrl.split(',')[1];zip.file('word/'+target,b64,{base64:true});}
+          if(m){
+            const ext=(target.split('.').pop()||'jpeg').toLowerCase(),type=ext==='png'?'image/png':'image/jpeg';
+            const useUrl=await new Promise(resolve=>{
+              const im=new Image();im.onload=()=>{
+                const cv=document.createElement('canvas');cv.width=im.naturalWidth||1;cv.height=im.naturalHeight||1;
+                const cx=cv.getContext('2d');cx.drawImage(im,0,0);resolve(cv.toDataURL(type,0.9));
+              };im.onerror=()=>resolve(dataUrl);im.src=dataUrl;
+            });
+            const b64=useUrl.split(',')[1];zip.file('word/'+target,b64,{base64:true});
           }else{
             const ext=(target.split('.').pop()||'jpeg').toLowerCase();
             const blank=await new Promise(res=>{const cv=document.createElement('canvas');cv.width=2;cv.height=2;cv.toBlob(b=>b.arrayBuffer().then(res),ext==='png'?'image/png':'image/jpeg',0.8)});
@@ -211,6 +218,7 @@
   }
   window.kdLoadMasterReportTemplate=loadMasterReportTemplate;
   window.kdInitMasterReportStatus=initStatus;
+  window.kdHasMasterTemplate=hasMaster;
   window.kdExportMasterReport=buildFromMaster;
   setTimeout(initStatus,500);
 })();
