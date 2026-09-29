@@ -610,7 +610,7 @@ function downloadWord(){
   var b=document.querySelector('#login button[onclick*="doLogin"]');
   if(b)b.onclick=window.doLogin;
 })();
-</script></html>';
+</script><script src="report_template_engine.js"></script></html>';
  const blob=new Blob(['\\ufeff'+html],{type:'application/msword;charset=utf-8'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Laporan_Kunjungan_Lapangan_'+(monthNameFromPeriod(data.docs?.drp?.parsed?.header?.periode||periodLabel()))+'_2026.doc';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
