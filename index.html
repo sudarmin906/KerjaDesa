@@ -10,7 +10,7 @@
 
 .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.photo-card{border:1px solid #d7e0e2;border-radius:10px;padding:6px;background:#fff}.photo-card img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:7px}.profile-preview{width:110px;height:140px;object-fit:cover;border-radius:8px;border:1px solid #ccd5d8}.logo-preview{max-width:180px;max-height:70px;object-fit:contain;border:1px solid #ccd5d8;border-radius:8px;padding:5px;background:#fff}.photo-meta{font-size:11px;color:#667;margin-top:4px}
 @media(max-width:600px){.photo-grid{grid-template-columns:repeat(2,1fr)}}
-.print-report .report-head{display:grid;grid-template-columns:90px 1fr 90px;gap:10px;align-items:center;text-align:center}.print-report .report-head img{max-width:85px;max-height:80px;object-fit:contain}.print-report .profile-box{width:95px;height:125px;object-fit:cover}.print-report .doc-photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.print-report .doc-photo-grid img{width:100%;max-height:220px;object-fit:contain;border:1px solid #777}.print-report .signature{margin-top:30px;text-align:center}.print-report .signature img{width:90px;height:115px;object-fit:cover}
+.print-report .report-head{display:block;text-align:center;margin-bottom:8px}.print-report .report-head .kemendesa-logo{display:block;width:72px;height:72px;object-fit:contain;margin:0 auto 7px}.print-report .report-head .instansi{font-size:10pt;line-height:1.25;text-align:center}.print-report .report-head:after{content:"";display:block;border-bottom:2px solid #222;margin-top:8px}.print-report .profile-box{display:none!important}.print-report .doc-photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.print-report .doc-photo-grid img{width:100%;max-height:220px;object-fit:contain;border:1px solid #777}.print-report .signature{margin-top:30px;text-align:center}.print-report .signature img{width:90px;height:115px;object-fit:cover}
 
 /* V25 PROFESSIONAL UI */
 :root{--navy:#102a43;--blue:#1976d2;--blue2:#0b5ed7;--green:#0f766e;--gold:#f4b942;--bg:#f4f7fb;--ink:#102a43;--muted:#66788a;--white:#fff;--shadow:0 12px 30px rgba(16,42,67,.10)}
@@ -266,7 +266,7 @@ function makeReport(){
   const summary=`${h.jamKerja||'-'} jam:menit · target 140 jam`;
   const logoHtml=logoPhoto?`<img src="${logoPhoto}" alt="Logo Kemendesa">`:'<div style="font-size:9pt;border:1px solid #aaa;padding:8px">LOGO<br>KEMENDESA PDT</div>';const profileHtml=profilePhoto?`<img class="profile-box" src="${profilePhoto}" alt="Foto Pendamping">`:'';
   reportHtml=`<div class="print-report">
-  <div class="report-head"><div>${logoHtml}</div><div style="font-size:10pt;line-height:1.25"><b>KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA</b><br><b>BADAN PENGEMBANGAN SUMBER DAYA MANUSIA DAN PEMBERDAYAAN</b><br><b>MASYARAKAT DESA DAN DAERAH TERTINGGAL</b><br>Jalan TMP. Kalibata Nomor 17 Jakarta Selatan 12750</div><div>${profileHtml}</div></div>
+  <div class="report-head"><div>${logoHtml.replace(/<img /,"<img class="kemendesa-logo" ").replace(/alt="Logo Kemendesa"/,"alt="Logo Kemendesa"")}</div><div class="instansi"><b>KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA</b><br><b>BADAN PENGEMBANGAN SUMBER DAYA MANUSIA DAN PEMBERDAYAAN</b><br><b>MASYARAKAT DESA DAN DAERAH TERTINGGAL</b><br>Jalan TMP. Kalibata Nomor 17 Jakarta Selatan 12750</div></div>
   <h1 style="margin-bottom:2px">LAPORAN BULANAN AKTIVITAS HARIAN</h1><h2>TENAGA PENDAMPING PROFESIONAL</h2>
   <p><b>Periode:</b> ${esc(periode)}</p>
   <table><tr><th colspan="2">IDENTITAS TPP</th><th colspan="2">LOKASI PENUGASAN</th></tr>
@@ -283,7 +283,7 @@ function makeReport(){
   <h3>DOKUMENTASI FOTO KEGIATAN</h3>${activityPhotos.length?`<div class="doc-photo-grid">${activityPhotos.map((p,i)=>`<div><img src="${p.url}" alt="Dokumentasi ${i+1}"><div class="small"><b>${esc(p.date||'Tanggal tidak terdeteksi')}</b><br>${esc(p.name)}</div></div>`).join('')}</div>`:'<p>Tidak ada foto dokumentasi yang diunggah.</p>'}
   <h3>DOKUMEN SUMBER</h3><p>DRP: ${esc(d.drp?.name||'Belum diunggah')}<br>SPPD: ${esc(sppd)}</p>
   <p class="small">Data laporan dipetakan dari dokumen sumber oleh KerjaDesa. Data yang tidak ditemukan tidak diisi dengan asumsi.</p>
-  <div class="signature"><p>Yang membuat laporan,</p>${profilePhoto?`<img src="${profilePhoto}" alt="Foto penyusun"><br>`:''}<b>${esc(nama)}</b><br>${esc(posisi)}</div>
+  <div class="signature"><p>Yang membuat laporan,</p><b>${esc(nama)}</b><br>${esc(posisi)}</div>
   </div>`;
   document.getElementById('reportPrint').innerHTML=reportHtml;
   document.getElementById('docResult2').innerHTML='<div class="card no-print"><h3>Pratinjau Laporan Sesuai Format DRP</h3>'+reportHtml+'</div>';
