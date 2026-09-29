@@ -101,7 +101,7 @@
       const periode=h.periode||periodLabel(),month=monthNameFromPeriod(periode),year=yearFromPeriod(periode);
       const acts=drp.all.slice().sort((a,b)=>{const da=String(a.tanggal||'').split('/').reverse().join('');const db=String(b.tanggal||'').split('/').reverse().join('');return da.localeCompare(db)||Number(a.no||0)-Number(b.no||0)});
       const nar=deriveNarratives(acts);
-      const W4=[800,2600,1700,4800],Wb=[1700,2850,1900,3450];
+      const W_ID=[2400,6240],W_B=[1350,2400,1800,3090],W_D=[800,1800,2200,9338],W_G=[4320,4320];
 
       let body='';
 
@@ -125,18 +125,18 @@
       body+=textPara('A. Identitas',{align:'left',bold:true,size:22,before:100,after:100});
       const idrows=[
         ['NIK',' : '+nik],['Nama Lengkap',' : '+nama],['Kecamatan',' : '+kec],['Kabupaten',' : '+kab],['Provinsi',' : '+prov],['Posisi',' : '+posisi],['Jabatan',' : '+jabatan]
-      ].map(x=>row([cell(textPara(x[0],{size:19}),2400),cell(textPara(x[1],{bold:x[0]==='Nama Lengkap',size:19}),5100)]));
-      body+=table(idrows,[2400,5100]);
+      ].map(x=>row([cell(textPara(x[0],{size:19}),2400),cell(textPara(x[1],{bold:x[0]==='Nama Lengkap',size:19}),6240)]));
+      body+=table(idrows,W_ID);
 
       body+=textPara('B. Waktu Pelaksanaan Kunjungan Lapangan',{align:'left',bold:true,size:22,before:280,after:120});
       const seen=new Set(),visit=[];
       for(const a of acts){const k=dateKey(a.tanggal);if(k&&!seen.has(k)){seen.add(k);visit.push(a)}}
-      const head1=row([cell(textPara('Hari ke',{bold:true,size:18,align:'center'}),1500),cell(textPara('Waktu (Tgl/Bln/Thn)',{bold:true,size:18,align:'center'}),2600),cell(textPara('Lokasi Kunjungan',{bold:true,size:18,align:'center'}),5300,{span:2})],{header:true});
-      const head2=row([cell(textPara('',{size:18}),1500),cell(textPara('',{size:18}),2600),cell(textPara('Kecamatan',{bold:true,size:18,align:'center'}),2000),cell(textPara('Desa',{bold:true,size:18,align:'center'}),3300)],{header:true});
+      const head1=row([cell(textPara('Hari ke',{bold:true,size:18,align:'center'}),1350),cell(textPara('Waktu (Tgl/Bln/Thn)',{bold:true,size:18,align:'center'}),2400),cell(textPara('Lokasi Kunjungan',{bold:true,size:18,align:'center'}),4890,{span:2})],{header:true});
+      const head2=row([cell(textPara('',{size:18}),1350),cell(textPara('',{size:18}),2400),cell(textPara('Kecamatan',{bold:true,size:18,align:'center'}),1800),cell(textPara('Desa',{bold:true,size:18,align:'center'}),3090)],{header:true});
       const brow=[head1,head2];
-      visit.forEach((x,i)=>brow.push(row([cell(textPara('Hari ke-'+(i+1),{size:17}),1500),cell(textPara(dateLongId(x.tanggal),{size:17}),2600),cell(textPara(kec,{size:17}),2000),cell(textPara(locationVillage(x.lokasi),{size:17}),3300)])));
-      brow.push(row([cell(textPara('Total Hari Kunjungan Lapangan Bulan '+month+' Tahun '+year+' : '+visit.length+' Hari',{bold:true,size:17,align:'center'}),9400,{span:4})]));
-      body+=table(brow,[1500,2600,2000,3300]);
+      visit.forEach((x,i)=>brow.push(row([cell(textPara('Hari ke-'+(i+1),{size:17}),1350),cell(textPara(dateLongId(x.tanggal),{size:17}),2400),cell(textPara(kec,{size:17}),1800),cell(textPara(locationVillage(x.lokasi),{size:17}),3090)])));
+      brow.push(row([cell(textPara('Total Hari Kunjungan Lapangan Bulan '+month+' Tahun '+year+' : '+visit.length+' Hari',{bold:true,size:17,align:'center'}),8640,{span:4})]));
+      body+=table(brow,W_B);
 
       body+=textPara('C. Tujuan Kunjungan Lapangan',{align:'left',bold:true,size:22,before:360,after:100});
       body+=textPara('Kunjungan lapangan dilaksanakan untuk melakukan pendampingan secara langsung kepada Pemerintah Desa dan masyarakat dalam memastikan proses pembangunan, perencanaan, pelaksanaan kegiatan, serta pengelolaan program desa berjalan sesuai dengan rencana dan ketentuan yang berlaku. Kunjungan dilakukan dengan melihat kondisi faktual di lapangan, melakukan koordinasi dengan pihak terkait, mencermati perkembangan kegiatan, serta memberikan pendampingan terhadap hal-hal yang memerlukan tindak lanjut.',{size:21,align:'both',line:300,after:120});
@@ -146,9 +146,9 @@
 
       /* SECTION 2 : LANDSCAPE = D only */
       body+=textPara('D. Hasil Kunjungan Lapangan',{align:'left',bold:true,size:22,before:0,after:120});
-      const drows=[row([cell(textPara('No',{bold:true,size:18,align:'center'}),700),cell(textPara('Tanggal',{bold:true,size:18,align:'center'}),1500),cell(textPara('Desa',{bold:true,size:18,align:'center'}),1900),cell(textPara('Kegiatan',{bold:true,size:18,align:'center'}),5300)],{header:true})];
+      const drows=[row([cell(textPara('No',{bold:true,size:18,align:'center'}),800),cell(textPara('Tanggal',{bold:true,size:18,align:'center'}),1800),cell(textPara('Desa',{bold:true,size:18,align:'center'}),2200),cell(textPara('Kegiatan',{bold:true,size:18,align:'center'}),9338)],{header:true})];
       acts.forEach((x,i)=>drows.push(row([cell(textPara(String(i+1),{size:17,align:'center'}),700),cell(textPara(dateLongId(x.tanggal),{size:17}),1500),cell(textPara(locationVillage(x.lokasi),{size:17}),1900),cell(textPara(String(x.deskripsi||'').replace(/\\s+/g,' ').trim(),{size:17,align:'both',line:235}) ,5300)])));
-      body+=table(drows,[700,1500,1900,5300]);
+      body+=table(drows,W_D);
       body+=textPara('Hasil kunjungan lapangan menunjukkan beberapa capaian dan temuan sebagai berikut:',{bold:true,size:21,align:'both',line:280,before:140,after:100});
       nar.hasil.forEach((x,i)=>body+=textPara((i+1)+'. '+String(x).replace(/^Kegiatan\\s+\\d+\\s*/i,'').replace(/^menunjukkan\\s+/i,''),{size:21,align:'both',line:300,after:100}));
       body+=sectionEnd('landscape',true);
@@ -176,17 +176,17 @@
         if(base>0)body+=para('<w:r><w:br w:type="page"/></w:r>',{after:0});
         for(let j=0;j<chunk.length;j+=2){
           const pair=[chunk[j],chunk[j+1]].filter(Boolean);
-          const top=pair.map(a=>{const note=textPara('Lokasi: '+locationVillage(a.lokasi),{size:18,after:30})+textPara('Tanggal '+dateLongId(a.tanggal),{size:18,after:30})+textPara('Kegiatan : '+docActivityTitle(a.deskripsi),{size:18,after:0,line:230});return cell(note,4700,{valign:'top'})});
-          if(pair.length===1)top.push(cell('',4700));
+          const top=pair.map(a=>{const note=textPara('Lokasi: '+locationVillage(a.lokasi),{size:18,after:30})+textPara('Tanggal '+dateLongId(a.tanggal),{size:18,after:30})+textPara('Kegiatan : '+docActivityTitle(a.deskripsi),{size:18,after:0,line:230});return cell(note,4320,{valign:'top'})});
+          if(pair.length===1)top.push(cell('',4320));
           const bot=[];
           for(const a of pair){
             const pics=photoBy[dateKey(a.tanggal)]||[];
             let pc='';
             for(const p of pics)pc+=para(await drawing(p.url,3.0,3.25,p.url.startsWith('data:image/png')?'png':'jpg'),{align:'center',after:30});
-            bot.push(cell(pc||textPara('Dokumentasi tidak tersedia',{align:'center',size:18}),4700,{valign:'center'}));
+            bot.push(cell(pc||textPara('Dokumentasi tidak tersedia',{align:'center',size:18}),4320,{valign:'center'}));
           }
-          if(pair.length===1)bot.push(cell('',4700));
-          body+=table([row(top),row(bot)],[4700,4700]);
+          if(pair.length===1)bot.push(cell('',4320));
+          body+=table([row(top),row(bot)],W_G);
           body+=blank(2);
         }
       }
