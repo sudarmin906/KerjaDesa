@@ -481,7 +481,6 @@ function periodLabel(){const v=document.getElementById('rPeriode').value;if(v){c
 function readAsDataURL(file){return new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=reject;fr.readAsDataURL(file)})}
 async function loadProfilePhoto(input){const f=input.files[0];if(!f)return;profilePhoto=await readAsDataURL(f);data.docs=data.docs||{};data.docs.profilePhoto=profilePhoto;save();renderMediaPreviews()}
 async function loadLogo(input){const f=input.files[0];if(!f)return;logoPhoto=await readAsDataURL(f);data.docs=data.docs||{};data.docs.logoPhoto=logoPhoto;save();renderMediaPreviews()}
-let photoOcrBusy=false,photoOcrLoaded=false;
 let photoOcrBusy=false,photoOcrLoaded=false,photoOcrWorker=null;
 async function loadTesseract(){
  if(photoOcrLoaded&&window.Tesseract)return window.Tesseract;
