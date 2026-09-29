@@ -559,6 +559,9 @@ renderVisitDates();
 if(localStorage.getItem('kd_login')==='1')show();else render();navigator.serviceWorker?.register('./sw.js');updateDocStatus();renderMediaPreviews();if(data.docs?.drp?.parsed)renderDrpPreview(data.docs.drp.parsed);
 
 /* === KerjaDesa V26 WORKFLOW: DRP -> LAPORAN -> DOKUMENTASI | SPPD TERPISAH === */
+(function(){
+  const s=document.createElement('style');
+  s.textContent=`
 .kd-workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
 .kd-workflow button{margin:0;background:#eef6fb;color:#123b5d;border:1px solid #cfe0ec}
 .kd-workflow button.active{background:linear-gradient(135deg,#1976d2,#0f766e);color:#fff;border-color:transparent}
@@ -568,6 +571,9 @@ if(localStorage.getItem('kd_login')==='1')show();else render();navigator.service
 .kd-quick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .kd-quick button{margin:0;background:#fff;color:#1261a0;border:1px solid #d6e3ea}
 @media(max-width:600px){.kd-workflow{grid-template-columns:repeat(2,1fr)}.kd-workflow button{font-size:12px}.kd-quick{grid-template-columns:1fr}}
+`;
+  document.head.appendChild(s);
+})();
 function kdFindDirect(selector){return document.querySelector(selector)}
 function kdWorkflowSetup(){
   const d=document.getElementById('dokumen');
