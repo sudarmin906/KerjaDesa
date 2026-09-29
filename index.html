@@ -53,7 +53,78 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
 .doc-note{border:1px solid #333;padding:7px;font-size:9.5pt;line-height:1.4;min-height:38mm}.doc-photo-frame{border:1px solid #333;padding:5px;text-align:center;min-height:42mm;display:flex;align-items:center;justify-content:center}.doc-photo-frame img{max-width:100%;max-height:62mm;object-fit:contain}
 .signature{text-align:center;margin-top:12mm;font-size:10.5pt}.ai-box{border:1px solid #cfe0ec;background:#f5faff;border-radius:12px;padding:12px;margin-top:10px}
 @media print{body{background:#fff!important;padding:0!important}header,.nav,#login,#app>div:not(#dokumen),#dokumen>.card:not(.print-area),#docResult,.no-print{display:none!important}#dokumen{display:block!important}.report-print,.print-report{display:block!important}}
-</style></head><body>
+<style id="kd-print-fit-v2">
+/* Cetak langsung: ukuran logo sampul dan foto dokumentasi dikunci agar tidak perlu edit manual */
+@media print{
+  @page{size:A4 portrait;margin:15mm}
+  @page landscape{size:A4 landscape;margin:12mm 14mm}
+  .report-page{overflow:hidden}
+  .portrait-page{page:portrait}
+  .landscape-page{page:landscape}
+  .cover-logo{
+    width:45mm!important;
+    height:45mm!important;
+    max-width:45mm!important;
+    max-height:45mm!important;
+    object-fit:contain!important;
+    margin:12mm auto 14mm!important;
+  }
+  .cover-logo.placeholder{
+    width:45mm!important;
+    height:45mm!important;
+  }
+  .cover-title{margin-bottom:12mm!important}
+  .cover-region{margin-top:16mm!important}
+  .doc-landscape-grid{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:4mm!important;
+    width:100%!important;
+  }
+  .doc-roll{
+    display:grid!important;
+    grid-template-columns:38% 62%!important;
+    gap:4mm!important;
+    align-items:center!important;
+    width:100%!important;
+    min-height:50mm!important;
+    height:50mm!important;
+    break-inside:avoid!important;
+    page-break-inside:avoid!important;
+  }
+  .doc-note{
+    box-sizing:border-box!important;
+    width:100%!important;
+    min-height:46mm!important;
+    max-height:48mm!important;
+    overflow:hidden!important;
+    padding:5px!important;
+    font-size:9pt!important;
+    line-height:1.3!important;
+  }
+  .doc-photo-frame{
+    box-sizing:border-box!important;
+    width:100%!important;
+    height:50mm!important;
+    min-height:50mm!important;
+    max-height:50mm!important;
+    padding:3mm!important;
+    overflow:hidden!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
+  .doc-photo-frame img{
+    display:block!important;
+    width:auto!important;
+    height:auto!important;
+    max-width:100%!important;
+    max-height:44mm!important;
+    object-fit:contain!important;
+    margin:auto!important;
+  }
+}
+</style></style></head><body>
 <header><div class="brandbar"><div class="brand-left"><img class="brand-logo" src="foto_profil.jpg" alt="Profil"><div><div class="brand-name">Kerja<span>Desa</span></div><div class="brand-sub">Sistem Kerja Pendamping Desa • Kecamatan Sendana • Kabupaten Majene</div></div></div><div class="profile-chip"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"><div><b>SUDARMIN ARIPUDDIN</b><small>Pendamping Lokal Desa</small></div></div></div></header>
 <main>
 <section id="login" class="card login-card"><div class="login-hero"><span class="login-tag">Sistem Kerja Pendamping Desa</span><img class="login-photo" src="foto_profil.jpg" alt="Sudarmin Aripuddin"><h2>Selamat Datang di<br><span style="color:#ffd34d">KerjaDesa</span></h2><p>Administrasi, dokumentasi, monitoring, DRP, laporan bulanan, dan SPPD dalam satu aplikasi yang dapat digunakan dari HP.</p><div style="margin-top:10px;font-size:12px;opacity:.85">Kecamatan Sendana • Kabupaten Majene • Sulawesi Barat</div></div><div class="login-form"><h2>Masuk ke Aplikasi</h2><p class="muted">Gunakan akun Anda untuk membuka dashboard KerjaDesa.</p><input id="user" value="admin" placeholder="Username" autocomplete="username"><input id="pass" value="admin123" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button type="button" onclick="doLogin()">🔐 Masuk ke KerjaDesa</button><p id="loginMsg" class="muted"></p><div style="margin-top:22px;padding:13px;border-radius:14px;background:#f2f7fb;font-size:12px;color:#66788a"><b>Offline Ready</b><br>Data kerja tetap dapat disimpan di perangkat saat koneksi internet tidak tersedia.</div></div></section><section id="app">
