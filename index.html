@@ -592,7 +592,25 @@ function downloadWord(){
  const w3='<div class="WordSection3" style="page:WordSection3;mso-page-orientation:portrait;page-break-before:always">'+pages[4].outerHTML+'</div>';
  const w4='<div class="WordSection4" style="page:WordSection4;mso-page-orientation:portrait;page-break-before:always">'+pages[5].outerHTML+'</div>';
  const title='Laporan Kunjungan Lapangan '+monthNameFromPeriod(data.docs?.drp?.parsed?.header?.periode||periodLabel());
- const html='<!doctype html><html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><meta name="ProgId" content="Word.Document"><title>'+esc(title)+'</title>'+css+'</head><body style="tab-interval:.5in">'+w1+w2+w3+w4+'</body></html>';
+ const html='<!doctype html><html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><meta name="ProgId" content="Word.Document"><title>'+esc(title)+'</title>'+css+'</head><body style="tab-interval:.5in">'+w1+w2+w3+w4+'</body><script>
+(function(){
+  window.doLogin=function(){
+    var u=(document.getElementById('user')||{}).value||'';
+    var p=(document.getElementById('pass')||{}).value||'';
+    var msg=document.getElementById('loginMsg');
+    if(String(u).trim()==='admin' && p==='admin123'){
+      try{localStorage.setItem('kd_login','1')}catch(e){}
+      var login=document.getElementById('login'),app=document.getElementById('app'),nav=document.getElementById('nav');
+      if(login)login.style.display='none';
+      if(app)app.style.display='block';
+      if(nav)nav.classList.remove('hide');
+      try{if(typeof render==='function')render()}catch(e){console.error(e)}
+    }else if(msg){msg.textContent='Username atau password salah. Gunakan admin / admin123.'}
+  };
+  var b=document.querySelector('#login button[onclick*="doLogin"]');
+  if(b)b.onclick=window.doLogin;
+})();
+</script></html>';
  const blob=new Blob(['\\ufeff'+html],{type:'application/msword;charset=utf-8'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Laporan_Kunjungan_Lapangan_'+(monthNameFromPeriod(data.docs?.drp?.parsed?.header?.periode||periodLabel()))+'_2026.doc';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
