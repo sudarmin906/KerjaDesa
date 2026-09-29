@@ -56,7 +56,7 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
 <div id="monitoring" class="hide"><div class="card"><h2>Monitoring Lapangan</h2><input id="mkeg" placeholder="ID / nama kegiatan"><input id="mpet" placeholder="Nama petugas"><input id="mprog" type="number" min="0" max="100" placeholder="Progres 0-100"><textarea id="mcat" placeholder="Catatan hasil monitoring"></textarea><button onclick="gps()">📍 Ambil Lokasi GPS</button><p id="gpsout" class="muted">Lokasi belum diambil</p><button onclick="addMonitoring()">Simpan Monitoring</button></div><input id="mSearch" placeholder="🔎 Cari monitoring, petugas, atau kegiatan..." oninput="kdFilterLists()"><div id="mlist"></div></div>
 <div id="dokumen" class="hide">
 <div id="drpPanel" class="card print-area"><h2>📄 Dokumen & Laporan Bulanan</h2><p class="muted">Upload DRP Bulanan untuk membuat laporan. Untuk SPPD, gunakan template Word asli di bawah; tidak perlu mengunggah SPPD setiap kali.</p>
-<div class="drop"><b>1. Upload DRP Bulanan</b><input id="drpFile" type="file" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt" onchange="autoProcessOne('drp')"><div id="drpStatus" class="small muted">Belum ada DRP.</div></div>
+<div class="drop"><b>1. Upload DRP Bulanan</b><p class="small muted" style="margin:6px 0">Jika pencarian 🔎 tidak muncul di File Manager HP, gunakan tombol di bawah. KerjaDesa akan membuka pemilih dokumen dengan filter PDF/Word/Excel.</p><div class="actions"><button type="button" class="secondary" onclick="kdPickDrp()">🔎 Cari / Pilih Dokumen DRP</button><button type="button" class="secondary" onclick="document.getElementById('drpFile').click()">📂 Buka File Manager</button></div><input id="drpFile" type="file" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" onchange="autoProcessOne('drp')"><div id="drpChosen" class="pill" style="margin-top:8px">Belum ada file dipilih.</div><div id="drpStatus" class="small muted">Belum ada DRP.</div></div>
 <div class="pill"><b>Status:</b> <span id="docStatus">Belum ada dokumen yang diproses.</span></div>
 <button onclick="processDocs()">⚙️ Proses Ulang Semua Dokumen</button></div>
 <div id="docResult"></div><div id="drpPreview"></div>
@@ -195,8 +195,36 @@ function renderDrpPreview(drp){
   const h=drp.header||{};
   document.getElementById('drpPreview').innerHTML=`<div class="card"><h3>✅ Hasil Pembacaan DRP</h3><p class="small"><b>${esc(h.nama||'-')}</b> • ${esc(h.posisi||'-')} • ${esc(h.periode||'-')}</p><p class="small">${esc(h.provinsi||'-')} / ${esc(h.kabupaten||'-')} / ${esc(h.kecamatan||'-')}<br>Desa: ${esc(h.desa||'-')}</p><p><span class="badge">${drp.count} kegiatan terbaca</span> <span class="badge">${drp.aktivitas.length} aktivitas</span> <span class="badge">${drp.kunlap.length} kunjungan lapangan</span></p><div class="tablewrap"><table class="simpletable"><thead><tr><th>No</th><th>Tanggal</th><th>Waktu</th><th>Jenis</th><th>Status</th><th>Lokasi</th><th>Deskripsi</th></tr></thead><tbody>${drp.all.map(x=>`<tr><td>${x.no}</td><td>${esc(x.tanggal)}</td><td>${esc(x.waktu)}</td><td>${esc(x.jenis)}</td><td>${x.kunjungan?'Kunjungan Lapangan':'Bukan Kunjungan Lapangan'}</td><td>${esc(x.lokasi)}</td><td>${esc(x.deskripsi)}</td></tr>`).join('')}</tbody></table></div></div>`
 }
-async function autoProcessOne(kind){
-  const f=document.getElementById(kind==='drp'?'drpFile':'sppdFile').files[0];if(!f)return;
+async function kdPickDrp(){
+  const accept=[{description:'Dokumen DRP',accept:{
+    'application/pdf':['.pdf'],
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document':['.docx'],
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx'],
+    'application/vnd.ms-excel':['.xls'],
+    'text/csv':['.csv'],
+    'text/plain':['.txt']
+  }}];
+  try{
+    if(window.showOpenFilePicker){
+      const handles=await window.showOpenFilePicker({multiple:false,types:accept,excludeAcceptAllOption:false});
+      if(!handles?.length)return;
+      const f=await handles[0].getFile();
+      const input=document.getElementById('drpFile');
+      try{
+        const dt=new DataTransfer();dt.items.add(f);input.files=dt.files;
+      }catch(e){}
+      const chosen=document.getElementById('drpChosen');if(chosen)chosen.innerHTML='📄 <b>'+esc(f.name)+'</b> • '+Math.round(f.size/1024)+' KB';
+      await autoProcessOne('drp',f);
+      return;
+    }
+  }catch(e){
+    if(e?.name==='AbortError')return;
+  }
+  document.getElementById('drpFile').click();
+}
+async function autoProcessOne(kind,selectedFile=null){
+  const f=selectedFile||document.getElementById(kind==='drp'?'drpFile':'sppdFile').files[0];if(!f)return;
+  if(kind==='drp'){const chosen=document.getElementById('drpChosen');if(chosen)chosen.innerHTML='📄 <b>'+esc(f.name)+'</b> • '+Math.round(f.size/1024)+' KB';}
   const st=document.getElementById(kind==='drp'?'drpStatus':'sppdStatus');st.innerHTML='<span class="loading">⏳ Memproses '+esc(f.name)+'...</span>';
   try{
     const txt=await readFile(f);data.docs=data.docs||{};
