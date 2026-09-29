@@ -1,0 +1,33 @@
+name: KerjaDesa Deployment Smoke Check
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for GitHub Pages propagation
+        run: sleep 30
+
+      - name: Check published KerjaDesa
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://sudarmin906.github.io/KerjaDesa/"
+          body=""
+          for attempt in {1..10}; do
+            echo "Smoke check attempt $attempt/10"
+            body="$(curl -fsSL --retry 2 --connect-timeout 10 --max-time 30 "$url" || true)"
+            if printf '%s' "$body" | grep -q 'id="login"' &&                printf '%s' "$body" | grep -q 'KerjaDesa'; then
+              echo "Published site is responding with the KerjaDesa login shell."
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "GitHub Pages smoke check failed."
+          exit 1
