@@ -1,20 +1,5 @@
 <!doctype html>
-<html lang="id"><head><script>
-(function(){
-  try{
-    const q=new URLSearchParams(location.search);
-    if(q.get('bersihkan')==='1'){
-      try{localStorage.clear()}catch(e){}
-      try{sessionStorage.clear()}catch(e){}
-      try{indexedDB.deleteDatabase('KerjaDesaMasterTemplateDB')}catch(e){}
-      const cleanUrl=location.origin+location.pathname+'?cleaned=1';
-      if(window.caches){
-        caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))).finally(()=>location.replace(cleanUrl));
-      }else location.replace(cleanUrl);
-    }
-  }catch(e){console.error(e)}
-})();
-</script>
+<html lang="id"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f766e"><link rel="manifest" href="manifest.json">
 <title>KerjaDesa V26 Professional - Sistem Kerja Pendamping Desa</title>
@@ -52,84 +37,11 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
 .kd-progress>span{display:block;height:100%;background:linear-gradient(90deg,#1976d2,#0f766e)}
 .kd-empty{padding:18px;text-align:center;color:#66788a;border:1px dashed #c9d6dc;border-radius:12px;background:#fafcfd}
 @media(max-width:600px){.kd-data-center .grid{grid-template-columns:1fr 1fr}}
-</style></style>
-<style id="kd-original-master-override">
-@page{size:A4 portrait;margin:15mm 12mm}
-@page landscape{size:A4 landscape;margin:12mm 15mm}
-.print-report{font-family:"Times New Roman",Times,serif;background:#fff;color:#000}
-.report-page{width:210mm;min-height:267mm;margin:0 auto;padding:0;box-sizing:border-box;background:#fff;break-after:page;page-break-after:always}
-.portrait-page{page:portrait}.landscape-page{width:297mm;min-height:186mm;page:landscape}
-.cover-head{position:relative;height:267mm;padding:0;text-align:center;font-weight:700;box-sizing:border-box}
-.cover-instansi{position:absolute;top:1mm;left:0;right:0;font-family:"Times New Roman",serif;font-size:7pt;line-height:1.28;margin:0 auto}
-.cover-logo{position:absolute;top:63mm;left:50%;transform:translateX(-50%);width:38mm;height:38mm;object-fit:contain;display:block;margin:0}
-.cover-title{position:absolute;top:202mm;left:0;right:0;font-size:8pt;line-height:1.15;margin:0;font-weight:700}
-.cover-name{position:absolute;top:208mm;left:0;right:0;font-size:7.5pt;line-height:1.1;margin:0;font-weight:700}
-.cover-position{position:absolute;top:212mm;left:0;right:0;font-size:7.5pt;line-height:1.1}
-.cover-region{position:absolute;top:216mm;left:0;right:0;font-size:7.5pt;line-height:1.38;margin:0}
-.cover-footer-title{position:absolute;top:247mm;left:0;right:0;font-size:7.5pt;line-height:1.15;font-weight:700;margin:0}
-.report-page h2{font-size:13pt;text-align:center;margin:0 0 3mm}.report-subtitle{font-size:12pt;text-align:center;font-weight:700;line-height:1.35}
-.report-page h3{font-size:13pt;margin:0 0 4mm}.report-page p,.report-page li{font-size:11pt;line-height:1.35;text-align:justify}
-.identity-table{width:100%;border-collapse:collapse;margin:3mm 0 7mm}.identity-table td{border:0;padding:1.2mm 0;font-size:11pt}.identity-table td:first-child{width:42mm}
-.wide-table,.result-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9.5pt}.wide-table th,.wide-table td,.result-table th,.result-table td{border:1px solid #000;padding:2.2mm 1.5mm;vertical-align:top}.wide-table th,.result-table th{text-align:center;font-weight:700}
-.result-table th:nth-child(1),.result-table td:nth-child(1){width:9%}.result-table th:nth-child(2),.result-table td:nth-child(2){width:18%}.result-table th:nth-child(3),.result-table td:nth-child(3){width:20%}.result-table th:nth-child(4),.result-table td:nth-child(4){width:53%}
-.doc-landscape-grid{display:grid;grid-template-columns:1fr 1fr;gap:5mm}.doc-roll{display:grid;grid-template-columns:48% 52%;gap:3mm;align-items:center;break-inside:avoid;page-break-inside:avoid;min-height:55mm}.doc-note{border:1px solid #000;border-radius:8px;padding:5mm;font-size:9.5pt;line-height:1.35;min-height:45mm}.doc-photo-frame{border:1px solid #000;border-radius:10px;padding:2mm;min-height:45mm;display:flex;align-items:center;justify-content:center}.doc-photo-frame img{max-width:100%;max-height:58mm;object-fit:contain}
-.signature{text-align:center;margin-top:12mm;font-size:11pt}
-@media print{body{background:#fff!important}.no-print,header,.nav,#login,#app>div:not(#dokumen){display:none!important}.report-print{display:block!important}.report-page{margin:0}.landscape-page{width:297mm}.portrait-page{width:210mm}}
-</style>
-<style id="kd-section-ab-master">
-.master-a-title{font-size:12pt;font-weight:700;text-align:center;margin:0 0 6mm}
-.master-a-sub{font-size:10.5pt;text-align:left;line-height:1.25;margin-bottom:3mm}
-.report-page>hr{border:0;border-top:1px solid #777;margin:0 0 6mm}
-.report-page h3{font-size:11.5pt;font-weight:700;text-align:left;margin:0 0 4mm}
-.identity-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:0 0 8mm}
-.identity-table td{border:1px solid #555;padding:1.4mm 2mm;font-size:9.5pt;line-height:1.15}
-.identity-table td:first-child{width:34%}
-.wide-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.5pt}
-.wide-table th,.wide-table td{border:1px solid #555;padding:1.4mm 1.5mm;vertical-align:middle}
-.wide-table th{text-align:center;font-weight:700}
-.wide-table th:nth-child(1),.wide-table td:nth-child(1){width:16%}
-.wide-table th:nth-child(2),.wide-table td:nth-child(2){width:27%}
-.wide-table th:nth-child(3),.wide-table td:nth-child(3){width:18%}
-.wide-table th:nth-child(4),.wide-table td:nth-child(4){width:39%}
-</style>
-<style id="kd-section-d-master">
-@page landscape{size:A4 landscape;margin:12mm 14mm}
-.landscape-page{width:297mm!important;min-height:186mm!important;box-sizing:border-box;padding:0!important;page:landscape}
-.landscape-page h3{font-size:11.5pt;font-weight:700;text-align:left;margin:0 0 4mm}
-.result-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.5pt}
-.result-table th,.result-table td{border:1px solid #555;padding:1.5mm 1.7mm;vertical-align:top}
-.result-table th{text-align:center;font-weight:700}
-.result-table th:nth-child(1),.result-table td:nth-child(1){width:6%}
-.result-table th:nth-child(2),.result-table td:nth-child(2){width:12%}
-.result-table th:nth-child(3),.result-table td:nth-child(3){width:17%}
-.result-table th:nth-child(4),.result-table td:nth-child(4){width:65%}
-.result-table td:nth-child(4){text-align:justify;text-justify:inter-word;line-height:1.28}
-@media print{
- .landscape-page{width:297mm!important;min-height:186mm!important;page:landscape}
-}
-</style>
-<style id="kd-section-g-master">
-@page sectionG{size:A4 landscape;margin:12mm 14mm}
-.landscape-page{page:landscape}
-.g-landscape-page{page:sectionG;width:297mm!important;min-height:186mm!important;padding:0!important;box-sizing:border-box}
-.g-landscape-page h3{font-size:11.5pt;font-weight:700;margin:0 0 5mm;text-align:left}
-.g-landscape-page .doc-landscape-grid{display:grid;grid-template-columns:1fr;gap:5mm;width:100%}
-.g-landscape-page .doc-roll{display:grid;grid-template-columns:40% 60%;gap:4mm;align-items:center;break-inside:avoid;page-break-inside:avoid;min-height:50mm}
-.g-landscape-page .doc-note{border:1px solid #555;border-radius:0;padding:4mm;font-size:9.5pt;line-height:1.4;min-height:42mm;box-sizing:border-box}
-.g-landscape-page .doc-note>div{margin-bottom:3mm}.g-landscape-page .doc-note>div:last-child{margin-bottom:0}
-.g-landscape-page .doc-photo-frame{border:1px solid #555;border-radius:0;padding:2mm;min-height:50mm;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
-.g-landscape-page .doc-photo-frame img{max-width:100%;max-height:57mm;object-fit:contain}
-@media print{.g-landscape-page{page:sectionG;width:297mm!important;min-height:186mm!important}.g-landscape-page .doc-roll{break-inside:avoid;page-break-inside:avoid}}
-</style><style id="kd-section-d-data-master">
-.result-table td:nth-child(2),.result-table td:nth-child(3){white-space:normal}
-.result-table td:nth-child(4){text-align:justify;text-align-last:left}
-</style><style id="kd-section-g-portrait-master">
-.g-landscape-page{page:auto!important;width:210mm!important;min-height:267mm!important}
-</style></head><body>
+</style></style></head><body>
 <header><div class="brandbar"><div class="brand-left"><img class="brand-logo" src="foto_profil.jpg" alt="Profil"><div><div class="brand-name">Kerja<span>Desa</span></div><div class="brand-sub">Sistem Kerja Pendamping Desa • Kecamatan Sendana • Kabupaten Majene</div></div></div><div class="profile-chip"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"><div><b>SUDARMIN ARIPUDDIN</b><small>Pendamping Lokal Desa</small></div></div></div></header>
 <main>
 <section id="login" class="card login-card"><div class="login-hero"><span class="login-tag">Sistem Kerja Pendamping Desa</span><img class="login-photo" src="foto_profil.jpg" alt="Sudarmin Aripuddin"><h2>Selamat Datang di<br><span style="color:#ffd34d">KerjaDesa</span></h2><p>Administrasi, dokumentasi, monitoring, DRP, laporan bulanan, dan SPPD dalam satu aplikasi yang dapat digunakan dari HP.</p><div style="margin-top:10px;font-size:12px;opacity:.85">Kecamatan Sendana • Kabupaten Majene • Sulawesi Barat</div></div><div class="login-form"><h2>Masuk ke Aplikasi</h2><p class="muted">Gunakan akun Anda untuk membuka dashboard KerjaDesa.</p><input id="user" value="admin" placeholder="Username" autocomplete="username"><input id="pass" value="admin123" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button type="button" onclick="doLogin()">🔐 Masuk ke KerjaDesa</button><p id="loginMsg" class="muted"></p><div style="margin-top:22px;padding:13px;border-radius:14px;background:#f2f7fb;font-size:12px;color:#66788a"><b>Offline Ready</b><br>Data kerja tetap dapat disimpan di perangkat saat koneksi internet tidak tersedia.</div></div></section><section id="app">
-<div id="home"><div class="welcome card"><div class="welcome-copy"><span class="tag">Mendampingi Desa • Membangun Negeri</span><h2>Selamat Datang di <span>KerjaDesa</span></h2><p class="muted" style="font-size:15px;max-width:650px">Ruang kerja digital untuk mengelola kegiatan, monitoring lapangan, dokumen, laporan bulanan, dan SPPD Pendamping Desa.</p><div style="margin-top:18px;font-weight:800">SUDARMIN ARIPUDDIN</div><div class="muted" style="font-size:13px">Pendamping Lokal Desa • Kecamatan Sendana • Kabupaten Majene</div></div><div class="welcome-profile"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"></div></div><div class="stats"><div class="stat-card"><div class="stat-icon si-blue">📋</div><div><div class="stat" id="jmlK">0</div><div class="muted">Kegiatan</div></div></div><div class="stat-card"><div class="stat-icon si-green">📍</div><div><div class="stat" id="jmlM">0</div><div class="muted">Monitoring</div></div></div><div class="stat-card"><div class="stat-icon si-orange">📄</div><div><div class="stat">SPPD</div><div class="muted">Template asli</div></div></div><div class="stat-card"><div class="stat-icon si-purple">📷</div><div><div class="stat">Foto</div><div class="muted">Dokumentasi</div></div></div></div><div class="section-title"><h3>Menu Utama</h3><span>Akses cepat KerjaDesa</span></div><div class="feature-grid"><div class="feature feature-blue" role="button" tabindex="0" onclick="page('sppd')"><div class="fi">🧾</div><h3>SPPD</h3><p>Pengaturan identitas dan pembuatan SPPD dari template Word asli.</p></div><div class="feature feature-green" role="button" tabindex="0" onclick="page('kegiatan')"><div class="fi">📅</div><h3>Agenda Kegiatan</h3><p>Pencatatan kegiatan dan jadwal lapangan.</p></div><div class="feature feature-purple" role="button" tabindex="0" onclick="page('laporan')"><div class="fi">📑</div><h3>Laporan Bulanan</h3><p>Pengolahan DRP menjadi laporan bulanan.</p></div><div class="feature feature-orange" role="button" tabindex="0" onclick="page('drp')"><div class="fi">🗂️</div><h3>Dokumen Desa</h3><p>Pusat penyimpanan dokumen kerja dan administrasi.</p></div><div class="feature feature-red" role="button" tabindex="0" onclick="page('monitoring')"><div class="fi">📊</div><h3>Monitoring</h3><p>Pencatatan progres dan hasil monitoring lapangan.</p></div><div class="feature feature-green" role="button" tabindex="0" onclick="page('dokumentasi')"><div class="fi">📸</div><h3>Galeri Kegiatan</h3><p>Dokumentasi foto kegiatan lapangan.</p></div><div class="feature feature-blue" role="button" tabindex="0" onclick="page('monitoring');setTimeout(gps,100)"><div class="fi">📍</div><h3>GPS Lapangan</h3><p>Catat koordinat lokasi kegiatan saat diperlukan.</p></div><div class="feature feature-purple" role="button" tabindex="0" onclick="alert('Pengaturan aplikasi tersimpan otomatis di perangkat. Identitas laporan dan SPPD dapat diubah dari menu masing-masing.')"><div class="fi">⚙️</div><h3>Pengaturan</h3><p>Data dan preferensi aplikasi tersimpan di perangkat.</p></div></div><div class="card" style="margin-top:14px;background:linear-gradient(135deg,#0b3158,#1266a5);color:#fff"><h3 style="margin-top:0">Status Perangkat</h3><div id="online">Memeriksa...</div><button class="secondary" onclick="installApp()" style="margin-top:10px;background:#fff;color:#1261a0">📱 Pasang ke Layar Utama</button></div><div class="card kd-data-center" style="margin-top:14px">
+<div id="home"><div class="welcome card"><div class="welcome-copy"><span class="tag">Mendampingi Desa • Membangun Negeri</span><h2>Selamat Datang di <span>KerjaDesa</span></h2><p class="muted" style="font-size:15px;max-width:650px">Ruang kerja digital untuk mengelola kegiatan, monitoring lapangan, dokumen, laporan bulanan, dan SPPD Pendamping Desa.</p><div style="margin-top:18px;font-weight:800">SUDARMIN ARIPUDDIN</div><div class="muted" style="font-size:13px">Pendamping Lokal Desa • Kecamatan Sendana • Kabupaten Majene</div></div><div class="welcome-profile"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"></div></div><div class="stats"><div class="stat-card"><div class="stat-icon si-blue">📋</div><div><div class="stat" id="jmlK">0</div><div class="muted">Kegiatan</div></div></div><div class="stat-card"><div class="stat-icon si-green">📍</div><div><div class="stat" id="jmlM">0</div><div class="muted">Monitoring</div></div></div><div class="stat-card"><div class="stat-icon si-orange">📄</div><div><div class="stat">SPPD</div><div class="muted">Template asli</div></div></div><div class="stat-card"><div class="stat-icon si-purple">📷</div><div><div class="stat">Foto</div><div class="muted">Dokumentasi</div></div></div></div><div class="section-title"><h3>Menu Utama</h3><span>Akses cepat KerjaDesa</span></div><div class="feature-grid"><div class="feature feature-blue"><div class="fi">🧾</div><h3>SPPD</h3><p>Pengaturan identitas dan pembuatan SPPD dari template Word asli.</p></div><div class="feature feature-green"><div class="fi">📅</div><h3>Agenda Kegiatan</h3><p>Pencatatan kegiatan dan jadwal lapangan.</p></div><div class="feature feature-purple"><div class="fi">📑</div><h3>Laporan Bulanan</h3><p>Pengolahan DRP menjadi laporan bulanan.</p></div><div class="feature feature-orange"><div class="fi">🗂️</div><h3>Dokumen Desa</h3><p>Pusat penyimpanan dokumen kerja dan administrasi.</p></div><div class="feature feature-red"><div class="fi">📊</div><h3>Monitoring</h3><p>Pencatatan progres dan hasil monitoring lapangan.</p></div><div class="feature feature-green"><div class="fi">📸</div><h3>Galeri Kegiatan</h3><p>Dokumentasi foto kegiatan lapangan.</p></div><div class="feature feature-blue"><div class="fi">📍</div><h3>GPS Lapangan</h3><p>Catat koordinat lokasi kegiatan saat diperlukan.</p></div><div class="feature feature-purple"><div class="fi">⚙️</div><h3>Pengaturan</h3><p>Data dan preferensi aplikasi tersimpan di perangkat.</p></div></div><div class="card" style="margin-top:14px;background:linear-gradient(135deg,#0b3158,#1266a5);color:#fff"><h3 style="margin-top:0">Status Perangkat</h3><div id="online">Memeriksa...</div><button class="secondary" onclick="installApp()" style="margin-top:10px;background:#fff;color:#1261a0">📱 Pasang ke Layar Utama</button></div><div class="card kd-data-center" style="margin-top:14px">
 <h3 style="margin-top:0">🛠️ Pusat Data KerjaDesa</h3>
 <p class="small muted">Kelola data yang tersimpan di HP. Backup dapat dipindahkan ke perangkat lain dan dipulihkan kembali.</p>
 <div class="grid">
@@ -144,7 +56,7 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
 <div id="monitoring" class="hide"><div class="card"><h2>Monitoring Lapangan</h2><input id="mkeg" placeholder="ID / nama kegiatan"><input id="mpet" placeholder="Nama petugas"><input id="mprog" type="number" min="0" max="100" placeholder="Progres 0-100"><textarea id="mcat" placeholder="Catatan hasil monitoring"></textarea><button onclick="gps()">📍 Ambil Lokasi GPS</button><p id="gpsout" class="muted">Lokasi belum diambil</p><button onclick="addMonitoring()">Simpan Monitoring</button></div><input id="mSearch" placeholder="🔎 Cari monitoring, petugas, atau kegiatan..." oninput="kdFilterLists()"><div id="mlist"></div></div>
 <div id="dokumen" class="hide">
 <div id="drpPanel" class="card print-area"><h2>📄 Dokumen & Laporan Bulanan</h2><p class="muted">Upload DRP Bulanan untuk membuat laporan. Untuk SPPD, gunakan template Word asli di bawah; tidak perlu mengunggah SPPD setiap kali.</p>
-<div class="drop"><b>1. Upload DRP Bulanan</b><p class="small muted" style="margin:6px 0">Jika pencarian 🔎 tidak muncul di File Manager HP, gunakan tombol di bawah. KerjaDesa akan membuka pemilih dokumen dengan filter PDF/Word/Excel.</p><div class="actions"><button type="button" class="secondary" onclick="kdPickDrp()">🔎 Cari / Pilih Dokumen DRP</button><button type="button" class="secondary" onclick="document.getElementById('drpFile').click()">📂 Buka File Manager</button><button type="button" class="secondary" onclick="kdClearDrp()">🧹 Bersihkan Data DRP Lama</button></div><input id="drpFile" type="file" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" onchange="autoProcessOne('drp')"><div id="drpChosen" class="pill" style="margin-top:8px">Belum ada file dipilih.</div><div id="drpStatus" class="small muted">Belum ada DRP.</div></div>
+<div class="drop"><b>1. Upload DRP Bulanan</b><input id="drpFile" type="file" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt" onchange="autoProcessOne('drp')"><div id="drpStatus" class="small muted">Belum ada DRP.</div></div>
 <div class="pill"><b>Status:</b> <span id="docStatus">Belum ada dokumen yang diproses.</span></div>
 <button onclick="processDocs()">⚙️ Proses Ulang Semua Dokumen</button></div>
 <div id="docResult"></div><div id="drpPreview"></div>
@@ -152,8 +64,8 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
 <div class="card no-print" id="sppdPanel"><div id="sppdEditorCard"><h3>🧾 SPPD — Template Word Asli & Editable</h3><p class="small muted">Template Word SPPD asli digunakan apa adanya. Identitas dapat diubah melalui Pengaturan Identitas SPPD. Huruf besar/kecil pada Nama dan Jabatan dipertahankan persis seperti yang Anda ketik.</p>
 <div class="card" style="margin:10px 0;border:2px solid #0f766e;background:#f7fbfb"><h3 style="margin-top:0">⚙️ Pengaturan Identitas SPPD</h3><p class="small muted">Gunakan bagian ini khusus untuk mengganti identitas. Setelah menekan Simpan Identitas, data akan tersimpan di HP dan otomatis dipakai saat membuat SPPD berikutnya.</p><div class="grid"><div><label><b>Nama Lengkap</b></label><input id="sppdNama" placeholder="Contoh: SUDARMIN ARIPUDDIN" autocomplete="off"></div><div><label><b>Jabatan</b></label><input id="sppdJabatan" placeholder="Contoh: Pendamping lokal Desa" autocomplete="off"></div><div><label><b>Berangkat Dari</b></label><input id="sppdBerangkat" placeholder="Contoh: Paminggalan"></div><div><label><b>Tempat Kedudukan</b></label><input id="sppdKedudukan" placeholder="Contoh: Paminggalan"></div><div><label><b>Tiba di</b></label><input id="sppdTiba" placeholder="Contoh: Tallu Banua Utara"></div></div><button type="button" onclick="saveSppdIdentity()">💾 Simpan Identitas SPPD</button><div id="sppdIdentityStatus" class="small muted"></div></div>
 <div class="grid"><input id="sppdNIK" placeholder="NIK"><input id="sppdKabupaten" placeholder="Kabupaten"><input id="sppdProvinsi" placeholder="Provinsi"><input id="sppdPosisi" placeholder="Posisi"><input id="sppdBulan" placeholder="Bulan, misalnya September" autocomplete="off"><span class="small muted" style="grid-column:1/-1">Bulan bebas ditulis huruf kecil/besar. Untuk judul Word, bulan otomatis menjadi HURUF BESAR.</span><input id="sppdTahun" type="number" min="2000" max="2100" placeholder="Tahun"><label>Logo SPPD <select id="sppdLogoPos"><option value="none" selected>Tanpa logo</option><option value="left">Kiri atas</option><option value="right">Kanan atas</option></select></label></div><p class="small muted">Logo SPPD dapat ditempatkan di kiri atau kanan atas halaman pertama.</p><div class="pill"><b>📅 Tanggal & Jumlah Hari per Kunjungan</b><p class="small muted">Isi tanggal mulai dan selesai untuk setiap kunjungan. Jumlah hari dihitung otomatis secara inklusif (tanggal mulai dan selesai dihitung).</p><div id="sppdVisits" class="small"></div></div><div class="actions"><button class="secondary" onclick="saveSppdData()">💾 Simpan Data SPPD</button><button class="secondary" onclick="resetSppdData()">↩️ Data Awal</button></div><div class="pill"><b>Preview:</b><div id="sppdPreview" class="small"></div></div><button onclick="makeSppdWord()">⬇️ Buat SPPD Word Asli</button><div id="sppdStatus" class="small muted"></div><p class="small muted">Template: <b>template_sppd_asli.docx</b> • Format asli dipertahankan.</p></div></div>
-<div id="laporanPanel" class="card no-print"><h3>📄 Laporan Bulanan — Format Master</h3><div class="row"><input id="rNama" placeholder="Nama Pendamping"><input id="rPosisi" value="PLD" placeholder="Posisi"></div><div class="row"><input id="rKec" placeholder="Kecamatan"><input id="rKab" placeholder="Kabupaten"></div><div class="row"><input id="rProv" placeholder="Provinsi"><input id="rPeriode" type="month"></div><textarea id="rCat" placeholder="Catatan tambahan laporan (opsional)"></textarea><div class="actions"><button onclick="makeReport()">📑 Buat Laporan Bulanan Otomatis</button><button type="button" class="secondary" onclick="copyGptNarrativePrompt()">🤖 Susun Narasi dengan GPT</button></div><p class="small muted">C, D, E dan F dianalisis dari seluruh DRP. Tombol GPT menyiapkan prompt dari data DRP untuk ChatGPT tanpa memasukkan seluruh uraian mentah ke laporan.</p></div>
-<div id="reportActions" class="card no-print hide"><h3>Output Laporan</h3><div class="actions"><button onclick="downloadWord()">⬇️ Word dari Master (.DOCX)</button><button onclick="printPdf()">🖨️ Cetak / PDF</button></div><p class="small muted">Untuk PDF di HP/Chrome, pilih menu cetak lalu pilih “Simpan sebagai PDF”.</p></div>
+<div id="laporanPanel" class="card no-print"><h3>📄 Laporan Bulanan — Format Master</h3><div class="row"><input id="rNama" placeholder="Nama Pendamping"><input id="rPosisi" value="PLD" placeholder="Posisi"></div><div class="row"><input id="rKec" placeholder="Kecamatan"><input id="rKab" placeholder="Kabupaten"></div><div class="row"><input id="rProv" placeholder="Provinsi"><input id="rPeriode" type="month"></div><textarea id="rCat" placeholder="Catatan tambahan laporan (opsional)"></textarea><button onclick="makeReport()">📑 Buat Laporan Bulanan Otomatis</button><p class="small muted">C, D, E dan F disusun berdasarkan seluruh kegiatan DRP. G mencocokkan dokumentasi berdasarkan tanggal.</p></div>
+<div id="reportActions" class="card no-print hide"><h3>Output Laporan</h3><div class="actions"><button onclick="downloadWord()">⬇️ Word</button><button onclick="printPdf()">🖨️ Cetak / PDF</button></div><p class="small muted">Untuk PDF di HP/Chrome, pilih menu cetak lalu pilih “Simpan sebagai PDF”.</p></div>
 <div id="docResult2"></div>
 </div>
 </section></main>
@@ -161,9 +73,7 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
 <div id="reportPrint" class="report-print"></div>
 <script src="jszip.min.js"></script>
 <script>
-let data=JSON.parse(localStorage.getItem('kerjadesa')||'{"kegiatan":[],"monitoring":[],"gps":null,"docs":{}}');const KD_PARSER_VERSION=6;let deferred=null;let reportHtml='';let reportText='';let profilePhoto='foto_profil.jpg';let logoPhoto='data:image/png;base64,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';let activityPhotos=[];
-
-try{if(data.docs?.drp?.parsed?.parserVersion!==KD_PARSER_VERSION){delete data.docs.drp;delete data.drpActivities;save()}}catch(e){console.error(e)}
+let data=JSON.parse(localStorage.getItem('kerjadesa')||'{"kegiatan":[],"monitoring":[],"gps":null,"docs":{}}');let deferred=null;let reportHtml='';let reportText='';let profilePhoto='foto_profil.jpg';let logoPhoto='';let activityPhotos=[];
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
 function save(){localStorage.setItem('kerjadesa',JSON.stringify(data));render()}
 function doLogin(){const u=(document.getElementById('user')?.value||'').trim(),pw=document.getElementById('pass')?.value||'',msg=document.getElementById('loginMsg');if(u==='admin'&&pw==='admin123'){try{localStorage.setItem('kd_login','1')}catch(e){}show()}else{if(msg)msg.textContent='Username atau password salah. Gunakan admin / admin123.'}}
@@ -282,53 +192,11 @@ function parseDRP(text){
 }
 function renderDrpPreview(drp){
   if(!drp)return;
-  drp=normalizeParsedDrp(drp);
-  if(!drp){
-    try{if(data.docs)data.docs.drp=null;data.drpActivities=[];data.kegiatan=[];save()}catch(e){}
-    const p=document.getElementById("drpPreview");if(p)p.innerHTML="<div class=\"card\"><b>🧹 Data DRP lama telah dibersihkan.</b><p class=\"small muted\">Silakan upload ulang DRP agar pembacaan menggunakan parser terbaru.</p></div>";
-    return;
-  }
-  const h=drp.header||{},stat=drp.complete?"<span class=\"badge\">✓ lengkap</span>":"<span class=\"badge warn\">⚠ belum lengkap</span>";
-  document.getElementById("drpPreview").innerHTML=`<div class="card"><h3>✅ Hasil Pembacaan DRP</h3><p class="small"><b>${esc(h.nama||"-")}</b> • ${esc(h.posisi||"-")} • ${esc(h.periode||"-")}</p><p class="small">${esc(h.provinsi||"-")} / ${esc(h.kabupaten||"-")} / ${esc(h.kecamatan||"-")}<br>Desa: ${esc(h.desa||"-")}</p><p><span class="badge">DRP ${drp.count}/${drp.expected||drp.count} kegiatan</span> <span class="badge">${drp.aktivitas.length} aktivitas</span> <span class="badge">${drp.kunlap.length} kunjungan lapangan</span> ${stat}</p><div class="tablewrap"><table class="simpletable"><thead><tr><th>No</th><th>Tanggal</th><th>Waktu</th><th>Jenis</th><th>Status</th><th>Lokasi</th><th>Deskripsi</th></tr></thead><tbody>${drp.all.map(x=>`<tr><td>${x.no}</td><td>${esc(x.tanggal)}</td><td>${esc(x.waktu)}</td><td>${esc(x.jenis)}</td><td>${x.kunjungan?"Kunjungan Lapangan":"Bukan Kunjungan Lapangan"}</td><td>${esc(x.lokasi)}</td><td>${esc(x.deskripsi)}</td></tr>`).join("")}</tbody></table></div></div>`;
+  const h=drp.header||{};
+  document.getElementById('drpPreview').innerHTML=`<div class="card"><h3>✅ Hasil Pembacaan DRP</h3><p class="small"><b>${esc(h.nama||'-')}</b> • ${esc(h.posisi||'-')} • ${esc(h.periode||'-')}</p><p class="small">${esc(h.provinsi||'-')} / ${esc(h.kabupaten||'-')} / ${esc(h.kecamatan||'-')}<br>Desa: ${esc(h.desa||'-')}</p><p><span class="badge">${drp.count} kegiatan terbaca</span> <span class="badge">${drp.aktivitas.length} aktivitas</span> <span class="badge">${drp.kunlap.length} kunjungan lapangan</span></p><div class="tablewrap"><table class="simpletable"><thead><tr><th>No</th><th>Tanggal</th><th>Waktu</th><th>Jenis</th><th>Status</th><th>Lokasi</th><th>Deskripsi</th></tr></thead><tbody>${drp.all.map(x=>`<tr><td>${x.no}</td><td>${esc(x.tanggal)}</td><td>${esc(x.waktu)}</td><td>${esc(x.jenis)}</td><td>${x.kunjungan?'Kunjungan Lapangan':'Bukan Kunjungan Lapangan'}</td><td>${esc(x.lokasi)}</td><td>${esc(x.deskripsi)}</td></tr>`).join('')}</tbody></table></div></div>`
 }
-function kdClearDrp(){
-  try{localStorage.removeItem("kerjadesa")}catch(e){}
-  data={kegiatan:[],monitoring:[],gps:null,docs:{}};reportHtml="";reportText="";
-  const f=document.getElementById("drpFile");if(f)f.value="";
-  const p=document.getElementById("drpPreview");if(p)p.innerHTML="";
-  const st=document.getElementById("drpStatus");if(st)st.innerHTML="<span class=\"ok\">✓ Data DRP lama sudah dibersihkan. Silakan upload DRP baru.</span>";
-  const ch=document.getElementById("drpChosen");if(ch)ch.textContent="Belum ada file dipilih.";updateDocStatus();save();
-}
-async function kdPickDrp(){
-  const accept=[{description:'Dokumen DRP',accept:{
-    'application/pdf':['.pdf'],
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document':['.docx'],
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx'],
-    'application/vnd.ms-excel':['.xls'],
-    'text/csv':['.csv'],
-    'text/plain':['.txt']
-  }}];
-  try{
-    if(window.showOpenFilePicker){
-      const handles=await window.showOpenFilePicker({multiple:false,types:accept,excludeAcceptAllOption:false});
-      if(!handles?.length)return;
-      const f=await handles[0].getFile();
-      const input=document.getElementById('drpFile');
-      try{
-        const dt=new DataTransfer();dt.items.add(f);input.files=dt.files;
-      }catch(e){}
-      const chosen=document.getElementById('drpChosen');if(chosen)chosen.innerHTML='📄 <b>'+esc(f.name)+'</b> • '+Math.round(f.size/1024)+' KB';
-      await autoProcessOne('drp',f);
-      return;
-    }
-  }catch(e){
-    if(e?.name==='AbortError')return;
-  }
-  document.getElementById('drpFile').click();
-}
-async function autoProcessOne(kind,selectedFile=null){
-  const f=selectedFile||document.getElementById(kind==='drp'?'drpFile':'sppdFile').files[0];if(!f)return;
-  if(kind==='drp'){const chosen=document.getElementById('drpChosen');if(chosen)chosen.innerHTML='📄 <b>'+esc(f.name)+'</b> • '+Math.round(f.size/1024)+' KB';}
+async function autoProcessOne(kind){
+  const f=document.getElementById(kind==='drp'?'drpFile':'sppdFile').files[0];if(!f)return;
   const st=document.getElementById(kind==='drp'?'drpStatus':'sppdStatus');st.innerHTML='<span class="loading">⏳ Memproses '+esc(f.name)+'...</span>';
   try{
     const txt=await readFile(f);data.docs=data.docs||{};
@@ -347,7 +215,7 @@ async function autoProcessOne(kind,selectedFile=null){
       data.docs.sppd={name:f.name,text:txt,summary,parsed:parseSPPD(txt),processedAt:new Date().toISOString()};
     }
     save();
-    st.innerHTML=kind==='drp'?`<span class="ok">✓ DRP selesai dibaca: ${parsed?.count||0}/${parsed?.expected||parsed?.count||0} kegiatan terbaca${parsed?.complete?' — lengkap':''}.</span>`:`<span class="ok">✓ Selesai: ${esc(f.name)}</span>`;
+    st.innerHTML=kind==='drp'?`<span class="ok">✓ DRP selesai dibaca: ${parsed?.count||0} kegiatan ditemukan.</span>`:`<span class="ok">✓ Selesai: ${esc(f.name)}</span>`;
     if(kind==='drp')renderDrpPreview(parsed);
     updateDocStatus()
   }catch(e){st.innerHTML='<span class="warn">Gagal membaca: '+esc(e.message)+'</span>'}
@@ -401,38 +269,6 @@ function dateLongId(s){
 }
 function dateKey(s){const m=String(s||'').match(/(\d{2})\/(\d{2})\/(20\d{2})/);return m?m[1]+'/'+m[2]+'/'+m[3]:String(s||'')}
 function locationVillage(s){let x=String(s||'').replace(/^SULAWESI BARAT\s*\/?/i,'').trim();const p=x.split('/').map(v=>v.trim()).filter(Boolean);return p.length?p[p.length-1]:x||'-'}
-function reportActivitySummary(desc){
- const d=String(desc||"").replace(/\\s+/g," ").trim(),l=d.toLowerCase();
- if(l.includes("gedung koperasi"))return "Monitoring progres pembangunan Gedung Koperasi Desa Merah Putih untuk melihat perkembangan pekerjaan dan kebutuhan penyelesaian lanjutan.";
- if(l.includes("rabat beton"))return "Monitoring progres lanjutan pekerjaan rabat beton Jalan Poros Paminggalan menuju Desa Limbua untuk memastikan pekerjaan berjalan sesuai rencana.";
- if(l.includes("jembatan dekker"))return "Monitoring progres pembangunan Jembatan Dekker Dusun Palla-Pallang untuk melihat perkembangan pekerjaan dan kesesuaian tahapan pelaksanaan.";
- if(l.includes("drainase"))return "Monitoring progres pembangunan drainase untuk melihat perkembangan pekerjaan dan kondisi saluran di lapangan.";
- if(l.includes("indeks desa")&&(l.includes("verifikasi")||l.includes("verval")||l.includes("pemutakhiran")||l.includes("perbaikan")))return "Perbaikan, verifikasi, dan pemutakhiran Data Indeks Desa Tahun 2026 untuk memastikan data lebih akurat dan sesuai kondisi aktual.";
- if(l.includes("pra musrenbang")||l.includes("pra-musrenbang"))return "Koordinasi persiapan Pra-Musrenbang Dusun untuk pemantapan usulan, prioritas kegiatan, dan kelengkapan administrasi.";
- if(l.includes("sembako")||l.includes("pkh")||l.includes("blt dana desa"))return "Pendampingan dan verifikasi data penerima bantuan sembako/PKH dan BLT Dana Desa untuk memastikan kesesuaian data.";
- if(l.includes("titik nol")||l.includes("rehabilitasi jalan setapak"))return "Monitoring titik nol rehabilitasi jalan setapak sebagai bahan perencanaan dan penganggaran Tahun 2027.";
- if(l.includes("musrenbangdes")||l.includes("musyawarah perencanaan pembangunan desa"))return "Pelaksanaan Musrenbang Desa dalam rangka penyusunan RKPDes dan DU-RKPDes Tahun 2027.";
- if(l.includes("monev dd")||l.includes("monitoring dan evaluasi dana desa"))return "Rapat koordinasi TPP P3MD terkait percepatan penginputan Monitoring dan Evaluasi Dana Desa (Monev DD).";
- if(l.includes("perubahan apbdes"))return "Koordinasi persiapan Perubahan APBDes Tahun Anggaran 2026 dan pembahasan penyusunan RKPDes Tahun 2027.";
- if(l.includes("rancangan apbdes"))return "Koordinasi penyusunan Rancangan APBDes sesuai ketentuan dan prioritas penggunaan Dana Desa.";
- return d.length>220?d.slice(0,217).replace(/\\s+\\S*$/,"")+"…":d;
-}
-function summarizeHasilAI(acts){
- const all=acts.map(x=>String(x.deskripsi||'').replace(/\\s+/g,' ').trim().toLowerCase()).join(' ');
- const has=(...keys)=>keys.some(k=>all.includes(k));
- const out=[];
- if(has('pembangunan','rabat beton','jembatan','drainase','gedung koperasi'))out.push('Pada aspek pembangunan fisik, monitoring dilakukan terhadap Gedung Koperasi Desa Merah Putih, pekerjaan rabat beton Jalan Poros Paminggalan menuju Desa Limbua, Jembatan Dekker Dusun Palla-Pallang, serta pembangunan drainase. Hasil pemantauan menjadi bahan untuk memastikan tahapan pekerjaan berjalan sesuai rencana dan kebutuhan penyelesaian dapat ditindaklanjuti.');
- if(has('indeks desa','verval','verifikasi-validasi','pemutakhiran data'))out.push('Pendataan Indeks Desa Tahun 2026 menjadi salah satu fokus pendampingan melalui perbaikan, verifikasi, validasi, dan pemutakhiran data agar informasi yang tersedia lebih akurat dan sesuai kondisi aktual.');
- if(has('pra-musrenbang','pra musrenbang','musrenbang desa','musrenbangdes','rkpdes'))out.push('Dalam bidang perencanaan pembangunan, pendampingan diarahkan pada persiapan Pra-Musrenbang Dusun dan pelaksanaan Musrenbang Desa untuk memantapkan usulan serta menjadi bahan penyusunan RKPDes dan DU-RKPDes Tahun Anggaran 2027.');
- if(has('sembako','pkh','blt dana desa','penerima bantuan'))out.push('Pada pendampingan bantuan masyarakat, dilakukan sinkronisasi dan verifikasi data penerima sembako/PKH dengan data penerima BLT Dana Desa sebagai upaya menjaga ketepatan dan kesesuaian data penerima.');
- if(has('titik nol','rehabilitasi jalan setapak'))out.push('Monitoring titik nol rehabilitasi jalan setapak memberikan gambaran kondisi awal pekerjaan yang dapat digunakan sebagai bahan perencanaan dan penganggaran Tahun Anggaran 2027.');
- if(has('monev','monitoring dan evaluasi dana desa'))out.push('Koordinasi TPP P3MD membahas percepatan penginputan Monitoring dan Evaluasi Dana Desa, termasuk perkembangan, kendala, dan langkah tindak lanjut penyelesaiannya.');
- if(has('perubahan apbdes'))out.push('Koordinasi persiapan Perubahan APBDes Tahun Anggaran 2026 dilakukan untuk mendukung kesiapan dokumen dan penyelarasan program dengan kebutuhan serta prioritas pembangunan desa.');
- if(has('rancangan apbdes'))out.push('Penyusunan Rancangan APBDes mendapat pendampingan agar prosesnya berpedoman pada ketentuan yang berlaku serta memperhatikan prioritas penggunaan Dana Desa.');
- if(has('baliho','infografis apbdes','transparansi'))out.push('Pada aspek transparansi, dilakukan koordinasi terkait percepatan pemasangan baliho atau infografis APBDes sebagai sarana keterbukaan informasi dan tertib administrasi.');
- out.push('Secara keseluruhan, kegiatan memperkuat koordinasi dan pendampingan dengan Pemerintah Desa, masyarakat, tim pendata, pelaksana pembangunan, dan unsur terkait. Hasil kunjungan menjadi dasar penyusunan tindak lanjut pada periode berikutnya.');
- return out;
-}
 function deriveNarratives(acts){
  const t=acts.map(x=>String(x.deskripsi||'')).join(' ').replace(/\s+/g,' ').trim(),l=t.toLowerCase(),has=(...w)=>w.some(k=>l.includes(k)),tujuan=[],follow=[],recs=[];
  if(has('indeks desa','pendataan','kuesioner','upload','penginputan','validasi data'))tujuan.push('Pendataan, verifikasi, pemutakhiran, dan finalisasi data Indeks Desa serta dokumen pendukung.');
@@ -441,7 +277,7 @@ function deriveNarratives(acts){
  if(has('koordinasi','rapat','pemdes','sekretaris desa','tpp'))tujuan.push('Koordinasi dan penguatan pendampingan bersama Pemerintah Desa, pelaksana kegiatan, dan pihak terkait.');
  if(has('laporan','dokumentasi','administrasi'))tujuan.push('Penertiban administrasi, dokumentasi, dan penyusunan laporan sebagai bahan evaluasi.');
  if(!tujuan.length)tujuan.push('Pendampingan, monitoring, verifikasi, dan evaluasi terhadap kegiatan Pemerintahan dan pembangunan desa sesuai uraian kegiatan dalam DRP.');
- const hasil=summarizeHasilAI(acts);
+ const hasil=acts.slice(0,10).map((x,i)=>{const d=String(x.deskripsi||'').replace(/\s+/g,' ').trim();if(!d)return '';return 'Kegiatan '+(i+1)+' pada '+dateLongId(x.tanggal)+' di '+locationVillage(x.lokasi)+' menunjukkan pelaksanaan kegiatan berupa '+(d.length>300?d.slice(0,297).replace(/\s+\S*$/,'')+'…':d)+'.'}).filter(Boolean);
  if(has('indeks desa','pendataan','kuesioner','upload','validasi data'))follow.push('Melanjutkan verifikasi dan penyempurnaan data yang masih belum lengkap atau belum sesuai sebelum dilakukan finalisasi dan pengunggahan.');
  if(has('pembangunan','jalan','drainase','jembatan','progres','fisik'))follow.push('Melakukan monitoring lanjutan terhadap progres fisik, volume, kualitas pekerjaan, kesesuaian dengan rencana, serta kelengkapan dokumentasi dan administrasi.');
  if(has('dana desa','anggaran','add','realisasi'))follow.push('Mencocokkan pelaksanaan kegiatan dengan dokumen perencanaan, anggaran, realisasi, dan dokumen pertanggungjawaban yang tersedia.');
@@ -456,124 +292,26 @@ function deriveNarratives(acts){
  return {tujuan,hasil,follow,recs};
 }
 function uniqueVisitDays(acts){return new Set(acts.map(x=>dateKey(x.tanggal)).filter(Boolean)).size}
-function activityBrief(desc){
- const d=String(desc||'').replace(/\s+/g,' ').trim(),l=d.toLowerCase();
- const rules=[
-  [/gedung koperasi|koperasi desa merah putih/,'Monitoring progres pembangunan Gedung Koperasi Desa Merah Putih, termasuk perkembangan pekerjaan struktur dan kebutuhan penyelesaian lanjutan.'],
-  [/rabat beton.*jalan.*paminggalan|jalan poros paminggalan.*limbua/,'Monitoring progres lanjutan pekerjaan rabat beton Jalan Poros Paminggalan menuju Desa Limbua untuk memastikan pekerjaan berjalan sesuai rencana.'],
-  [/jembatan dekker/,'Monitoring progres pembangunan Jembatan Dekker Dusun Palla-Pallang untuk melihat perkembangan pekerjaan dan kesesuaian tahapan pelaksanaan.'],
-  [/drainase/,'Monitoring progres pembangunan drainase untuk melihat perkembangan pekerjaan dan kondisi saluran di lapangan.'],
-  [/titik nol|rehabilitasi jalan setapak/,'Monitoring titik nol rehabilitasi jalan setapak sebagai bahan perencanaan dan penganggaran Tahun 2027.'],
-  [/pra[- ]?musrenbang/,'Koordinasi persiapan Pra-Musrenbang Dusun untuk pemantapan usulan, prioritas kegiatan, dan kelengkapan administrasi.'],
-  [/musrenbangdes|musrenbang desa/,'Pelaksanaan Musrenbang Desa dalam rangka penyusunan RKPDes dan DU-RKPDes Tahun 2027.'],
-  [/perubahan apbdes/,'Koordinasi persiapan Perubahan APBDes Tahun Anggaran 2026 dan penyelarasan program pembangunan desa.'],
-  [/rancangan apbdes/,'Koordinasi penyusunan Rancangan APBDes sesuai ketentuan dan prioritas penggunaan Dana Desa.'],
-  [/monev.*dana desa|monitoring dan evaluasi dana desa/,'Rapat koordinasi TPP P3MD terkait percepatan penginputan Monitoring dan Evaluasi Dana Desa (Monev DD).'],
-  [/sembako|pkh|blt dana desa|penerima bantuan/,'Pendampingan dan verifikasi data penerima bantuan sembako/PKH dan BLT Dana Desa untuk memastikan kesesuaian data.'],
-  [/indeks desa|verifikasi-validasi|verval|pemutakhiran data/,'Perbaikan, verifikasi, dan pemutakhiran Data Indeks Desa Tahun 2026 untuk memastikan data lebih akurat dan sesuai kondisi aktual.'],
-  [/baliho|infografis.*apbdes/,'Koordinasi percepatan pemasangan baliho/infografis APBDes sebagai bagian dari transparansi informasi desa.']
- ];
- for(const [re,txt] of rules) if(re.test(l)) return txt;
- const clean=d.replace(/^(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.\s*/i,'').trim();
- const first=clean.split(/[.!?](?:\s|$)/)[0].trim();
- return first.length>180?first.slice(0,177).replace(/\s+\S*$/,'')+'…':first;
-}
-function buildVisitRows(acts){return acts.map((x,i)=>'<tr><td>'+ (i+1) +'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(locationVillage(x.lokasi))+'</td><td>'+esc(activityBrief(x.deskripsi))+'</td></tr>').join('')}
-function buildVisitDays(acts){const u=[],s=new Set();acts.forEach(x=>{const k=dateKey(x.tanggal);if(k&&!s.has(k)){s.add(k);u.push(x)}});return u.map((x,i)=>'<tr><td>Hari ke-'+(i+1)+'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>SENDANA</td><td>'+esc(locationVillage(x.lokasi))+'</td></tr>').join('')}
-function docActivityTitle(desc){
- const d=String(desc||'').replace(/\s+/g,' ').trim();
- if(!d)return 'Kegiatan kunjungan lapangan';
- const l=d.toLowerCase();
- const rules=[
-  [/gedung koperasi|koperasi desa merah putih/,'Monitoring progres pembangunan Gedung Koperasi Desa Merah Putih'],
-  [/rabat beton.*jalan.*paminggalan|jalan poros paminggalan.*limbua/,'Monitoring progres pembangunan rabat beton Jalan Poros Paminggalan menuju Desa Limbua'],
-  [/jembatan dekker/,'Monitoring progres pembangunan Jembatan Dekker Dusun Palla-Pallang'],
-  [/drainase/,'Monitoring progres pembangunan drainase'],
-  [/titik nol|titik 0.*rehabilitasi jalan setapak/,'Monitoring titik nol rehabilitasi jalan setapak'],
-  [/pra[- ]?musrenbang/,'Koordinasi persiapan Pra-Musrenbang Dusun'],
-  [/musrenbangdes|musyawarah.*rkpdes/,'Musrenbang Desa dalam rangka penyusunan RKPDes dan DU-RKPDes Tahun 2027'],
-  [/perubahan apbdes/,'Koordinasi persiapan Perubahan APBDes Tahun Anggaran 2026'],
-  [/rancangan apbdes/,'Koordinasi penyusunan Rancangan APBDes'],
-  [/monev.*dana desa|monitoring dan evaluasi dana desa/,'Rapat Koordinasi TPP P3MD terkait percepatan Monev Dana Desa'],
-  [/verifikasi.*penerima.*sembako|sembako.*pkh|blt.*pkh/,'Verifikasi dan sinkronisasi data penerima bantuan'],
-  [/indeks desa|verval.*data/,'Verifikasi, perbaikan, dan pemutakhiran Data Indeks Desa'],
-  [/baliho.*apbdes|infografis.*apbdes/,'Koordinasi percepatan pemasangan baliho/infografis APBDes']
- ];
- for(const [re,title] of rules)if(re.test(l))return title;
- const first=d.split(/[.!?](?:\s|$)/)[0].trim();
- return first.length>105?first.slice(0,102).replace(/\s+\S*$/,'')+'…':first;
-}
+function buildVisitRows(acts){return acts.map((x,i)=>'<tr><td>'+ (i+1) +'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(locationVillage(x.lokasi))+'</td><td>'+esc(String(x.deskripsi||'').replace(/\s+/g,' ').trim())+'</td></tr>').join('')}
+function buildVisitDays(acts){const u=[],s=new Set();acts.forEach(x=>{const k=dateKey(x.tanggal);if(k&&!s.has(k)){s.add(k);u.push(x)}});return u.map((x,i)=>'<tr><td>Hari ke-'+(i+1)+'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc((String(x.lokasi||'').split('/')[1]||'-').trim())+'</td><td>'+esc(locationVillage(x.lokasi))+'</td></tr>').join('')}
 function buildDocumentation(acts){
- const groups=[],by={};
- activityPhotos.forEach(p=>{if(!p.date)return;(by[dateKey(p.date)]??=[]).push(p)});
+ const groups=[],by={};activityPhotos.forEach(p=>{if(!p.date)return;(by[dateKey(p.date)]??=[]).push(p)});
  Object.keys(by).forEach(k=>by[k].forEach(p=>groups.push({photo:p,act:acts.find(x=>dateKey(x.tanggal)===k)||{tanggal:p.date,lokasi:'',deskripsi:''}})));
  if(!groups.length)return '<p>Belum ada foto yang tanggalnya dapat dicocokkan dengan D. Hasil Kunjungan Lapangan.</p>';
- return '<div class="doc-landscape-grid">'+groups.map((g,i)=>'<div class="doc-roll"><div class="doc-note"><div><b>Lokasi :</b> '+esc(locationVillage(g.act.lokasi))+'</div><div><b>Tanggal :</b> '+esc(dateLongId(g.act.tanggal||g.photo.date))+'</div><div><b>Kegiatan :</b> '+esc(docActivityTitle(g.act.deskripsi))+'</div></div><div class="doc-photo-frame"><img src="'+g.photo.url+'" alt="Dokumentasi '+(i+1)+'"></div></div>').join('')+'</div>';
-}
-async function copyGptNarrativePrompt(){
- const drp=normalizeParsedDrp(data.docs?.drp?.parsed); if(!drp?.all?.length){alert('Upload dan proses DRP terlebih dahulu.');return}
- const list=drp.all.map((x,i)=>i+1+'. '+dateLongId(x.tanggal)+' | '+locationVillage(x.lokasi)+' | '+activityBrief(x.deskripsi)).join('\n');
- const prompt='Anda bertindak sebagai penyusun laporan kunjungan lapangan resmi. Gunakan daftar kegiatan DRP berikut sebagai satu-satunya sumber. Jangan menyalin uraian mentah. Kelompokkan tema, simpulkan capaian/temuan, lalu susun C. Tujuan, D. Hasil, E. Tindak Lanjut, dan F. Rekomendasi dengan bahasa Indonesia formal, jelas, natural, tidak repetitif, dan berdasarkan fakta yang tersedia. Pertahankan urutan tanggal untuk D.\n\nDAFTAR KEGIATAN:\n'+list;
- try{await navigator.clipboard.writeText(prompt);alert('Prompt narasi sudah disalin. Buka ChatGPT dan tempel prompt tersebut.')}catch(e){promptInput=window.prompt('Salin prompt ini ke ChatGPT:',prompt)}
- window.open('https://chatgpt.com/','_blank');
+ return '<div class="doc-landscape-grid">'+groups.map((g,i)=>'<div class="doc-roll"><div class="doc-note"><b>Lokasi :</b> '+esc(locationVillage(g.act.lokasi))+'<br><br><b>Tanggal :</b> '+esc(dateLongId(g.act.tanggal||g.photo.date))+'<br><br><b>Kegiatan :</b> '+esc(String(g.act.deskripsi||'').replace(/\s+/g,' ').trim())+'</div><div class="doc-photo-frame"><img src="'+g.photo.url+'" alt="Dokumentasi '+(i+1)+'"></div></div>').join('')+'</div>';
 }
 function makeReport(){
  const d=data.docs||{},drp=d.drp?.parsed,h=drp?.header||{};if(!drp||!drp.all?.length){alert('Upload dan proses DRP terlebih dahulu.');return}
- const nama='SUDARMIN ARIPUDDIN',posisi='Pendamping Desa',nik='760503312910050',jabatan='Pendamping lokal Desa',kec='SENDANA',kab='MAJENE',prov='SULAWESI BARAT';
- normalizeParsedDrp(drp); const periode=h.periode||periodLabel(),month=monthNameFromPeriod(periode),year=yearFromPeriod(periode),acts=drp.all.slice().sort((a,b)=>{const da=String(a.tanggal||'').split('/').reverse().join('');const db=String(b.tanggal||'').split('/').reverse().join('');return da.localeCompare(db)||Number(a.no||0)-Number(b.no||0)}),nar=deriveNarratives(acts);
+ const nama=h.nama||document.getElementById('rNama').value||'-',posisi=h.posisi||document.getElementById('rPosisi').value||'PLD',nik=h.nik||'-',jabatan=h.jabatan||'Pendamping Lokal Desa',kec=h.kecamatan||document.getElementById('rKec').value||'-',kab=h.kabupaten||document.getElementById('rKab').value||'-',prov=h.provinsi||document.getElementById('rProv').value||'-';
+ const periode=h.periode||periodLabel(),month=monthNameFromPeriod(periode),year=yearFromPeriod(periode),acts=(drp.kunlap&&drp.kunlap.length?drp.kunlap:drp.all).slice().sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no),nar=deriveNarratives(acts);
  const logo=logoPhoto?'<img class="cover-logo" src="'+logoPhoto+'" alt="Logo Kemendesa">':'<div class="cover-logo placeholder">LOGO KEMENDESA PDT</div>';
- const cover='<section class="report-page portrait-page"><div class="cover-head"><div class="cover-instansi">KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA<br><br>BADAN PENGEMBANGAN SUMBERDAYA MANUSIA DAN PEMBERDAYAAN<br>MASYARAKAT DESA DAN DAERAH TERTINGGAL</div>'+logo+'<div class="cover-title">LAPORAN KUNJUNGAN LAPANGAN '+esc(month).toUpperCase()+'</div><div class="cover-name">'+esc(nama).toUpperCase()+'</div><div class="cover-position">'+esc(posisi).toUpperCase()+'</div><div class="cover-region">KECAMATAN '+esc(kec).toUpperCase()+'<br>KABUPATEN '+esc(kab).toUpperCase()+'<br>PROVINSI '+esc(prov).toUpperCase()+'<br><br>TAHUN '+esc(year)+'</div><div class="cover-footer-title">LAPORAN KUNJUNGAN LAPANGAN BULANAN</div></div></section>';
- const ident='<section class="report-page portrait-page"><div class="master-a-title">LAPORAN KUNJUNGAN LAPANGAN BULANAN</div><div class="master-a-sub">PENDAMPING DESA<br>BULAN '+esc(month).toUpperCase()+' TAHUN '+esc(year)+'</div><hr><h3>A. Identitas</h3><table class="identity-table"><tr><td>NIK</td><td>: '+esc(nik)+'</td></tr><tr><td>Nama Lengkap</td><td>: <b>'+esc(nama).toUpperCase()+'</b></td></tr><tr><td>Kecamatan</td><td>: '+esc(kec)+'</td></tr><tr><td>Kabupaten</td><td>: '+esc(kab)+'</td></tr><tr><td>Provinsi</td><td>: '+esc(prov)+'</td></tr><tr><td>Posisi</td><td>: '+esc(posisi)+'</td></tr><tr><td>Jabatan</td><td>: '+esc(jabatan)+'</td></tr></table><h3>B. Waktu Pelaksanaan Kunjungan Lapangan</h3><table class="wide-table"><thead><tr><th>Hari ke</th><th>Waktu (Tgl/Bln/Thn)</th><th colspan="2">Lokasi Kunjungan</th></tr><tr><th></th><th></th><th>Kecamatan</th><th>Desa</th></tr></thead><tbody>'+buildVisitDays(acts)+'</tbody><tfoot><tr><th colspan="4">Total Hari Kunjungan Lapangan Bulan '+esc(month)+' Tahun '+esc(year)+' : '+uniqueVisitDays(acts)+' Hari</th></tr></tfoot></table></section>';
+ const cover='<section class="report-page portrait-page"><div class="cover-head"><div class="cover-instansi">KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA<br><br>BADAN PENGEMBANGAN SUMBERDAYA MANUSIA DAN PEMBERDAYAAN<br>MASYARAKAT DESA DAN DAERAH TERTINGGAL</div>'+logo+'<div class="cover-title">LAPORAN KUNJUNGAN LAPANGAN '+esc(month).toUpperCase()+'</div><div class="cover-name">'+esc(nama).toUpperCase()+'</div><div class="cover-position">'+esc(posisi).toUpperCase()+'</div><div class="cover-region">KECAMATAN '+esc(kec).toUpperCase()+'<br>KABUPATEN '+esc(kab).toUpperCase()+'<br>PROVINSI '+esc(prov).toUpperCase()+'<br><br>TAHUN '+esc(year)+'</div></div></section>';
+ const ident='<section class="report-page portrait-page"><h2>LAPORAN KUNJUNGAN LAPANGAN BULANAN</h2><div class="report-subtitle">PENDAMPING DESA<br>BULAN '+esc(month).toUpperCase()+' TAHUN '+esc(year)+'</div><hr><h3>A. Identitas</h3><table class="identity-table"><tr><td>NIK</td><td>: '+esc(nik)+'</td></tr><tr><td>Nama Lengkap</td><td>: <b>'+esc(nama).toUpperCase()+'</b></td></tr><tr><td>Kecamatan</td><td>: '+esc(kec)+'</td></tr><tr><td>Kabupaten</td><td>: '+esc(kab)+'</td></tr><tr><td>Provinsi</td><td>: '+esc(prov)+'</td></tr><tr><td>Posisi</td><td>: '+esc(posisi)+'</td></tr><tr><td>Jabatan</td><td>: '+esc(jabatan)+'</td></tr></table><h3>B. Waktu Pelaksanaan Kunjungan Lapangan</h3><table class="wide-table"><thead><tr><th>Hari ke</th><th>Waktu (Tgl/Bln/Thn)</th><th colspan="2">Lokasi Kunjungan</th></tr><tr><th></th><th></th><th>Kecamatan</th><th>Desa</th></tr></thead><tbody>'+buildVisitDays(acts)+'</tbody><tfoot><tr><th colspan="4">Total Hari Kunjungan Lapangan Bulan '+esc(month)+' Tahun '+esc(year)+' : '+uniqueVisitDays(acts)+' Hari</th></tr></tfoot></table></section>';
  const csec='<section class="report-page portrait-page"><h3>C. Tujuan Kunjungan Lapangan</h3><p>Kunjungan lapangan dilaksanakan untuk melakukan pendampingan, monitoring, verifikasi, dan evaluasi terhadap kegiatan yang tercatat dalam DRP bulan '+esc(month)+' '+esc(year)+'. Secara khusus, kunjungan bertujuan untuk:</p><ol>'+nar.tujuan.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol></section><section class="report-page landscape-page"><h3>D. Hasil Kunjungan Lapangan</h3><table class="result-table"><thead><tr><th>No</th><th>Tanggal</th><th>Desa</th><th>Kegiatan</th></tr></thead><tbody>'+buildVisitRows(acts)+'</tbody></table><p><b>Hasil kunjungan lapangan menunjukkan beberapa capaian dan temuan sebagai berikut:</b></p><ol>'+nar.hasil.map(x=>'<li>'+esc(x.replace(/^Kegiatan \d+\s*/,''))+'</li>').join('')+'</ol></section>'; const eF='<section class="report-page portrait-page"><h3>E. Langkah Tindak Lanjut Penanganan Lapangan</h3><p>Berdasarkan hasil kunjungan lapangan selama bulan '+esc(month)+' '+esc(year)+', tindak lanjut diarahkan pada penyelesaian temuan, penyempurnaan data, pemantauan kegiatan pembangunan, penguatan administrasi, serta koordinasi dengan unsur terkait sesuai kondisi yang tercatat dalam DRP.</p><ol>'+nar.follow.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol><h3>F. Rekomendasi</h3><p>Berdasarkan keseluruhan kegiatan dan hasil kunjungan lapangan, rekomendasi disusun sebagai bahan perbaikan dan tindak lanjut pada periode berikutnya.</p><ol>'+nar.recs.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol><p><b>Kesimpulan:</b> Secara keseluruhan, kunjungan lapangan bulan '+esc(month)+' '+esc(year)+' diarahkan pada kegiatan yang tercatat dalam DRP, dengan tindak lanjut dan rekomendasi yang menyesuaikan hasil verifikasi, monitoring, koordinasi, dan kondisi yang ditemukan di lapangan.</p><div class="signature"><p>Sendana, '+esc(new Date().getDate())+' '+esc(month)+' '+esc(year)+'</p><p>Penyusun Laporan</p><br><b>'+esc(nama).toUpperCase()+'</b></div></section>';
- const g='<section class="report-page portrait-page"><h3>G. Dokumentasi Kunjungan Lapangan</h3>'+buildDocumentation(acts)+'</section>';
+ const g='<section class="report-page landscape-page"><h3>G. Dokumentasi Kunjungan Lapangan</h3>'+buildDocumentation(acts)+'</section>';
  reportHtml='<div class="print-report">'+cover+ident+csec+eF+g+'</div>';document.getElementById('reportPrint').innerHTML=reportHtml;document.getElementById('docResult2').innerHTML='<div class="card no-print"><h3>Pratinjau Laporan Sesuai Format Master</h3>'+reportHtml+'</div>';document.getElementById('reportActions').classList.remove('hide');reportText=document.getElementById('reportPrint').innerText;page('laporan');window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
 }
-function downloadWord(){
- if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}
- const host=document.createElement('div');host.innerHTML=reportHtml;
- const pages=[...host.querySelectorAll('.report-page')];
- if(pages.length<6){alert('Struktur laporan belum lengkap. Buat ulang laporan terlebih dahulu.');return}
- const sectionStyles=`
- @page WordSection1{size:8.5in 11in;mso-page-orientation:portrait;margin:0.59in 0.47in 0.59in 0.47in;mso-header-margin:.3in;mso-footer-margin:.3in;mso-paper-source:0}
- @page WordSection2{size:11in 8.5in;mso-page-orientation:landscape;margin:0.47in 0.59in 0.47in 0.59in;mso-header-margin:.3in;mso-footer-margin:.3in;mso-paper-source:0}
- @page WordSection3{size:8.5in 11in;mso-page-orientation:portrait;margin:0.59in 0.47in 0.59in 0.47in;mso-header-margin:.3in;mso-footer-margin:.3in;mso-paper-source:0}
- @page WordSection4{size:8.5in 11in;mso-page-orientation:portrait;margin:0.59in 0.47in 0.59in 0.47in;mso-header-margin:.3in;mso-footer-margin:.3in;mso-paper-source:0}
- div.WordSection1{page:WordSection1;mso-page-orientation:portrait}
- div.WordSection2{page:WordSection2;page-break-before:always;mso-page-orientation:landscape}
- div.WordSection3{page:WordSection3;page-break-before:always;mso-page-orientation:portrait}
- div.WordSection4{page:WordSection4;page-break-before:always;mso-page-orientation:portrait}
- .WordSection1,.WordSection2,.WordSection3,.WordSection4{box-sizing:border-box}
- `;
- const css=(document.getElementById('kd-original-master-override')?.outerHTML||'')+'<style>'+sectionStyles+'</style>';
- const w1='<div class="WordSection1" style="page:WordSection1;mso-page-orientation:portrait">'+pages.slice(0,3).map(x=>x.outerHTML).join('')+'</div>';
- const w2='<div class="WordSection2" style="page:WordSection2;mso-page-orientation:landscape;page-break-before:always">'+pages[3].outerHTML+'</div>';
- const w3='<div class="WordSection3" style="page:WordSection3;mso-page-orientation:portrait;page-break-before:always">'+pages[4].outerHTML+'</div>';
- const w4='<div class="WordSection4" style="page:WordSection4;mso-page-orientation:portrait;page-break-before:always">'+pages[5].outerHTML+'</div>';
- const title='Laporan Kunjungan Lapangan '+monthNameFromPeriod(data.docs?.drp?.parsed?.header?.periode||periodLabel());
- const html='<!doctype html><html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><meta name="ProgId" content="Word.Document"><title>'+esc(title)+'</title>'+css+'</head><body style="tab-interval:.5in">'+w1+w2+w3+w4+'</body><script>
-(function(){
-  window.doLogin=function(){
-    var u=(document.getElementById('user')||{}).value||'';
-    var p=(document.getElementById('pass')||{}).value||'';
-    var msg=document.getElementById('loginMsg');
-    if(String(u).trim()==='admin' && p==='admin123'){
-      try{localStorage.setItem('kd_login','1')}catch(e){}
-      var login=document.getElementById('login'),app=document.getElementById('app'),nav=document.getElementById('nav');
-      if(login)login.style.display='none';
-      if(app)app.style.display='block';
-      if(nav)nav.classList.remove('hide');
-      try{if(typeof render==='function')render()}catch(e){console.error(e)}
-    }else if(msg){msg.textContent='Username atau password salah. Gunakan admin / admin123.'}
-  };
-  var b=document.querySelector('#login button[onclick*="doLogin"]');
-  if(b)b.onclick=window.doLogin;
-})();
-</script><script>
-function kdClearMasterReport(){try{indexedDB.deleteDatabase('KerjaDesaMasterTemplateDB_V3')}catch(e){}var st=document.getElementById('masterReportStatus');if(st)st.innerHTML='<span class="ok">✓ Master dibersihkan. Pilih file master asli Anda untuk menyimpan ulang.</span>';alert('Master laporan lama sudah dibersihkan. Silakan pilih file master laporan asli Anda.')}
-</script></html>';
- const blob=new Blob(['\\ufeff'+html],{type:'application/msword;charset=utf-8'});
- const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Laporan_Kunjungan_Lapangan_'+(monthNameFromPeriod(data.docs?.drp?.parsed?.header?.periode||periodLabel()))+'_2026.doc';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-}
+function downloadWord(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}const html='<!doctype html><html><head><meta charset="utf-8"><title>Laporan Bulanan KerjaDesa</title><style>body{font-family:Arial;font-size:11pt;line-height:1.45}h1{text-align:center;font-size:16pt}h2{text-align:center;font-size:13pt}table{width:100%;border-collapse:collapse}th,td{border:1px solid #555;padding:5px;vertical-align:top}</style></head><body>'+reportHtml+'</body></html>';const blob=new Blob([html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Laporan_Bulanan_KerjaDesa.doc';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function printPdf(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}window.print()}
 const SPPD_DEFAULT={nik:'760503312910050',nama:'SUDARMIN ARIPUDDIN',kabupaten:'Majene',provinsi:'Sulawesi Barat',posisi:'Pendamping Desa',jabatan:'Pendamping lokal Desa',bulan:'SEPTEMBER',tahun:'2026',tiba:'Tallu Banua Utara',berangkat:'Paminggalan',kedudukan:'Paminggalan'};
 const sppdIds=['sppdNIK','sppdNama','sppdKabupaten','sppdProvinsi','sppdPosisi','sppdJabatan','sppdBulan','sppdTahun','sppdTiba','sppdBerangkat','sppdKedudukan'];
@@ -840,28 +578,9 @@ loadSppdData();
 renderVisitDates();
 if(localStorage.getItem('kd_login')==='1')show();else render();navigator.serviceWorker?.register('./sw.js');updateDocStatus();renderMediaPreviews();if(data.docs?.drp?.parsed)renderDrpPreview(data.docs.drp.parsed);
 
-(function(){
-const st=document.createElement('style');
-st.textContent=`
-.print-report{font-family:"Times New Roman",serif;color:#111;background:#fff}
-.report-page{box-sizing:border-box;background:#fff;break-after:page;page-break-after:always;padding:20mm 18mm;min-height:277mm;width:210mm;margin:0 auto}
-.portrait-page{page:portrait}.landscape-page{page:landscape;width:297mm;min-height:180mm;padding:12mm 14mm}
-.cover-head{text-align:center;font-weight:700;height:100%}.cover-instansi{font-size:16px;line-height:1.55;margin-top:4mm}
-.cover-logo{display:block;width:78mm;height:78mm;object-fit:contain;margin:28mm auto 24mm}.cover-logo.placeholder{font-size:12px;color:#777;border:1px dashed #aaa;display:flex;align-items:center;justify-content:center}
-.cover-title{font-size:15px;margin:0 auto 20mm;font-weight:700}.cover-name{font-size:18px;margin-bottom:7mm;font-weight:700}.cover-position{font-size:16px}.cover-region{font-size:15px;line-height:1.65;margin-top:26mm}.cover-footer-title{font-size:15px;font-weight:700;margin-top:18mm}
-.report-page h2{text-align:center;font-size:16px;margin:2mm 0}.report-subtitle{text-align:center;font-weight:700;line-height:1.35}.report-page hr{border:0;border-top:1px solid #111;margin:5mm 0}.report-page h3{font-size:14px;margin:5mm 0 3mm}
-.report-page p,.report-page li{font-size:11px;line-height:1.45;text-align:justify}.report-page ol{padding-left:8mm}
-.identity-table{width:82%;border-collapse:collapse;margin-bottom:5mm}.identity-table td{border:0;padding:2px 5px;font-size:11px}.identity-table td:first-child{width:150px}
-.wide-table,.result-table{width:100%;border-collapse:collapse;font-size:10px}.wide-table th,.wide-table td,.result-table th,.result-table td{border:1px solid #111;padding:4px;vertical-align:top}.wide-table th{text-align:center}
-.result-table td:nth-child(1){width:35px;text-align:center}.result-table td:nth-child(2){width:95px}.result-table td:nth-child(3){width:150px}.result-table td:nth-child(4){width:auto}
-.doc-landscape-grid{display:grid;grid-template-columns:1fr;gap:8mm}.doc-roll{display:grid;grid-template-columns:42% 58%;gap:6mm;align-items:center;min-height:48mm;break-inside:avoid;page-break-inside:avoid}
-.doc-note{border:1px solid #333;border-radius:8px;padding:8px;font-size:10px;line-height:1.45;min-height:38mm}.doc-photo-frame{border:1px solid #333;border-radius:12px;padding:5px;text-align:center;min-height:42mm;display:flex;align-items:center;justify-content:center}.doc-photo-frame img{max-width:100%;max-height:58mm;object-fit:contain}
-.signature{text-align:center;margin-top:12mm;font-size:11px}
-@media screen and (max-width:800px){.print-report{overflow-x:auto}.report-page{width:100%;min-height:auto;margin-bottom:12px;padding:18px}.landscape-page{width:100%;min-height:auto}.cover-logo{width:55mm;height:55mm;margin:18mm auto 18mm}}
-@media print{body{background:#fff}.no-print,.nav,header{display:none!important}.report-page{box-shadow:none;margin:0}.portrait-page{width:210mm;min-height:297mm}.landscape-page{width:297mm;min-height:210mm}}
-`;
-document.head.appendChild(st);
-})();/* === KerjaDesa V26 WORKFLOW: DRP -> LAPORAN -> DOKUMENTASI | SPPD TERPISAH === */
+/*
+.print-report{font-family:"Times New Roman",serif;color:#111;background:#fff}.report-page{box-sizing:border-box;background:#fff;break-after:page;page-break-after:always;padding:20mm 18mm;min-height:277mm}.portrait-page{page:portrait}.landscape-page{page:landscape;padding:12mm 14mm;min-height:180mm}.cover-head{text-align:center;font-weight:700}.cover-instansi{font-size:18px;line-height:1.55;margin-top:8mm}.cover-logo{display:block;width:105mm;height:105mm;object-fit:contain;margin:28mm auto 24mm}.cover-logo.placeholder{font-size:12px;color:#777;border:1px dashed #aaa;display:flex;align-items:center;justify-content:center}.cover-title{font-size:16px;margin:0 auto 20mm}.cover-name{font-size:18px;margin-bottom:7mm}.cover-position{font-size:16px}.cover-region{font-size:15px;line-height:1.65;margin-top:26mm}.report-page h2{text-align:center;font-size:16px;margin:2mm 0}.report-subtitle{text-align:center;font-weight:700;line-height:1.35}.report-page hr{border:0;border-top:2px solid #666;margin:5mm 0}.report-page h3{font-size:14px;margin:5mm 0 3mm}.report-page p,.report-page li{font-size:11px;line-height:1.45;text-align:justify}.identity-table{width:75%;border-collapse:collapse;margin-bottom:5mm}.identity-table td{border:0;padding:2px 5px;font-size:11px}.identity-table td:first-child{width:150px}.wide-table,.result-table{width:100%;border-collapse:collapse;font-size:10px}.wide-table th,.wide-table td,.result-table th,.result-table td{border:1px solid #666;padding:4px;vertical-align:top}.wide-table th{text-align:center}.result-table td:nth-child(1){width:35px;text-align:center}.result-table td:nth-child(2){width:95px}.result-table td:nth-child(3){width:150px}.doc-landscape-grid{display:grid;grid-template-columns:1fr;gap:8mm}.doc-roll{display:grid;grid-template-columns:42% 58%;gap:6mm;align-items:center;min-height:48mm;break-inside:avoid}.doc-note{border:1px solid #333;border-radius:8px;padding:8px;font-size:10px;line-height:1.45;min-height:38mm}.doc-photo-frame{border:1px solid #333;border-radius:12px;padding:5px;text-align:center;min-height:42mm;display:flex;align-items:center;justify-content:center}.doc-photo-frame img{max-width:100%;max-height:58mm;object-fit:contain}.signature{text-align:center;margin-top:12mm;font-size:11px}@media print{body{background:#fff}.no-print,.nav,header{display:none!important}.report-page{box-shadow:none;margin:0}}
+*/;/* === KerjaDesa V26 WORKFLOW: DRP -> LAPORAN -> DOKUMENTASI | SPPD TERPISAH === */
 (function(){
   const s=document.createElement('style');
   s.textContent=`
