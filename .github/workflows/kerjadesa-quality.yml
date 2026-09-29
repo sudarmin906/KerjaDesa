@@ -1,0 +1,86 @@
+name: KerjaDesa Quality Gate
+
+on:
+  push:
+    branches: [main, build-215-devops-ci]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate manifest.json
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('manifest.json','utf8')); console.log('manifest.json OK')"
+
+      - name: Validate JavaScript embedded in index.html
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path("index.html").read_text(encoding="utf-8")
+          scripts = re.findall(r"<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>", html, flags=re.I)
+          if not scripts:
+              raise SystemExit("No inline script blocks found in index.html")
+          out = Path(".ci-inline-js")
+          out.mkdir(exist_ok=True)
+          for i, script in enumerate(scripts, 1):
+              (out / f"script-{i}.js").write_text(script, encoding="utf-8")
+          print(f"Extracted {len(scripts)} script block(s)")
+          PY
+          failed=0
+          for f in .ci-inline-js/*.js; do
+            echo "Checking $f"
+            if ! node --check "$f"; then
+              failed=1
+            fi
+          done
+          exit $failed
+
+      - name: Validate referenced local assets
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path("index.html").read_text(encoding="utf-8")
+          refs = set()
+          for pattern in (
+              r'href=["'\']([^"'\']+)["'\']',
+              r'src=["'\']([^"'\']+)["'\']',
+          ):
+              refs.update(re.findall(pattern, html, flags=re.I))
+          missing = []
+          for ref in sorted(refs):
+              if ref.startswith(("#", "http://", "https://", "data:", "blob:", "javascript:")):
+                  continue
+              clean = ref.split("?", 1)[0].split("#", 1)[0]
+              if not clean or clean.startswith("/"):
+                  continue
+              if not Path(clean).exists():
+                  missing.append(clean)
+          if missing:
+              print("Missing local assets:")
+              for item in missing:
+                  print(f" - {item}")
+              raise SystemExit(1)
+          print("Referenced local assets OK")
+          PY
+
+      - name: Validate service worker cache manifest
+        shell: bash
+        run: |
+          node -e "const fs=require('fs'); const s=fs.readFileSync('sw.js','utf8'); if(!s.includes('const CACHE=')){throw new Error('CACHE constant missing in sw.js')} if(!s.includes('const ASSETS=')){throw new Error('ASSETS constant missing in sw.js')} console.log('sw.js OK')"
