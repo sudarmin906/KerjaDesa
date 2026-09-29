@@ -234,93 +234,51 @@ async function readPdfBasic(file){
   }
   return (out||'').replace(/\u0000/g,' ').replace(/[ \t]+/g,' ').replace(/\n+/g,'\n').trim();
 }
-function normalizeDrpRaw(t){
- return String(t||"").replace(/\u0000/g," ").replace(/\r/g,"\n").replace(/[ \t]+/g," ").replace(/\n{2,}/g,"\n").trim();
-}
-function cleanText(t){
- return String(t||"").replace(/\u0000/g," ").replace(/\r/g,"\n").replace(/\b\d+\s*\/\s*\d+\s+No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi," ").replace(/No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi," ").replace(/\s+Total Laporan (?:Aktivitas|Kunjungan Lapangan)\s+\d+\s+laporan(?:\s+\d+\s*\/\s*\d+)?/gi," ").replace(/[ \t]+/g," ").replace(/\n{2,}/g,"\n").trim();
-}
-function normText(t){return normalizeDrpRaw(t)}
-function parseDateShort(s){const m=String(s||"").match(/^(\d{2})\/(\d{2})\/(\d{2})$/);return m?m[1]+"/"+m[2]+"/20"+m[3]:s}
+function cleanText(t){return String(t||'').replace(/\u0000/g,' ').replace(/\r/g,'\n').replace(/\b\d+\s*\/\s*\d+\s+No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim()}
+function normText(t){return cleanText(t).replace(/\s+/g,' ').trim()}
+function escReg(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
+function parseDateShort(s){const m=s.match(/^(\d{2})\/(\d{2})\/(\d{2})$/);return m?`${m[1]}/${m[2]}/20${m[3]}`:s}
 function parseDrpHeader(t){
- const x=normalizeDrpRaw(t);
- const get=(label,next)=>{const re=new RegExp(label+"\\s*([^]+?)(?=\\s+(?:"+next.join("|")+")|$)","i");const m=x.match(re);return m?m[1].trim():""};
- const h={};
- h.periode=get('Periode:',['IDENTITAS TPP']);
- h.nama=get('Nama:',['NIK:','Posisi:','Jabatan:','Provinsi:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
- h.nik=get('NIK:',['Nama:','Posisi:','Jabatan:','Provinsi:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
- h.posisi=get('Posisi:',['Nama:','NIK:','Jabatan:','Provinsi:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
- h.jabatan=get('Jabatan:',['Nama:','NIK:','Posisi:','Provinsi:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
- h.provinsi=get('Provinsi:',['Nama:','NIK:','Posisi:','Jabatan:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
- h.kabupaten=get('Kabupaten/Kota:',['Nama:','NIK:','Posisi:','Jabatan:','Provinsi:','Kecamatan:','Desa:','RINGKASAN']);
- h.kecamatan=get('Kecamatan:',['Nama:','NIK:','Posisi:','Jabatan:','Provinsi:','Kabupaten/Kota:','Desa:','RINGKASAN']);
- h.desa=get('Desa:',['Nama:','NIK:','Posisi:','Jabatan:','Provinsi:','Kabupaten/Kota:','Kecamatan:','RINGKASAN']);
-  h.jamKerja=(x.match(/JAM KERJA[\s\S]*?(\d{1,3}:\d{2})/i)||[])[1]||'';
- h.hariKerja=(x.match(/HARI KERJA[\\s\\S]*?(\\d+\\s*\/\\s*\\d+)/i)||[])[1]||'';
-  h.totalLaporan=(x.match(/TOTAL LAPORAN\s+(\d+)\s+laporan/i)||[])[1]||'';
-  h.capaian=(x.match(/CAPAIAN KINERJA\s+([\d.]+%)/i)||[])[1]||'';
- return h;
+  const x=normText(t);
+  const get=(label,next)=>{const re=new RegExp(label+'\\s*([^]+?)(?=\\s+(?:'+next.join('|')+')|$)','i');const m=x.match(re);return m?m[1].trim():''};
+  const h={};
+  h.periode=get('Periode:', ['IDENTITAS TPP']);
+  h.nama=get('Nama:', ['NIK:','Posisi:','Jabatan:','Provinsi:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
+  h.nik=get('NIK:', ['Nama:','Posisi:','Jabatan:','Provinsi:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
+  h.posisi=get('Posisi:', ['Nama:','NIK:','Jabatan:','Provinsi:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
+  h.jabatan=get('Jabatan:', ['Nama:','NIK:','Posisi:','Provinsi:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
+  h.provinsi=get('Provinsi:', ['Nama:','NIK:','Posisi:','Jabatan:','Kabupaten/Kota:','Kecamatan:','Desa:','RINGKASAN']);
+  h.kabupaten=get('Kabupaten/Kota:', ['Nama:','NIK:','Posisi:','Jabatan:','Provinsi:','Kecamatan:','Desa:','RINGKASAN']);
+  h.kecamatan=get('Kecamatan:', ['Nama:','NIK:','Posisi:','Jabatan:','Provinsi:','Kabupaten/Kota:','Desa:','RINGKASAN']);
+  h.desa=get('Desa:', ['Nama:','NIK:','Posisi:','Jabatan:','Provinsi:','Kabupaten/Kota:','Kecamatan:','RINGKASAN']);
+  h.jamKerja=(x.match(/JAM KERJA[^]*?(\d{1,3}:\d{2})/i)||[])[1]||'';
+  h.hariKerja=(x.match(/HARI KERJA[^]*?(\d+\s*\/\s*\d+)/i)||[])[1]||'';
+  h.totalLaporan=(x.match(/TOTAL LAPORAN[^]*?(\d+)\s+[\d.]+%/i)||[])[1]||'';
+  h.capaian=(x.match(/CAPAIAN KINERJA[^]*?([\d.]+%)/i)||[])[1]||'';
+  return h;
 }
 function parseDrpActivities(text, sectionTitle, totalTitle, kunlap){
- const raw=normalizeDrpRaw(text);
- const start=raw.indexOf(sectionTitle); if(start<0)return [];
- const after=raw.slice(start+sectionTitle.length);
- const tm=after.match(new RegExp(escReg(totalTitle)+"\\s+(\\d+)\\s+laporan","i"));
- const expected=tm?Number(tm[1]):0;
- const bm=after.search(new RegExp("\\s"+escReg(totalTitle)+"\\s+\\d+\\s+laporan","i"));
- const sec=(bm>=0?after.slice(0,bm):after).replace(/\\s+/g," ").trim();
-  const re=new RegExp('(?:^|\\s)(\\d{1,2})\\s+(\\d{2}/\\d{2}/\\d{2})\\s+(\\d{2}\\.\\d{2}\\s*-\\s*\\d{2}\\.\\d{2})\\s+(\\d+)\\s+Jam,\\s*(\\d+)\\s+Menit\\s+([^\\n]+?)\\s+Deskripsi kegiatan:\\s*\\(([^)]*)\\)\\s+Lokasi:\\s*(.+?)(?=\\s+\\d{1,2}\\s+\\d{2}\\/\\d{2}\\/\\d{2}\\s+\\d{2}\\.\\d{2}\\s*-\\s*\\d{2}\\.\\d{2}\\s+\\d+\\s+Jam,|\\s*$)','g');
- const out=[]; let m;
- while((m=re.exec(sec))){
-   const no=Number(m[1]); if(no<1||no>999)continue;
-   const locDesc=String(m[8]||"").replace(/\\s+/g," ").trim();
-   let lokasi=locDesc,desc="";
-   const dm=locDesc.match(/^(.*?\\s+)(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\\.\\s*(.*)$/i);
-   if(dm){lokasi=dm[1].trim();desc=dm[2].trim()}
-   else{
-     const dm2=locDesc.match(/^(.*?)(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\\.\\s*(.*)$/i);
-     if(dm2){lokasi=dm2[1].trim();desc=dm2[2].trim()}
-   }
-   if(!desc)desc=locDesc;
-   desc=cleanText(desc).replace(/^(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\\.\\s*/i,"").trim();
-   if(!lokasi||!desc)continue;
-   out.push({no: no,tanggal:parseDateShort(m[2]),waktu:m[3].replace(/\\s+/g," "),durasi:m[4]+" Jam, "+m[5]+" Menit",jenis:m[6].trim(),kunjungan:kunlap,jenisKunjungan:m[7].trim(),lokasi:lokasi,deskripsi:desc});
-   if(expected&&out.length>=expected)break;
- }
- return out;
-}
-function drpRecordKey(x){
- const d=String(x.deskripsi||'').replace(/\s+/g,' ').trim().toLowerCase();
- const loc=String(x.lokasi||'').replace(/\s+/g,' ').trim().toLowerCase();
- return [x.tanggal||'',loc,d].join('|');
-}
-function mergeDrpRecords(aktivitas,kunlap){
- const map=new Map();
- [...aktivitas.map(x=>({...x,kunjungan:false})),...kunlap.map(x=>({...x,kunjungan:true}))].forEach(x=>{
-   const k=drpRecordKey(x),old=map.get(k);
-   if(!old || (x.kunjungan&&!old.kunjungan)) map.set(k,x);
- });
- return [...map.values()].sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no).map((x,i)=>({...x,no:i+1}));
-}
-function normalizeParsedDrp(drp){
- if(!drp)return null;
- if(drp.parserVersion!==5)return null;
- const aktivitas=Array.isArray(drp.aktivitas)?drp.aktivitas:[];
- const kunlap=Array.isArray(drp.kunlap)?drp.kunlap:[];
- const all=mergeDrpRecords(aktivitas,kunlap);
- const expected=Number(drp.expected||drp.header?.totalLaporan||0);
- drp.all=all;drp.aktivitas=all.filter(x=>!x.kunjungan);drp.kunlap=all.filter(x=>x.kunjungan);
- drp.count=all.length;drp.expected=expected;drp.complete=expected?all.length===expected:true;
- return drp;
+  const raw=normText(text);
+  const a=raw.indexOf(sectionTitle); if(a<0)return [];
+  const b=raw.indexOf(totalTitle,a+sectionTitle.length); const sec=raw.slice(a+sectionTitle.length,b>0?b:raw.length);
+  const re=/(\d+)\s+(\d{2}\/\d{2}\/\d{2})\s+(\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2})\s+(\d+)\s+Jam,\s*(\d+)\s+Menit\s+(.+?)\s+Deskripsi kegiatan:\s*\(([^)]*)\)\s+Lokasi:\s*(SULAWESI BARAT\s*\/\s*[^]+?)(?=\s+(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.?\s)/g;
+  const out=[];let m;
+  while((m=re.exec(sec))){
+    const type=m[6].trim(); const loc=m[8].replace(/\s+/g,' ').trim();
+    let end=sec.length; const nm=sec.slice(re.lastIndex).match(/\s+\d+\s+\d{2}\/\d{2}\/\d{2}\s+\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2}\s+\d+\s+Jam,/); if(nm) end=re.lastIndex+nm.index;
+    let desc=sec.slice(re.lastIndex,end).trim();
+    desc=desc.replace(/^(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.\s*/i,'');
+    out.push({no:Number(m[1]),tanggal:parseDateShort(m[2]),waktu:m[3].replace(/\s+/g,' '),durasi:`${m[4]} Jam, ${m[5]} Menit`,jenis:type,kunjungan:kunlap,jenisKunjungan:m[7].trim(),lokasi:loc,deskripsi:desc});
+  }
+  return out;
 }
 function parseDRP(text){
- const header=parseDrpHeader(text);
- const aktivitas=parseDrpActivities(text,"DAFTAR LAPORAN AKTIVITAS","Total Laporan Aktivitas",false);
- const kunlap=parseDrpActivities(text,"DAFTAR LAPORAN KUNJUNGAN LAPANGAN","Total Laporan Kunjungan Lapangan",true);
- const all=mergeDrpRecords(aktivitas,kunlap).map(x=>({...x,no:undefined})).sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no).map((x,i)=>({...x,no:i+1,parserVersion:KD_PARSER_VERSION}));
- const expected=Number(header.totalLaporan||0);
- const acts=all.filter(x=>!x.kunjungan),kuns=all.filter(x=>x.kunjungan);
- return {header,aktivitas:acts,kunlap:kuns,all,count:all.length,source:"DRP",parserVersion:KD_PARSER_VERSION,expected,complete:expected?all.length===expected:true};
+  const header=parseDrpHeader(text);
+  const aktivitas=parseDrpActivities(text,'DAFTAR LAPORAN AKTIVITAS','Total Laporan Aktivitas',false);
+  const kunlap=parseDrpActivities(text,'DAFTAR LAPORAN KUNJUNGAN LAPANGAN','Total Laporan Kunjungan Lapangan',true);
+  const all=aktivitas.concat(kunlap).sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no).map((x,i)=>({...x,no:i+1,deskripsi:cleanText(x.deskripsi)}));
+  const cleanGroup=(arr)=>arr.map(x=>all.find(y=>y.tanggal===x.tanggal&&y.deskripsi===x.deskripsi)||x);
+  return {header,aktivitas:cleanGroup(aktivitas),kunlap:cleanGroup(kunlap),all,count:all.length,source:'DRP'}
 }
 function renderDrpPreview(drp){
   if(!drp)return;
@@ -612,7 +570,7 @@ function downloadWord(){
 })();
 </script><script>
 function kdClearMasterReport(){try{indexedDB.deleteDatabase('KerjaDesaMasterTemplateDB_V3')}catch(e){}var st=document.getElementById('masterReportStatus');if(st)st.innerHTML='<span class="ok">✓ Master dibersihkan. Pilih file master asli Anda untuk menyimpan ulang.</span>';alert('Master laporan lama sudah dibersihkan. Silakan pilih file master laporan asli Anda.')}
-</script><script src="report_template_engine.js"></script></html>';
+</script></html>';
  const blob=new Blob(['\\ufeff'+html],{type:'application/msword;charset=utf-8'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Laporan_Kunjungan_Lapangan_'+(monthNameFromPeriod(data.docs?.drp?.parsed?.header?.periode||periodLabel()))+'_2026.doc';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
