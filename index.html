@@ -152,7 +152,7 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
 <div class="card no-print" id="sppdPanel"><div id="sppdEditorCard"><h3>🧾 SPPD — Template Word Asli & Editable</h3><p class="small muted">Template Word SPPD asli digunakan apa adanya. Identitas dapat diubah melalui Pengaturan Identitas SPPD. Huruf besar/kecil pada Nama dan Jabatan dipertahankan persis seperti yang Anda ketik.</p>
 <div class="card" style="margin:10px 0;border:2px solid #0f766e;background:#f7fbfb"><h3 style="margin-top:0">⚙️ Pengaturan Identitas SPPD</h3><p class="small muted">Gunakan bagian ini khusus untuk mengganti identitas. Setelah menekan Simpan Identitas, data akan tersimpan di HP dan otomatis dipakai saat membuat SPPD berikutnya.</p><div class="grid"><div><label><b>Nama Lengkap</b></label><input id="sppdNama" placeholder="Contoh: SUDARMIN ARIPUDDIN" autocomplete="off"></div><div><label><b>Jabatan</b></label><input id="sppdJabatan" placeholder="Contoh: Pendamping lokal Desa" autocomplete="off"></div><div><label><b>Berangkat Dari</b></label><input id="sppdBerangkat" placeholder="Contoh: Paminggalan"></div><div><label><b>Tempat Kedudukan</b></label><input id="sppdKedudukan" placeholder="Contoh: Paminggalan"></div><div><label><b>Tiba di</b></label><input id="sppdTiba" placeholder="Contoh: Tallu Banua Utara"></div></div><button type="button" onclick="saveSppdIdentity()">💾 Simpan Identitas SPPD</button><div id="sppdIdentityStatus" class="small muted"></div></div>
 <div class="grid"><input id="sppdNIK" placeholder="NIK"><input id="sppdKabupaten" placeholder="Kabupaten"><input id="sppdProvinsi" placeholder="Provinsi"><input id="sppdPosisi" placeholder="Posisi"><input id="sppdBulan" placeholder="Bulan, misalnya September" autocomplete="off"><span class="small muted" style="grid-column:1/-1">Bulan bebas ditulis huruf kecil/besar. Untuk judul Word, bulan otomatis menjadi HURUF BESAR.</span><input id="sppdTahun" type="number" min="2000" max="2100" placeholder="Tahun"><label>Logo SPPD <select id="sppdLogoPos"><option value="none" selected>Tanpa logo</option><option value="left">Kiri atas</option><option value="right">Kanan atas</option></select></label></div><p class="small muted">Logo SPPD dapat ditempatkan di kiri atau kanan atas halaman pertama.</p><div class="pill"><b>📅 Tanggal & Jumlah Hari per Kunjungan</b><p class="small muted">Isi tanggal mulai dan selesai untuk setiap kunjungan. Jumlah hari dihitung otomatis secara inklusif (tanggal mulai dan selesai dihitung).</p><div id="sppdVisits" class="small"></div></div><div class="actions"><button class="secondary" onclick="saveSppdData()">💾 Simpan Data SPPD</button><button class="secondary" onclick="resetSppdData()">↩️ Data Awal</button></div><div class="pill"><b>Preview:</b><div id="sppdPreview" class="small"></div></div><button onclick="makeSppdWord()">⬇️ Buat SPPD Word Asli</button><div id="sppdStatus" class="small muted"></div><p class="small muted">Template: <b>template_sppd_asli.docx</b> • Format asli dipertahankan.</p></div></div>
-<div id="laporanPanel" class="card no-print"><h3>📄 Laporan Bulanan — Format Master</h3><div class="drop" style="margin-bottom:10px"><b>📌 Master Template Laporan (sekali saja)</b><p class="small muted">Pilih file DOCX laporan asli Anda. KerjaDesa akan menyimpan template ini di perangkat dan mempertahankan susunan Word aslinya pada laporan berikutnya.</p><input id="masterReportFile" type="file" accept=".docx" onchange="kdLoadMasterReportTemplate(this)"><div id="masterReportStatus" class="small muted">Template master belum disimpan.</div></div><div class="row"><input id="rNama" placeholder="Nama Pendamping"><input id="rPosisi" value="PLD" placeholder="Posisi"></div><div class="row"><input id="rKec" placeholder="Kecamatan"><input id="rKab" placeholder="Kabupaten"></div><div class="row"><input id="rProv" placeholder="Provinsi"><input id="rPeriode" type="month"></div><textarea id="rCat" placeholder="Catatan tambahan laporan (opsional)"></textarea><div class="actions"><button onclick="makeReport()">📑 Buat Laporan Bulanan Otomatis</button><button type="button" class="secondary" onclick="copyGptNarrativePrompt()">🤖 Susun Narasi dengan GPT</button></div><p class="small muted">C, D, E dan F dianalisis dari seluruh DRP. Tombol GPT menyiapkan prompt dari data DRP untuk ChatGPT tanpa memasukkan seluruh uraian mentah ke laporan.</p></div>
+<div id="laporanPanel" class="card no-print"><h3>📄 Laporan Bulanan — Format Master</h3><div class="row"><input id="rNama" placeholder="Nama Pendamping"><input id="rPosisi" value="PLD" placeholder="Posisi"></div><div class="row"><input id="rKec" placeholder="Kecamatan"><input id="rKab" placeholder="Kabupaten"></div><div class="row"><input id="rProv" placeholder="Provinsi"><input id="rPeriode" type="month"></div><textarea id="rCat" placeholder="Catatan tambahan laporan (opsional)"></textarea><div class="actions"><button onclick="makeReport()">📑 Buat Laporan Bulanan Otomatis</button><button type="button" class="secondary" onclick="copyGptNarrativePrompt()">🤖 Susun Narasi dengan GPT</button></div><p class="small muted">C, D, E dan F dianalisis dari seluruh DRP. Tombol GPT menyiapkan prompt dari data DRP untuk ChatGPT tanpa memasukkan seluruh uraian mentah ke laporan.</p></div>
 <div id="reportActions" class="card no-print hide"><h3>Output Laporan</h3><div class="actions"><button onclick="downloadWord()">⬇️ Word dari Master (.DOCX)</button><button onclick="printPdf()">🖨️ Cetak / PDF</button></div><p class="small muted">Untuk PDF di HP/Chrome, pilih menu cetak lalu pilih “Simpan sebagai PDF”.</p></div>
 <div id="docResult2"></div>
 </div>
@@ -292,7 +292,8 @@ function mergeDrpRecords(aktivitas,kunlap){
  return [...map.values()].sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no).map((x,i)=>({...x,no:i+1}));
 }
 function normalizeParsedDrp(drp){
- if(!drp)return drp;
+ if(!drp)return null;
+ if(drp.parserVersion!==2)return null;
  const aktivitas=Array.isArray(drp.aktivitas)?drp.aktivitas:[];
  const kunlap=Array.isArray(drp.kunlap)?drp.kunlap:[];
  const all=mergeDrpRecords(aktivitas,kunlap);
@@ -308,11 +309,16 @@ function parseDRP(text){
  const all=mergeDrpRecords(aktivitasRaw,kunlapRaw);
  const aktivitas=all.filter(x=>!x.kunjungan),kunlap=all.filter(x=>x.kunjungan);
  const expected=Number(header.totalLaporan||0);
- return {header,aktivitas,kunlap,all,count:all.length,source:"DRP",expected:expected,complete:expected===all.length};
+ return {header,aktivitas,kunlap,all,count:all.length,source:"DRP",parserVersion:2,expected:expected,complete:expected===all.length};
 }
 function renderDrpPreview(drp){
   if(!drp)return;
   drp=normalizeParsedDrp(drp);
+  if(!drp){
+    try{if(data.docs)data.docs.drp=null;data.drpActivities=[];data.kegiatan=[];save()}catch(e){}
+    const p=document.getElementById("drpPreview");if(p)p.innerHTML="<div class=\"card\"><b>🧹 Data DRP lama telah dibersihkan.</b><p class=\"small muted\">Silakan upload ulang DRP agar pembacaan menggunakan parser terbaru.</p></div>";
+    return;
+  }
   const h=drp.header||{},stat=drp.complete?"<span class=\"badge\">✓ lengkap</span>":"<span class=\"badge warn\">⚠ belum lengkap</span>";
   document.getElementById("drpPreview").innerHTML=`<div class="card"><h3>✅ Hasil Pembacaan DRP</h3><p class="small"><b>${esc(h.nama||"-")}</b> • ${esc(h.posisi||"-")} • ${esc(h.periode||"-")}</p><p class="small">${esc(h.provinsi||"-")} / ${esc(h.kabupaten||"-")} / ${esc(h.kecamatan||"-")}<br>Desa: ${esc(h.desa||"-")}</p><p><span class="badge">DRP ${drp.count}/${drp.expected||drp.count} kegiatan</span> <span class="badge">${drp.aktivitas.length} aktivitas</span> <span class="badge">${drp.kunlap.length} kunjungan lapangan</span> ${stat}</p><div class="tablewrap"><table class="simpletable"><thead><tr><th>No</th><th>Tanggal</th><th>Waktu</th><th>Jenis</th><th>Status</th><th>Lokasi</th><th>Deskripsi</th></tr></thead><tbody>${drp.all.map(x=>`<tr><td>${x.no}</td><td>${esc(x.tanggal)}</td><td>${esc(x.waktu)}</td><td>${esc(x.jenis)}</td><td>${x.kunjungan?"Kunjungan Lapangan":"Bukan Kunjungan Lapangan"}</td><td>${esc(x.lokasi)}</td><td>${esc(x.deskripsi)}</td></tr>`).join("")}</tbody></table></div></div>`;
 }
@@ -959,4 +965,4 @@ function kdAddHomeQuick(){
 const kdOldShow=show;
 show=function(){kdOldShow();kdWorkflowSetup();kdAddHomeQuick();workflowPage('drp');}
 kdWorkflowSetup();kdAddHomeQuick();
-</script><script src="report_template_engine.js"></script></body></html>
+</script></body></html>
