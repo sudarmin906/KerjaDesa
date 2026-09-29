@@ -69,7 +69,7 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
 <div id="docResult2"></div>
 </div>
 </section></main>
-<div id="nav" class="nav hide"><button onclick="page('home')">🏠 Beranda</button><button onclick="page('kegiatan')">📋 Kegiatan</button><button onclick="page('monitoring')">📍 Monitoring</button><button onclick="page('dokumen')">📄 Dokumen</button></div>
+<div id="nav" class="nav hide"><button onclick="page('home')">🏠 Beranda</button><button onclick="page('drp')">📑 DRP</button><button onclick="page('laporan')">📄 Laporan</button><button onclick="page('dokumentasi')">🖼️ Dokumentasi</button><button onclick="page('sppd')">🧾 SPPD</button></div>
 <div id="reportPrint" class="report-print"></div>
 <script src="jszip.min.js"></script>
 <script>
@@ -557,4 +557,82 @@ function sppdXmlEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;
 loadSppdData();
 renderVisitDates();
 if(localStorage.getItem('kd_login')==='1')show();else render();navigator.serviceWorker?.register('./sw.js');updateDocStatus();renderMediaPreviews();if(data.docs?.drp?.parsed)renderDrpPreview(data.docs.drp.parsed);
+
+/* === KerjaDesa V26 WORKFLOW: DRP -> LAPORAN -> DOKUMENTASI | SPPD TERPISAH === */
+.kd-workflow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.kd-workflow button{margin:0;background:#eef6fb;color:#123b5d;border:1px solid #cfe0ec}
+.kd-workflow button.active{background:linear-gradient(135deg,#1976d2,#0f766e);color:#fff;border-color:transparent}
+.kd-flow-note{padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,#f4f9ff,#eef9f6);border:1px solid #d7e7ee;margin-bottom:12px}
+.kd-step{display:none}
+.kd-step.active{display:block}
+.kd-quick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.kd-quick button{margin:0;background:#fff;color:#1261a0;border:1px solid #d6e3ea}
+@media(max-width:600px){.kd-workflow{grid-template-columns:repeat(2,1fr)}.kd-workflow button{font-size:12px}.kd-quick{grid-template-columns:1fr}}
+function kdFindDirect(selector){return document.querySelector(selector)}
+function kdWorkflowSetup(){
+  const d=document.getElementById('dokumen');
+  if(!d||d.dataset.workflowReady==='1') return;
+  d.dataset.workflowReady='1';
+  const toolbar=document.createElement('div');
+  toolbar.id='kdWorkflowToolbar';
+  toolbar.className='card no-print';
+  toolbar.innerHTML='<h2 style="margin-top:0">📂 Alur Kerja KerjaDesa</h2><div class="kd-flow-note"><b>DRP → Laporan Bulanan → Dokumentasi</b><br><span class="small muted">Data DRP menjadi sumber laporan. Dokumentasi ditambahkan setelah laporan siap. <b>SPPD dikelola terpisah</b> menggunakan template Word asli.</span></div><div class="kd-workflow"><button data-step="drp" onclick="workflowPage(\'drp\')">📑 DRP</button><button data-step="laporan" onclick="workflowPage(\'laporan\')">📄 Laporan Bulanan</button><button data-step="dokumentasi" onclick="workflowPage(\'dokumentasi\')">🖼️ Dokumentasi</button><button data-step="sppd" onclick="workflowPage(\'sppd\')">🧾 SPPD Terpisah</button></div>';
+  d.insertBefore(toolbar,d.firstElementChild);
+
+  const drpBox=document.createElement('div'); drpBox.id='kdStepDrp'; drpBox.className='kd-step';
+  const reportBox=document.createElement('div'); reportBox.id='kdStepLaporan'; reportBox.className='kd-step';
+  const docBox=document.createElement('div'); docBox.id='kdStepDokumentasi'; docBox.className='kd-step';
+  const sppdBox=document.createElement('div'); sppdBox.id='kdStepSppd'; sppdBox.className='kd-step';
+
+  const printArea=d.querySelector('.print-area');
+  const docResult=document.getElementById('docResult');
+  const drpPreview=document.getElementById('drpPreview');
+  if(printArea)drpBox.appendChild(printArea);
+  if(docResult)drpBox.appendChild(docResult);
+  if(drpPreview)drpBox.appendChild(drpPreview);
+
+  const profileCard=document.getElementById('profileFile')?.closest('.card');
+  if(profileCard)docBox.appendChild(profileCard);
+
+  const sppd=document.getElementById('sppdEditorCard');
+  if(sppd)sppdBox.appendChild(sppd);
+
+  const identity=document.getElementById('rNama')?.closest('.card');
+  if(identity)reportBox.appendChild(identity);
+  const reportActions=document.getElementById('reportActions');
+  if(reportActions)reportBox.appendChild(reportActions);
+  const docResult2=document.getElementById('docResult2');
+  if(docResult2)reportBox.appendChild(docResult2);
+
+  d.appendChild(drpBox);d.appendChild(reportBox);d.appendChild(docBox);d.appendChild(sppdBox);
+}
+function workflowPage(step){
+  kdWorkflowSetup();
+  document.getElementById('dokumen').classList.remove('hide');
+  ['drp','laporan','dokumentasi','sppd'].forEach(s=>{
+    const el=document.getElementById('kdStep'+s.charAt(0).toUpperCase()+s.slice(1));
+    if(el)el.classList.toggle('active',s===step);
+  });
+  document.querySelectorAll('#kdWorkflowToolbar [data-step]').forEach(b=>b.classList.toggle('active',b.dataset.step===step));
+  if(step==='drp'){updateDocStatus();if(data.docs?.drp?.parsed)renderDrpPreview(data.docs.drp.parsed);}
+  if(step==='dokumentasi')renderMediaPreviews();
+  if(step==='sppd'){loadSppdData();renderVisitDates();}
+  if(step==='laporan'){kdInitIdentity();if(data.docs?.drp?.parsed)renderDrpPreview(data.docs.drp.parsed);}
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+const kdOriginalPage=page;
+page=function(x){
+  if(['drp','laporan','dokumentasi','sppd'].includes(x)){['home','kegiatan','monitoring'].forEach(y=>document.getElementById(y).classList.add('hide'));workflowPage(x);render();return;}
+  kdOriginalPage(x);
+}
+function kdAddHomeQuick(){
+  const home=document.getElementById('home');
+  if(!home||document.getElementById('kdHomeQuick'))return;
+  const box=document.createElement('div');box.id='kdHomeQuick';box.className='card';
+  box.innerHTML='<h3 style="margin-top:0">⚡ Akses Kerja</h3><div class="kd-quick"><button onclick="page(\'kegiatan\')">📋 Kegiatan</button><button onclick="page(\'monitoring\')">📍 Monitoring</button></div>';
+  const dc=home.querySelector('.kd-data-center'); if(dc)dc.before(box); else home.appendChild(box);
+}
+const kdOldShow=show;
+show=function(){kdOldShow();kdWorkflowSetup();kdAddHomeQuick();workflowPage('drp');}
+kdWorkflowSetup();kdAddHomeQuick();
 </script></body></html>
