@@ -263,7 +263,7 @@ function parseDrpActivities(text, sectionTitle, totalTitle, kunlap){
  const raw=normalizeDrpRaw(text);
  const a=raw.indexOf(sectionTitle); if(a<0)return [];
  const b=raw.indexOf(totalTitle,a+sectionTitle.length); if(b<0)return [];
- let sec=raw.slice(a+sectionTitle.length,b).replace(/\b\d+\s*\/\s*\d+\s+/gi,' ').replace(/No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/\s+/g,' ').trim();
+ let sec=raw.slice(a+sectionTitle.length,b).replace(/\b\d+\s*\/\s*\d+\s+No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/\s+/g,' ').trim();
  const re=/(?:^|\s)(\d{1,2})\s+(\d{2}\/\d{2}\/\d{2})\s+(\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2})\s+(\d+)\s+Jam,\s*(\d+)\s+Menit\s+(.+?)\s+Deskripsi kegiatan:\s*\(([^)]*)\)\s+Lokasi:\s*(.+?)(?=\s+\d{1,2}\s+\d{2}\/\d{2}\/\d{2}\s+\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2}\s+\d+\s+Jam,|\s*$)/g;
  const out=[]; let m;
  while((m=re.exec(sec))){
