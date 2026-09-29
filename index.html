@@ -161,6 +161,22 @@ async function readZipOffice(file,type){const b=new Uint8Array(await file.arrayB
 function parseZip(b){let p=-1;for(let i=b.length-22;i>=0;i--){if(b[i]===80&&b[i+1]===75&&b[i+2]===5&&b[i+3]===6){p=i;break}}if(p<0)throw Error('ZIP tidak dikenali');const dv=new DataView(b.buffer,b.byteOffset,b.byteLength);const count=dv.getUint16(p+10,true),off=dv.getUint32(p+16,true);let pos=off,o={};for(let i=0;i<count;i++){if(dv.getUint32(pos,true)!==0x02014b50)break;const method=dv.getUint16(pos+10,true),cs=dv.getUint32(pos+20,true),ns=dv.getUint16(pos+28,true),es=dv.getUint16(pos+30,true),com=dv.getUint16(pos+32,true),lo=dv.getUint32(pos+42,true);const name=new TextDecoder().decode(b.slice(pos+46,pos+46+ns));o[name]={method,cs,lo};pos+=46+ns+es+com}return o}
 async function unzipEntry(b,e){const dv=new DataView(b.buffer,b.byteOffset,b.byteLength),p=e.lo;if(dv.getUint32(p,true)!==0x04034b50)throw Error('ZIP entry error');const ns=dv.getUint16(p+26,true),es=dv.getUint16(p+28,true),start=p+30+ns+es,raw=b.slice(start,start+e.cs);if(e.method===0)return raw;if(e.method===8){const ds=new DecompressionStream('deflate-raw');return new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer())}throw Error('Kompresi dokumen belum didukung')}
 function stripXml(x){return x.replace(/<w:tab[^>]*\/>/g,'\t').replace(/<[^>]+>/g,' ').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\s+/g,' ').trim()}
+function extractPdfText(src){
+  const decodeLiteral=(v)=>String(v).replace(/\\\\([\\\\()])/g,'$1').replace(/\\n/g,'\n').replace(/\\r/g,'\r').replace(/\\t/g,'\t').replace(/\\b/g,'\b').replace(/\\f/g,'\f').replace(/\\([0-7]{1,3})/g,(m,o)=>String.fromCharCode(parseInt(o,8)));
+  const decodeHex=(v)=>{let h=String(v).replace(/[^0-9A-Fa-f]/g,'');if(h.length%2)h+='0';let out='';for(let i=0;i<h.length;i+=2)out+=String.fromCharCode(parseInt(h.slice(i,i+2),16));return out};
+  const blocks=String(src).match(/BT[\s\S]*?ET/g)||[];let out=[];
+  for(const block of blocks){
+    const vals=[];let i=0;
+    while(i<block.length){
+      const ch=block[i];
+      if(ch==='('){let j=i+1,depth=1,buf='';while(j<block.length&&depth>0){const c=block[j];if(c==='\\'&&j+1<block.length){buf+=c+block[j+1];j+=2;continue}if(c==='('){depth++;buf+=c;j++;continue}if(c===')'){depth--;if(depth>0)buf+=c;j++;continue}buf+=c;j++;}if(depth===0)vals.push(decodeLiteral(buf));i=j;continue}
+      if(ch==='<'){const j=block.indexOf('>',i+1);if(j>i){vals.push(decodeHex(block.slice(i+1,j)));i=j+1;continue}}
+      i++;
+    }
+    const line=vals.join(' ').replace(/\s+/g,' ').trim();if(line)out.push(line);
+  }
+  return out.join('\n');
+}
 async function readPdfBasic(file){
   // Primary PDF reader: PDF.js in the browser. This handles compressed/hex-encoded
   // PDF text used by the official DRP PDF. It is loaded only when a PDF is uploaded.
@@ -222,22 +238,24 @@ function parseDrpHeader(t){
   h.desa=get('Desa:', ['Nama:','NIK:','Posisi:','Jabatan:','Provinsi:','Kabupaten/Kota:','Kecamatan:','RINGKASAN']);
   h.jamKerja=(x.match(/JAM KERJA[^]*?(\d{1,3}:\d{2})/i)||[])[1]||'';
   h.hariKerja=(x.match(/HARI KERJA[^]*?(\d+\s*\/\s*\d+)/i)||[])[1]||'';
-  h.totalLaporan=(x.match(/TOTAL LAPORAN[^]*?(\d+)\s+[\d.]+%/i)||[])[1]||'';
+  h.totalLaporan=(x.match(/TOTAL LAPORAN[^]*?(\d+)\s+(?:laporan\b)?/i)||[])[1]||'';
   h.capaian=(x.match(/CAPAIAN KINERJA[^]*?([\d.]+%)/i)||[])[1]||'';
   return h;
 }
 function parseDrpActivities(text, sectionTitle, totalTitle, kunlap){
-  const raw=normText(text);
-  const a=raw.indexOf(sectionTitle); if(a<0)return [];
-  const b=raw.indexOf(totalTitle,a+sectionTitle.length); const sec=raw.slice(a+sectionTitle.length,b>0?b:raw.length);
-  const re=/(\d+)\s+(\d{2}\/\d{2}\/\d{2})\s+(\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2})\s+(\d+)\s+Jam,\s*(\d+)\s+Menit\s+(.+?)\s+Deskripsi kegiatan:\s*\(([^)]*)\)\s+Lokasi:\s*(SULAWESI BARAT\s*\/\s*[^]+?)(?=\s+(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.?\s)/g;
-  const out=[];let m;
-  while((m=re.exec(sec))){
-    const type=m[6].trim(); const loc=m[8].replace(/\s+/g,' ').trim();
-    let end=sec.length; const nm=sec.slice(re.lastIndex).match(/\s+\d+\s+\d{2}\/\d{2}\/\d{2}\s+\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2}\s+\d+\s+Jam,/); if(nm) end=re.lastIndex+nm.index;
-    let desc=sec.slice(re.lastIndex,end).trim();
-    desc=desc.replace(/^(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.\s*/i,'');
-    out.push({no:Number(m[1]),tanggal:parseDateShort(m[2]),waktu:m[3].replace(/\s+/g,' '),durasi:`${m[4]} Jam, ${m[5]} Menit`,jenis:type,kunjungan:kunlap,jenisKunjungan:m[7].trim(),lokasi:loc,deskripsi:desc});
+  const raw=normText(text); const a=raw.indexOf(sectionTitle); if(a<0)return [];
+  const b=raw.indexOf(totalTitle,a+sectionTitle.length); const sec=raw.slice(a+sectionTitle.length,b>0?b:raw.length).trim();
+  const headRe=/(\d+)\s+(\d{2}\/\d{2}\/\d{2})\s+(\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2})\s+(\d+)\s+Jam,\s*(\d+)\s+Menit\s+([^]*?)(?=\s+\d+\s+\d{2}\/\d{2}\/\d{2}\s+\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2}\s+\d+\s+Jam,|$)/g;
+  const out=[]; let m;
+  while((m=headRe.exec(sec))){
+    const block=m[6].trim();
+    const dm=block.match(/^([^]*?)\s+Deskripsi kegiatan:\s*\(([^)]*)\)\s+Lokasi:\s*(.*)$/i); if(!dm)continue;
+    const type=(dm[1]||'').trim(), jenisKunjungan=(dm[2]||'').trim(), tail=(dm[3]||'').trim();
+    const locMatch=tail.match(/^(SULAWESI BARAT\s*\/\s*[^]*?)(?=\s+(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.?\s)/i);
+    const loc=(locMatch?locMatch[1]:tail).replace(/\s+/g,' ').trim();
+    let desc=locMatch?tail.slice(locMatch[1].length).trim():tail;
+    desc=desc.replace(/^(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.?\s*/i,'').trim();
+    out.push({no:Number(m[1]),tanggal:parseDateShort(m[2]),waktu:m[3].replace(/\s+/g,' '),durasi:m[4]+' Jam, '+m[5]+' Menit',jenis:type,kunjungan:kunlap,jenisKunjungan,lokasi:loc,deskripsi:desc});
   }
   return out;
 }
@@ -336,7 +354,7 @@ function deriveNarratives(acts){
  if(has('koordinasi','rapat','pemdes','sekretaris desa','tpp'))tujuan.push('Koordinasi dan penguatan pendampingan bersama Pemerintah Desa, pelaksana kegiatan, dan pihak terkait.');
  if(has('laporan','dokumentasi','administrasi'))tujuan.push('Penertiban administrasi, dokumentasi, dan penyusunan laporan sebagai bahan evaluasi.');
  if(!tujuan.length)tujuan.push('Pendampingan, monitoring, verifikasi, dan evaluasi terhadap kegiatan Pemerintahan dan pembangunan desa sesuai uraian kegiatan dalam DRP.');
- const hasil=acts.slice(0,10).map((x,i)=>{const d=String(x.deskripsi||'').replace(/\s+/g,' ').trim();if(!d)return '';return 'Kegiatan '+(i+1)+' pada '+dateLongId(x.tanggal)+' di '+locationVillage(x.lokasi)+' menunjukkan pelaksanaan kegiatan berupa '+(d.length>300?d.slice(0,297).replace(/\s+\S*$/,'')+'…':d)+'.'}).filter(Boolean);
+ const hasil=acts.map((x,i)=>{const d=String(x.deskripsi||'').replace(/\s+/g,' ').trim();if(!d)return '';return 'Kegiatan '+(i+1)+' pada '+dateLongId(x.tanggal)+' di '+locationVillage(x.lokasi)+' menunjukkan pelaksanaan kegiatan berupa '+(d.length>300?d.slice(0,297).replace(/\s+\S*$/,'')+'…':d)+'.'}).filter(Boolean);
  if(has('indeks desa','pendataan','kuesioner','upload','validasi data'))follow.push('Melanjutkan verifikasi dan penyempurnaan data yang masih belum lengkap atau belum sesuai sebelum dilakukan finalisasi dan pengunggahan.');
  if(has('pembangunan','jalan','drainase','jembatan','progres','fisik'))follow.push('Melakukan monitoring lanjutan terhadap progres fisik, volume, kualitas pekerjaan, kesesuaian dengan rencana, serta kelengkapan dokumentasi dan administrasi.');
  if(has('dana desa','anggaran','add','realisasi'))follow.push('Mencocokkan pelaksanaan kegiatan dengan dokumen perencanaan, anggaran, realisasi, dan dokumen pertanggungjawaban yang tersedia.');
@@ -352,7 +370,7 @@ function deriveNarratives(acts){
 }
 function uniqueVisitDays(acts){return new Set(acts.map(x=>dateKey(x.tanggal)).filter(Boolean)).size}
 function buildVisitRows(acts){return acts.map((x,i)=>'<tr><td>'+ (i+1) +'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(locationVillage(x.lokasi))+'</td><td>'+esc(String(x.deskripsi||'').replace(/\s+/g,' ').trim())+'</td></tr>').join('')}
-function buildVisitDays(acts){const u=[],s=new Set();acts.forEach(x=>{const k=dateKey(x.tanggal);if(k&&!s.has(k)){s.add(k);u.push(x)}});return u.map((x,i)=>'<tr><td>Hari ke-'+(i+1)+'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc((String(x.lokasi||'').split('/')[1]||'-').trim())+'</td><td>'+esc(locationVillage(x.lokasi))+'</td></tr>').join('')}
+function buildVisitDays(acts){const u=[],s=new Set();acts.forEach(x=>{const k=dateKey(x.tanggal);if(k&&!s.has(k)){s.add(k);u.push(x)}});return u.map((x,i)=>{const p=String(x.lokasi||'').split('/').map(v=>v.trim()).filter(Boolean);const kec=p.length>=3?p[2]:(p[1]||'-');return '<tr><td>Hari ke-'+(i+1)+'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(kec)+'</td><td>'+esc(locationVillage(x.lokasi))+'</td></tr>'}).join('')}
 function buildDocumentation(acts){
  const groups=[],by={};activityPhotos.forEach(p=>{if(!p.date)return;(by[dateKey(p.date)]??=[]).push(p)});
  Object.keys(by).forEach(k=>by[k].forEach(p=>groups.push({photo:p,act:acts.find(x=>dateKey(x.tanggal)===k)||{tanggal:p.date,lokasi:'',deskripsi:''}})));
@@ -363,10 +381,10 @@ function makeReport(){
  const d=data.docs||{},drp=d.drp?.parsed,h=drp?.header||{};if(!drp||!drp.all?.length){alert('Upload dan proses DRP terlebih dahulu.');return}
  const nama=h.nama||document.getElementById('rNama').value||'-',posisi=h.posisi||document.getElementById('rPosisi').value||'PLD',nik=h.nik||'-',jabatan=h.jabatan||'Pendamping Lokal Desa',kec=h.kecamatan||document.getElementById('rKec').value||'-',kab=h.kabupaten||document.getElementById('rKab').value||'-',prov=h.provinsi||document.getElementById('rProv').value||'-';
  const periode=h.periode||periodLabel(),month=monthNameFromPeriod(periode),year=yearFromPeriod(periode),acts=(drp.kunlap&&drp.kunlap.length?drp.kunlap:drp.all).slice().sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no),nar=deriveNarratives(acts);
- const logo=logoPhoto?'<img class="cover-logo" src="'+logoPhoto+'" alt="Logo Kemendesa">':'<div class="cover-logo placeholder">LOGO KEMENDESA PDT</div>';
+ const logo=logoPhoto?'<img class="cover-logo" src="'+logoPhoto+'" alt="Logo Kemendesa">':'<div class="cover-logo placeholder">LOGO KEMENDESA PDT</div>'; const lastAct=acts.length?acts[acts.length-1]:null; const signDate=lastAct?dateLongId(lastAct.tanggal):('30 '+month+' '+year);
  const cover='<section class="report-page portrait-page"><div class="cover-head"><div class="cover-instansi">KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA<br><br>BADAN PENGEMBANGAN SUMBERDAYA MANUSIA DAN PEMBERDAYAAN<br>MASYARAKAT DESA DAN DAERAH TERTINGGAL</div>'+logo+'<div class="cover-title">LAPORAN KUNJUNGAN LAPANGAN '+esc(month).toUpperCase()+'</div><div class="cover-name">'+esc(nama).toUpperCase()+'</div><div class="cover-position">'+esc(posisi).toUpperCase()+'</div><div class="cover-region">KECAMATAN '+esc(kec).toUpperCase()+'<br>KABUPATEN '+esc(kab).toUpperCase()+'<br>PROVINSI '+esc(prov).toUpperCase()+'<br><br>TAHUN '+esc(year)+'</div></div></section>';
  const ident='<section class="report-page portrait-page"><h2>LAPORAN KUNJUNGAN LAPANGAN BULANAN</h2><div class="report-subtitle">PENDAMPING DESA<br>BULAN '+esc(month).toUpperCase()+' TAHUN '+esc(year)+'</div><hr><h3>A. Identitas</h3><table class="identity-table"><tr><td>NIK</td><td>: '+esc(nik)+'</td></tr><tr><td>Nama Lengkap</td><td>: <b>'+esc(nama).toUpperCase()+'</b></td></tr><tr><td>Kecamatan</td><td>: '+esc(kec)+'</td></tr><tr><td>Kabupaten</td><td>: '+esc(kab)+'</td></tr><tr><td>Provinsi</td><td>: '+esc(prov)+'</td></tr><tr><td>Posisi</td><td>: '+esc(posisi)+'</td></tr><tr><td>Jabatan</td><td>: '+esc(jabatan)+'</td></tr></table><h3>B. Waktu Pelaksanaan Kunjungan Lapangan</h3><table class="wide-table"><thead><tr><th>Hari ke</th><th>Waktu (Tgl/Bln/Thn)</th><th colspan="2">Lokasi Kunjungan</th></tr><tr><th></th><th></th><th>Kecamatan</th><th>Desa</th></tr></thead><tbody>'+buildVisitDays(acts)+'</tbody><tfoot><tr><th colspan="4">Total Hari Kunjungan Lapangan Bulan '+esc(month)+' Tahun '+esc(year)+' : '+uniqueVisitDays(acts)+' Hari</th></tr></tfoot></table></section>';
- const csec='<section class="report-page portrait-page"><h3>C. Tujuan Kunjungan Lapangan</h3><p>Kunjungan lapangan dilaksanakan untuk melakukan pendampingan, monitoring, verifikasi, dan evaluasi terhadap kegiatan yang tercatat dalam DRP bulan '+esc(month)+' '+esc(year)+'. Secara khusus, kunjungan bertujuan untuk:</p><ol>'+nar.tujuan.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol></section><section class="report-page landscape-page"><h3>D. Hasil Kunjungan Lapangan</h3><table class="result-table"><thead><tr><th>No</th><th>Tanggal</th><th>Desa</th><th>Kegiatan</th></tr></thead><tbody>'+buildVisitRows(acts)+'</tbody></table><p><b>Hasil kunjungan lapangan menunjukkan beberapa capaian dan temuan sebagai berikut:</b></p><ol>'+nar.hasil.map(x=>'<li>'+esc(x.replace(/^Kegiatan \d+\s*/,''))+'</li>').join('')+'</ol></section>'; const eF='<section class="report-page portrait-page"><h3>E. Langkah Tindak Lanjut Penanganan Lapangan</h3><p>Berdasarkan hasil kunjungan lapangan selama bulan '+esc(month)+' '+esc(year)+', tindak lanjut diarahkan pada penyelesaian temuan, penyempurnaan data, pemantauan kegiatan pembangunan, penguatan administrasi, serta koordinasi dengan unsur terkait sesuai kondisi yang tercatat dalam DRP.</p><ol>'+nar.follow.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol><h3>F. Rekomendasi</h3><p>Berdasarkan keseluruhan kegiatan dan hasil kunjungan lapangan, rekomendasi disusun sebagai bahan perbaikan dan tindak lanjut pada periode berikutnya.</p><ol>'+nar.recs.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol><p><b>Kesimpulan:</b> Secara keseluruhan, kunjungan lapangan bulan '+esc(month)+' '+esc(year)+' diarahkan pada kegiatan yang tercatat dalam DRP, dengan tindak lanjut dan rekomendasi yang menyesuaikan hasil verifikasi, monitoring, koordinasi, dan kondisi yang ditemukan di lapangan.</p><div class="signature"><p>Sendana, '+esc(new Date().getDate())+' '+esc(month)+' '+esc(year)+'</p><p>Penyusun Laporan</p><br><b>'+esc(nama).toUpperCase()+'</b></div></section>';
+ const csec='<section class="report-page portrait-page"><h3>C. Tujuan Kunjungan Lapangan</h3><p>Kunjungan lapangan dilaksanakan untuk melakukan pendampingan, monitoring, verifikasi, dan evaluasi terhadap kegiatan yang tercatat dalam DRP bulan '+esc(month)+' '+esc(year)+'. Secara khusus, kunjungan bertujuan untuk:</p><ol>'+nar.tujuan.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol></section><section class="report-page landscape-page"><h3>D. Hasil Kunjungan Lapangan</h3><table class="result-table"><thead><tr><th>No</th><th>Tanggal</th><th>Desa</th><th>Kegiatan</th></tr></thead><tbody>'+buildVisitRows(acts)+'</tbody></table><p><b>Hasil kunjungan lapangan menunjukkan beberapa capaian dan temuan sebagai berikut:</b></p><ol>'+nar.hasil.map(x=>'<li>'+esc(x.replace(/^Kegiatan \d+\s*/,''))+'</li>').join('')+'</ol></section>'; const eF='<section class="report-page portrait-page"><h3>E. Langkah Tindak Lanjut Penanganan Lapangan</h3><p>Berdasarkan hasil kunjungan lapangan selama bulan '+esc(month)+' '+esc(year)+', tindak lanjut diarahkan pada penyelesaian temuan, penyempurnaan data, pemantauan kegiatan pembangunan, penguatan administrasi, serta koordinasi dengan unsur terkait sesuai kondisi yang tercatat dalam DRP.</p><ol>'+nar.follow.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol><h3>F. Rekomendasi</h3><p>Berdasarkan keseluruhan kegiatan dan hasil kunjungan lapangan, rekomendasi disusun sebagai bahan perbaikan dan tindak lanjut pada periode berikutnya.</p><ol>'+nar.recs.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol><p><b>Kesimpulan:</b> Secara keseluruhan, kunjungan lapangan bulan '+esc(month)+' '+esc(year)+' diarahkan pada kegiatan yang tercatat dalam DRP, dengan tindak lanjut dan rekomendasi yang menyesuaikan hasil verifikasi, monitoring, koordinasi, dan kondisi yang ditemukan di lapangan.</p><div class="signature"><p>Sendana, '+esc(signDate)+'</p><p>Penyusun Laporan</p><br><b>'+esc(nama).toUpperCase()+'</b></div></section>';
  const g='<section class="report-page landscape-page"><h3>G. Dokumentasi Kunjungan Lapangan</h3>'+buildDocumentation(acts)+'</section>';
  reportHtml='<div class="print-report">'+cover+ident+csec+eF+g+'</div>';document.getElementById('reportPrint').innerHTML=reportHtml;document.getElementById('docResult2').innerHTML='<div class="card no-print"><h3>Pratinjau Laporan Sesuai Format Master</h3>'+reportHtml+'</div>';document.getElementById('reportActions').classList.remove('hide');reportText=document.getElementById('reportPrint').innerText;page('laporan');window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
 }
