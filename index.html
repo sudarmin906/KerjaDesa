@@ -1,5 +1,20 @@
 <!doctype html>
-<html lang="id"><head>
+<html lang="id"><head><script>
+(function(){
+  try{
+    const q=new URLSearchParams(location.search);
+    if(q.get('bersihkan')==='1'){
+      try{localStorage.clear()}catch(e){}
+      try{sessionStorage.clear()}catch(e){}
+      try{indexedDB.deleteDatabase('KerjaDesaMasterTemplateDB')}catch(e){}
+      const cleanUrl=location.origin+location.pathname+'?cleaned=1';
+      if(window.caches){
+        caches.keys().then(keys=>Promise.all(keys.map(k=>caches.delete(k)))).finally(()=>location.replace(cleanUrl));
+      }else location.replace(cleanUrl);
+    }
+  }catch(e){console.error(e)}
+})();
+</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f766e"><link rel="manifest" href="manifest.json">
 <title>KerjaDesa V26 Professional - Sistem Kerja Pendamping Desa</title>
