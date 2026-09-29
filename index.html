@@ -352,6 +352,48 @@ function dateLongId(s){
 }
 function dateKey(s){const m=String(s||'').match(/(\d{2})\/(\d{2})\/(20\d{2})/);return m?m[1]+'/'+m[2]+'/'+m[3]:String(s||'')}
 function locationVillage(s){let x=String(s||'').replace(/^SULAWESI BARAT\s*\/?/i,'').trim();const p=x.split('/').map(v=>v.trim()).filter(Boolean);return p.length?p[p.length-1]:x||'-'}
+function summarizeHasilAI(acts){
+ const rows=acts.map(x=>({d:String(x.deskripsi||'').replace(/\s+/g,' ').trim(),l:String(x.deskripsi||'').toLowerCase(),lok:locationVillage(x.lokasi),tgl:dateLongId(x.tanggal)}));
+ const all=rows.map(x=>x.l).join(' ');
+ const out=[];
+ const has=k=>all.includes(k);
+ const pick=(keys)=>rows.filter(x=>keys.some(k=>x.l.includes(k)));
+ const names=(keys,limit=4)=>{
+   const a=pick(keys).map(x=>x.d).filter(Boolean);
+   return [...new Set(a)].slice(0,limit).join('; ');
+ };
+ if(has('pembangunan')||has('rabat beton')||has('jembatan')||has('drainase')||has('gedung koperasi')){
+   const p=pick(['pembangunan','rabat beton','jembatan','drainase','gedung koperasi']);
+   const uniq=[...new Set(p.map(x=>x.d))];
+   out.push('Pada aspek pembangunan fisik desa, kunjungan lapangan difokuskan pada pemantauan perkembangan sejumlah pekerjaan, antara lain '+(uniq.slice(0,4).join('; '))+'. Hasil pemantauan menunjukkan bahwa sebagian pekerjaan masih berada dalam tahapan pelaksanaan sehingga diperlukan monitoring lanjutan untuk memastikan kesesuaian dengan rencana, tahapan pekerjaan, mutu, volume, dan target penyelesaian.');
+ }
+ if(has('indeks desa')||has('verval')||has('validasi data')||has('pemutakhiran data')){
+   out.push('Pada aspek Pendataan Indeks Desa Tahun 2026, dilakukan verifikasi, validasi, perbaikan, dan pemutakhiran data pada beberapa tahapan. Kegiatan juga membahas data yang masih memerlukan penyesuaian serta percepatan penyelesaian perbaikan agar data yang diinput dan disampaikan sesuai dengan kondisi aktual serta dapat dipertanggungjawabkan.');
+ }
+ if(has('pra-musrenbang')||has('pra musrenbang')||has('musrenbang desa')||has('musrenbangdes')){
+   out.push('Dalam proses perencanaan pembangunan desa, telah dilakukan pendampingan terhadap persiapan Pra-Musrenbang Dusun dan pelaksanaan Musrenbang Desa. Pembahasan diarahkan pada penghimpunan, verifikasi, pemeringkatan, dan penetapan usulan masyarakat sebagai bahan penyusunan RKPDes dan DU-RKPDes Tahun Anggaran 2027.');
+ }
+ if(has('perubahan apbdes')){
+   out.push('Pada aspek penganggaran desa, dilakukan koordinasi dan pembahasan persiapan Perubahan APBDes Tahun Anggaran 2026. Pendampingan diarahkan pada kesiapan dokumen, penyelarasan program dan kegiatan, serta kesesuaian dengan kebutuhan dan prioritas pembangunan desa.');
+ }
+ if(has('rancangan apbdes')||has('penyusunan rancangan apbdes')||has('apbdes')){
+   out.push('Selain Perubahan APBDes, terdapat pendampingan terkait penyusunan Rancangan APBDes. Pemerintah Desa diberikan penguatan agar penyusunan dan pengalokasian kegiatan berpedoman pada ketentuan dan regulasi yang berlaku serta memperhatikan prioritas penggunaan Dana Desa.');
+ }
+ if(has('baliho')||has('infografis apbdes')||has('transparansi')){
+   out.push('Pada aspek keterbukaan informasi, dilakukan koordinasi mengenai percepatan pemasangan baliho atau infografis APBDes sebagai sarana transparansi kepada masyarakat sekaligus mendukung pemenuhan persyaratan administrasi yang berkaitan dengan penggunaan Dana Desa.');
+ }
+ if(has('sembako')||has('pkh')||has('blt dana desa')||has('verifikasi data penerima')){
+   out.push('Dalam pendampingan program bantuan masyarakat, dilakukan sinkronisasi dan verifikasi data penerima sembako/PKH dengan data penerima BLT Dana Desa untuk mengidentifikasi kemungkinan data ganda, perubahan data, atau ketidaksesuaian sehingga data penerima dapat diperbarui dan lebih tepat sasaran.');
+ }
+ if(has('monev')||has('monitoring dan evaluasi dana desa')){
+   out.push('Pada tingkat koordinasi pendampingan, dilakukan pembahasan percepatan penginputan Monitoring dan Evaluasi Dana Desa (Monev DD), termasuk perkembangan penginputan, kendala, dan kebutuhan tindak lanjut agar proses pelaporan dapat diselesaikan secara lengkap dan tepat waktu.');
+ }
+ if(has('titik nol')||has('titik 0')||has('titik nol kegiatan')){
+   out.push('Kegiatan monitoring titik nol menghasilkan informasi kondisi awal pekerjaan yang akan menjadi bahan perencanaan dan penganggaran. Kondisi fisik lapangan ditinjau dan didokumentasikan untuk mengidentifikasi kebutuhan rehabilitasi serta mendukung penyusunan rencana kegiatan berikutnya.');
+ }
+ out.push('Secara umum, kunjungan lapangan menghasilkan penguatan koordinasi dan pendampingan kepada Pemerintah Desa, pelaksana kegiatan, tim pendata, serta unsur terkait. Hasil monitoring menjadi bahan tindak lanjut untuk memastikan kesesuaian antara kondisi lapangan, perencanaan, pelaksanaan, administrasi, dokumentasi, dan pertanggungjawaban.');
+ return [...new Map(out.map(x=>[x,x])).values()];
+}
 function deriveNarratives(acts){
  const t=acts.map(x=>String(x.deskripsi||'')).join(' ').replace(/\s+/g,' ').trim(),l=t.toLowerCase(),has=(...w)=>w.some(k=>l.includes(k)),tujuan=[],follow=[],recs=[];
  if(has('indeks desa','pendataan','kuesioner','upload','penginputan','validasi data'))tujuan.push('Pendataan, verifikasi, pemutakhiran, dan finalisasi data Indeks Desa serta dokumen pendukung.');
@@ -360,7 +402,7 @@ function deriveNarratives(acts){
  if(has('koordinasi','rapat','pemdes','sekretaris desa','tpp'))tujuan.push('Koordinasi dan penguatan pendampingan bersama Pemerintah Desa, pelaksana kegiatan, dan pihak terkait.');
  if(has('laporan','dokumentasi','administrasi'))tujuan.push('Penertiban administrasi, dokumentasi, dan penyusunan laporan sebagai bahan evaluasi.');
  if(!tujuan.length)tujuan.push('Pendampingan, monitoring, verifikasi, dan evaluasi terhadap kegiatan Pemerintahan dan pembangunan desa sesuai uraian kegiatan dalam DRP.');
- const hasil=acts.slice(0,10).map((x,i)=>{const d=String(x.deskripsi||'').replace(/\s+/g,' ').trim();if(!d)return '';return 'Kegiatan '+(i+1)+' pada '+dateLongId(x.tanggal)+' di '+locationVillage(x.lokasi)+' menunjukkan pelaksanaan kegiatan berupa '+(d.length>300?d.slice(0,297).replace(/\s+\S*$/,'')+'…':d)+'.'}).filter(Boolean);
+ const hasil=summarizeHasilAI(acts);
  if(has('indeks desa','pendataan','kuesioner','upload','validasi data'))follow.push('Melanjutkan verifikasi dan penyempurnaan data yang masih belum lengkap atau belum sesuai sebelum dilakukan finalisasi dan pengunggahan.');
  if(has('pembangunan','jalan','drainase','jembatan','progres','fisik'))follow.push('Melakukan monitoring lanjutan terhadap progres fisik, volume, kualitas pekerjaan, kesesuaian dengan rencana, serta kelengkapan dokumentasi dan administrasi.');
  if(has('dana desa','anggaran','add','realisasi'))follow.push('Mencocokkan pelaksanaan kegiatan dengan dokumen perencanaan, anggaran, realisasi, dan dokumen pertanggungjawaban yang tersedia.');
