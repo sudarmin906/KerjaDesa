@@ -287,8 +287,8 @@ function parseDRP(text){
 }
 function renderDrpPreview(drp){
   if(!drp)return;
-  const h=drp.header||{};
-  document.getElementById('drpPreview').innerHTML=`<div class="card"><h3>✅ Hasil Pembacaan DRP</h3><p class="small"><b>${esc(h.nama||'-')}</b> • ${esc(h.posisi||'-')} • ${esc(h.periode||'-')}</p><p class="small">${esc(h.provinsi||'-')} / ${esc(h.kabupaten||'-')} / ${esc(h.kecamatan||'-')}<br>Desa: ${esc(h.desa||'-')}</p><p><span class="badge">${drp.count} kegiatan terbaca</span> <span class="badge">${drp.aktivitas.length} aktivitas</span> <span class="badge">${drp.kunlap.length} kunjungan lapangan</span></p><div class="tablewrap"><table class="simpletable"><thead><tr><th>No</th><th>Tanggal</th><th>Waktu</th><th>Jenis</th><th>Status</th><th>Lokasi</th><th>Deskripsi</th></tr></thead><tbody>${drp.all.map(x=>`<tr><td>${x.no}</td><td>${esc(x.tanggal)}</td><td>${esc(x.waktu)}</td><td>${esc(x.jenis)}</td><td>${x.kunjungan?'Kunjungan Lapangan':'Bukan Kunjungan Lapangan'}</td><td>${esc(x.lokasi)}</td><td>${esc(x.deskripsi)}</td></tr>`).join('')}</tbody></table></div></div>`
+  const h=drp.header||{},stat=drp.complete?"<span class=\"badge\">✓ lengkap</span>":"<span class=\"badge warn\">⚠ belum lengkap</span>";
+  document.getElementById("drpPreview").innerHTML=`<div class="card"><h3>✅ Hasil Pembacaan DRP</h3><p class="small"><b>${esc(h.nama||"-")}</b> • ${esc(h.posisi||"-")} • ${esc(h.periode||"-")}</p><p class="small">${esc(h.provinsi||"-")} / ${esc(h.kabupaten||"-")} / ${esc(h.kecamatan||"-")}<br>Desa: ${esc(h.desa||"-")}</p><p><span class="badge">DRP ${drp.count}/${drp.expected||drp.count} kegiatan</span> <span class="badge">${drp.aktivitas.length} aktivitas</span> <span class="badge">${drp.kunlap.length} kunjungan lapangan</span> ${stat}</p><div class="tablewrap"><table class="simpletable"><thead><tr><th>No</th><th>Tanggal</th><th>Waktu</th><th>Jenis</th><th>Status</th><th>Lokasi</th><th>Deskripsi</th></tr></thead><tbody>${drp.all.map(x=>`<tr><td>${x.no}</td><td>${esc(x.tanggal)}</td><td>${esc(x.waktu)}</td><td>${esc(x.jenis)}</td><td>${x.kunjungan?"Kunjungan Lapangan":"Bukan Kunjungan Lapangan"}</td><td>${esc(x.lokasi)}</td><td>${esc(x.deskripsi)}</td></tr>`).join("")}</tbody></table></div></div>`;
 }
 async function kdPickDrp(){
   const accept=[{description:'Dokumen DRP',accept:{
@@ -338,7 +338,7 @@ async function autoProcessOne(kind,selectedFile=null){
       data.docs.sppd={name:f.name,text:txt,summary,parsed:parseSPPD(txt),processedAt:new Date().toISOString()};
     }
     save();
-    st.innerHTML=kind==='drp'?`<span class="ok">✓ DRP selesai dibaca: ${parsed?.count||0} kegiatan ditemukan.</span>`:`<span class="ok">✓ Selesai: ${esc(f.name)}</span>`;
+    st.innerHTML=kind==='drp'?`<span class="ok">✓ DRP selesai dibaca: ${parsed?.count||0}/${parsed?.expected||parsed?.count||0} kegiatan terbaca${parsed?.complete?' — lengkap':''}.</span>`:`<span class="ok">✓ Selesai: ${esc(f.name)}</span>`;
     if(kind==='drp')renderDrpPreview(parsed);
     updateDocStatus()
   }catch(e){st.innerHTML='<span class="warn">Gagal membaca: '+esc(e.message)+'</span>'}
