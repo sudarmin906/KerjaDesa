@@ -195,7 +195,7 @@
         const blips=tcBot[c].getElementsByTagNameNS(A,'blip');if(blips.length){const rid=blips[0].getAttributeNS(R,'embed');const target=relMap.get(rid);if(target){
           let dataUrl=null;
           if(item)dataUrl=item.url;
-          const m=String(dataUrl||'').match(/^data:image\\/([^;]+);base64,(.+)$/);
+          const m=String(dataUrl||'').match(/^data:image\/([^;]+);base64,(.+)$/);
           if(m){
             const ext=(target.split('.').pop()||'jpeg').toLowerCase(),type=ext==='png'?'image/png':'image/jpeg';
             const useUrl=await new Promise(resolve=>{
