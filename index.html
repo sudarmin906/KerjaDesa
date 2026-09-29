@@ -434,7 +434,7 @@ function deriveNarratives(acts){
 }
 function uniqueVisitDays(acts){return new Set(acts.map(x=>dateKey(x.tanggal)).filter(Boolean)).size}
 function buildVisitRows(acts){return acts.map((x,i)=>'<tr><td>'+ (i+1) +'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(locationVillage(x.lokasi))+'</td><td>'+esc(String(x.deskripsi||'').replace(/\s+/g,' ').trim())+'</td></tr>').join('')}
-function buildVisitDays(acts){const u=[],s=new Set();acts.forEach(x=>{const k=dateKey(x.tanggal);if(k&&!s.has(k)){s.add(k);u.push(x)}});return u.map((x,i)=>'<tr><td>Hari ke-'+(i+1)+'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc((String(x.lokasi||'').split('/')[1]||'-').trim())+'</td><td>'+esc(locationVillage(x.lokasi))+'</td></tr>').join('')}
+function buildVisitDays(acts){const u=[],s=new Set();acts.forEach(x=>{const k=dateKey(x.tanggal);if(k&&!s.has(k)){s.add(k);u.push(x)}});return u.map((x,i)=>'<tr><td>Hari ke-'+(i+1)+'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>SENDANA</td><td>'+esc(locationVillage(x.lokasi))+'</td></tr>').join('')}
 function docActivityTitle(desc){
  const d=String(desc||'').replace(/\s+/g,' ').trim();
  if(!d)return 'Kegiatan kunjungan lapangan';
@@ -476,7 +476,32 @@ function makeReport(){
  const g='<section class="report-page landscape-page g-landscape-page"><h3>G. Dokumentasi Kunjungan Lapangan</h3>'+buildDocumentation(acts)+'</section>';
  reportHtml='<div class="print-report">'+cover+ident+csec+eF+g+'</div>';document.getElementById('reportPrint').innerHTML=reportHtml;document.getElementById('docResult2').innerHTML='<div class="card no-print"><h3>Pratinjau Laporan Sesuai Format Master</h3>'+reportHtml+'</div>';document.getElementById('reportActions').classList.remove('hide');reportText=document.getElementById('reportPrint').innerText;page('laporan');window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
 }
-function downloadWord(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}const css=document.getElementById('kd-original-master-override')?.outerHTML||'';const html='<!doctype html><html><head><meta charset="utf-8"><title>Laporan Kunjungan Lapangan '+esc(monthNameFromPeriod(data.docs?.drp?.parsed?.header?.periode||periodLabel()))+'</title>'+css+'</head><body>'+reportHtml+'</body></html>';const blob=new Blob([html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Laporan_Kunjungan_Lapangan_'+(monthNameFromPeriod(data.docs?.drp?.parsed?.header?.periode||periodLabel()))+'_2026.doc';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function downloadWord(){
+ if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}
+ const host=document.createElement('div');host.innerHTML=reportHtml;
+ const pages=[...host.querySelectorAll('.report-page')];
+ if(pages.length<6){alert('Struktur laporan belum lengkap. Buat ulang laporan terlebih dahulu.');return}
+ const sectionStyles=`
+ @page WordSection1{size:8.27in 11.69in;margin:0.59in 0.47in 0.59in 0.47in;mso-header-margin:.3in;mso-footer-margin:.3in;mso-paper-source:0}
+ @page WordSection2{size:11.69in 8.27in;mso-page-orientation:landscape;margin:0.47in 0.59in 0.47in 0.59in;mso-header-margin:.3in;mso-footer-margin:.3in;mso-paper-source:0}
+ @page WordSection3{size:8.27in 11.69in;margin:0.59in 0.47in 0.59in 0.47in;mso-header-margin:.3in;mso-footer-margin:.3in;mso-paper-source:0}
+ @page WordSection4{size:11.69in 8.27in;mso-page-orientation:landscape;margin:0.47in 0.59in 0.47in 0.59in;mso-header-margin:.3in;mso-footer-margin:.3in;mso-paper-source:0}
+ div.WordSection1{page:WordSection1}
+ div.WordSection2{page:WordSection2;page-break-before:always;mso-page-orientation:landscape}
+ div.WordSection3{page:WordSection3;page-break-before:always}
+ div.WordSection4{page:WordSection4;page-break-before:always;mso-page-orientation:landscape}
+ .WordSection2,.WordSection4{width:100%}
+ `;
+ const css=(document.getElementById('kd-original-master-override')?.outerHTML||'')+'<style>'+sectionStyles+'</style>';
+ const w1='<div class="WordSection1" style="page:WordSection1">'+pages.slice(0,3).map(x=>x.outerHTML).join('')+'</div>';
+ const w2='<div class="WordSection2" style="page:WordSection2;page-break-before:always;mso-page-orientation:landscape">'+pages[3].outerHTML+'</div>';
+ const w3='<div class="WordSection3" style="page:WordSection3;page-break-before:always">'+pages[4].outerHTML+'</div>';
+ const w4='<div class="WordSection4" style="page:WordSection4;page-break-before:always;mso-page-orientation:landscape">'+pages[5].outerHTML+'</div>';
+ const title='Laporan Kunjungan Lapangan '+monthNameFromPeriod(data.docs?.drp?.parsed?.header?.periode||periodLabel());
+ const html='<!doctype html><html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><meta name="ProgId" content="Word.Document"><title>'+esc(title)+'</title>'+css+'</head><body style="tab-interval:.5in">'+w1+w2+w3+w4+'</body></html>';
+ const blob=new Blob(['\\ufeff'+html],{type:'application/msword;charset=utf-8'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Laporan_Kunjungan_Lapangan_'+(monthNameFromPeriod(data.docs?.drp?.parsed?.header?.periode||periodLabel()))+'_2026.doc';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
 function printPdf(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}window.print()}
 const SPPD_DEFAULT={nik:'760503312910050',nama:'SUDARMIN ARIPUDDIN',kabupaten:'Majene',provinsi:'Sulawesi Barat',posisi:'Pendamping Desa',jabatan:'Pendamping lokal Desa',bulan:'SEPTEMBER',tahun:'2026',tiba:'Tallu Banua Utara',berangkat:'Paminggalan',kedudukan:'Paminggalan'};
 const sppdIds=['sppdNIK','sppdNama','sppdKabupaten','sppdProvinsi','sppdPosisi','sppdJabatan','sppdBulan','sppdTahun','sppdTiba','sppdBerangkat','sppdKedudukan'];
