@@ -92,6 +92,19 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
 @media print{
  .landscape-page{width:297mm!important;min-height:186mm!important;page:landscape}
 }
+</style>
+<style id="kd-section-g-master">
+@page sectionG{size:A4 landscape;margin:12mm 14mm}
+.landscape-page{page:landscape}
+.g-landscape-page{page:sectionG;width:297mm!important;min-height:186mm!important;padding:0!important;box-sizing:border-box}
+.g-landscape-page h3{font-size:11.5pt;font-weight:700;margin:0 0 5mm;text-align:left}
+.g-landscape-page .doc-landscape-grid{display:grid;grid-template-columns:1fr;gap:5mm;width:100%}
+.g-landscape-page .doc-roll{display:grid;grid-template-columns:40% 60%;gap:4mm;align-items:center;break-inside:avoid;page-break-inside:avoid;min-height:50mm}
+.g-landscape-page .doc-note{border:1px solid #555;border-radius:0;padding:4mm;font-size:9.5pt;line-height:1.4;min-height:42mm;box-sizing:border-box}
+.g-landscape-page .doc-note>div{margin-bottom:3mm}.g-landscape-page .doc-note>div:last-child{margin-bottom:0}
+.g-landscape-page .doc-photo-frame{border:1px solid #555;border-radius:0;padding:2mm;min-height:50mm;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+.g-landscape-page .doc-photo-frame img{max-width:100%;max-height:57mm;object-fit:contain}
+@media print{.g-landscape-page{page:sectionG;width:297mm!important;min-height:186mm!important}.g-landscape-page .doc-roll{break-inside:avoid;page-break-inside:avoid}}
 </style></head><body>
 <header><div class="brandbar"><div class="brand-left"><img class="brand-logo" src="foto_profil.jpg" alt="Profil"><div><div class="brand-name">Kerja<span>Desa</span></div><div class="brand-sub">Sistem Kerja Pendamping Desa • Kecamatan Sendana • Kabupaten Majene</div></div></div><div class="profile-chip"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"><div><b>SUDARMIN ARIPUDDIN</b><small>Pendamping Lokal Desa</small></div></div></div></header>
 <main>
@@ -419,11 +432,35 @@ function deriveNarratives(acts){
 function uniqueVisitDays(acts){return new Set(acts.map(x=>dateKey(x.tanggal)).filter(Boolean)).size}
 function buildVisitRows(acts){return acts.map((x,i)=>'<tr><td>'+ (i+1) +'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(locationVillage(x.lokasi))+'</td><td>'+esc(String(x.deskripsi||'').replace(/\s+/g,' ').trim())+'</td></tr>').join('')}
 function buildVisitDays(acts){const u=[],s=new Set();acts.forEach(x=>{const k=dateKey(x.tanggal);if(k&&!s.has(k)){s.add(k);u.push(x)}});return u.map((x,i)=>'<tr><td>Hari ke-'+(i+1)+'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc((String(x.lokasi||'').split('/')[1]||'-').trim())+'</td><td>'+esc(locationVillage(x.lokasi))+'</td></tr>').join('')}
+function docActivityTitle(desc){
+ const d=String(desc||'').replace(/\s+/g,' ').trim();
+ if(!d)return 'Kegiatan kunjungan lapangan';
+ const l=d.toLowerCase();
+ const rules=[
+  [/gedung koperasi|koperasi desa merah putih/,'Monitoring progres pembangunan Gedung Koperasi Desa Merah Putih'],
+  [/rabat beton.*jalan.*paminggalan|jalan poros paminggalan.*limbua/,'Monitoring progres pembangunan rabat beton Jalan Poros Paminggalan menuju Desa Limbua'],
+  [/jembatan dekker/,'Monitoring progres pembangunan Jembatan Dekker Dusun Palla-Pallang'],
+  [/drainase/,'Monitoring progres pembangunan drainase'],
+  [/titik nol|titik 0.*rehabilitasi jalan setapak/,'Monitoring titik nol rehabilitasi jalan setapak'],
+  [/pra[- ]?musrenbang/,'Koordinasi persiapan Pra-Musrenbang Dusun'],
+  [/musrenbangdes|musyawarah.*rkpdes/,'Musrenbang Desa dalam rangka penyusunan RKPDes dan DU-RKPDes Tahun 2027'],
+  [/perubahan apbdes/,'Koordinasi persiapan Perubahan APBDes Tahun Anggaran 2026'],
+  [/rancangan apbdes/,'Koordinasi penyusunan Rancangan APBDes'],
+  [/monev.*dana desa|monitoring dan evaluasi dana desa/,'Rapat Koordinasi TPP P3MD terkait percepatan Monev Dana Desa'],
+  [/verifikasi.*penerima.*sembako|sembako.*pkh|blt.*pkh/,'Verifikasi dan sinkronisasi data penerima bantuan'],
+  [/indeks desa|verval.*data/,'Verifikasi, perbaikan, dan pemutakhiran Data Indeks Desa'],
+  [/baliho.*apbdes|infografis.*apbdes/,'Koordinasi percepatan pemasangan baliho/infografis APBDes']
+ ];
+ for(const [re,title] of rules)if(re.test(l))return title;
+ const first=d.split(/[.!?](?:\s|$)/)[0].trim();
+ return first.length>105?first.slice(0,102).replace(/\s+\S*$/,'')+'…':first;
+}
 function buildDocumentation(acts){
- const groups=[],by={};activityPhotos.forEach(p=>{if(!p.date)return;(by[dateKey(p.date)]??=[]).push(p)});
+ const groups=[],by={};
+ activityPhotos.forEach(p=>{if(!p.date)return;(by[dateKey(p.date)]??=[]).push(p)});
  Object.keys(by).forEach(k=>by[k].forEach(p=>groups.push({photo:p,act:acts.find(x=>dateKey(x.tanggal)===k)||{tanggal:p.date,lokasi:'',deskripsi:''}})));
  if(!groups.length)return '<p>Belum ada foto yang tanggalnya dapat dicocokkan dengan D. Hasil Kunjungan Lapangan.</p>';
- return '<div class="doc-landscape-grid">'+groups.map((g,i)=>'<div class="doc-roll"><div class="doc-note"><b>Lokasi :</b> '+esc(locationVillage(g.act.lokasi))+'<br><br><b>Tanggal :</b> '+esc(dateLongId(g.act.tanggal||g.photo.date))+'<br><br><b>Kegiatan :</b> '+esc(String(g.act.deskripsi||'').replace(/\s+/g,' ').trim())+'</div><div class="doc-photo-frame"><img src="'+g.photo.url+'" alt="Dokumentasi '+(i+1)+'"></div></div>').join('')+'</div>';
+ return '<div class="doc-landscape-grid">'+groups.map((g,i)=>'<div class="doc-roll"><div class="doc-note"><div><b>Lokasi :</b> '+esc(locationVillage(g.act.lokasi))+'</div><div><b>Tanggal :</b> '+esc(dateLongId(g.act.tanggal||g.photo.date))+'</div><div><b>Kegiatan :</b> '+esc(docActivityTitle(g.act.deskripsi))+'</div></div><div class="doc-photo-frame"><img src="'+g.photo.url+'" alt="Dokumentasi '+(i+1)+'"></div></div>').join('')+'</div>';
 }
 function makeReport(){
  const d=data.docs||{},drp=d.drp?.parsed,h=drp?.header||{};if(!drp||!drp.all?.length){alert('Upload dan proses DRP terlebih dahulu.');return}
@@ -433,7 +470,7 @@ function makeReport(){
  const cover='<section class="report-page portrait-page"><div class="cover-head"><div class="cover-instansi">KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA<br><br>BADAN PENGEMBANGAN SUMBERDAYA MANUSIA DAN PEMBERDAYAAN<br>MASYARAKAT DESA DAN DAERAH TERTINGGAL</div>'+logo+'<div class="cover-title">LAPORAN KUNJUNGAN LAPANGAN '+esc(month).toUpperCase()+'</div><div class="cover-name">'+esc(nama).toUpperCase()+'</div><div class="cover-position">'+esc(posisi).toUpperCase()+'</div><div class="cover-region">KECAMATAN '+esc(kec).toUpperCase()+'<br>KABUPATEN '+esc(kab).toUpperCase()+'<br>PROVINSI '+esc(prov).toUpperCase()+'<br><br>TAHUN '+esc(year)+'</div><div class="cover-footer-title">LAPORAN KUNJUNGAN LAPANGAN BULANAN</div></div></section>';
  const ident='<section class="report-page portrait-page"><div class="master-a-title">LAPORAN KUNJUNGAN LAPANGAN BULANAN</div><div class="master-a-sub">PENDAMPING DESA<br>BULAN '+esc(month).toUpperCase()+' TAHUN '+esc(year)+'</div><hr><h3>A. Identitas</h3><table class="identity-table"><tr><td>NIK</td><td>: '+esc(nik)+'</td></tr><tr><td>Nama Lengkap</td><td>: <b>'+esc(nama).toUpperCase()+'</b></td></tr><tr><td>Kecamatan</td><td>: '+esc(kec)+'</td></tr><tr><td>Kabupaten</td><td>: '+esc(kab)+'</td></tr><tr><td>Provinsi</td><td>: '+esc(prov)+'</td></tr><tr><td>Posisi</td><td>: '+esc(posisi)+'</td></tr><tr><td>Jabatan</td><td>: '+esc(jabatan)+'</td></tr></table><h3>B. Waktu Pelaksanaan Kunjungan Lapangan</h3><table class="wide-table"><thead><tr><th>Hari ke</th><th>Waktu (Tgl/Bln/Thn)</th><th colspan="2">Lokasi Kunjungan</th></tr><tr><th></th><th></th><th>Kecamatan</th><th>Desa</th></tr></thead><tbody>'+buildVisitDays(acts)+'</tbody><tfoot><tr><th colspan="4">Total Hari Kunjungan Lapangan Bulan '+esc(month)+' Tahun '+esc(year)+' : '+uniqueVisitDays(acts)+' Hari</th></tr></tfoot></table></section>';
  const csec='<section class="report-page portrait-page"><h3>C. Tujuan Kunjungan Lapangan</h3><p>Kunjungan lapangan dilaksanakan untuk melakukan pendampingan, monitoring, verifikasi, dan evaluasi terhadap kegiatan yang tercatat dalam DRP bulan '+esc(month)+' '+esc(year)+'. Secara khusus, kunjungan bertujuan untuk:</p><ol>'+nar.tujuan.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol></section><section class="report-page landscape-page"><h3>D. Hasil Kunjungan Lapangan</h3><table class="result-table"><thead><tr><th>No</th><th>Tanggal</th><th>Desa</th><th>Kegiatan</th></tr></thead><tbody>'+buildVisitRows(acts)+'</tbody></table><p><b>Hasil kunjungan lapangan menunjukkan beberapa capaian dan temuan sebagai berikut:</b></p><ol>'+nar.hasil.map(x=>'<li>'+esc(x.replace(/^Kegiatan \d+\s*/,''))+'</li>').join('')+'</ol></section>'; const eF='<section class="report-page portrait-page"><h3>E. Langkah Tindak Lanjut Penanganan Lapangan</h3><p>Berdasarkan hasil kunjungan lapangan selama bulan '+esc(month)+' '+esc(year)+', tindak lanjut diarahkan pada penyelesaian temuan, penyempurnaan data, pemantauan kegiatan pembangunan, penguatan administrasi, serta koordinasi dengan unsur terkait sesuai kondisi yang tercatat dalam DRP.</p><ol>'+nar.follow.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol><h3>F. Rekomendasi</h3><p>Berdasarkan keseluruhan kegiatan dan hasil kunjungan lapangan, rekomendasi disusun sebagai bahan perbaikan dan tindak lanjut pada periode berikutnya.</p><ol>'+nar.recs.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol><p><b>Kesimpulan:</b> Secara keseluruhan, kunjungan lapangan bulan '+esc(month)+' '+esc(year)+' diarahkan pada kegiatan yang tercatat dalam DRP, dengan tindak lanjut dan rekomendasi yang menyesuaikan hasil verifikasi, monitoring, koordinasi, dan kondisi yang ditemukan di lapangan.</p><div class="signature"><p>Sendana, '+esc(new Date().getDate())+' '+esc(month)+' '+esc(year)+'</p><p>Penyusun Laporan</p><br><b>'+esc(nama).toUpperCase()+'</b></div></section>';
- const g='<section class="report-page landscape-page"><h3>G. Dokumentasi Kunjungan Lapangan</h3>'+buildDocumentation(acts)+'</section>';
+ const g='<section class="report-page landscape-page g-landscape-page"><h3>G. Dokumentasi Kunjungan Lapangan</h3>'+buildDocumentation(acts)+'</section>';
  reportHtml='<div class="print-report">'+cover+ident+csec+eF+g+'</div>';document.getElementById('reportPrint').innerHTML=reportHtml;document.getElementById('docResult2').innerHTML='<div class="card no-print"><h3>Pratinjau Laporan Sesuai Format Master</h3>'+reportHtml+'</div>';document.getElementById('reportActions').classList.remove('hide');reportText=document.getElementById('reportPrint').innerText;page('laporan');window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
 }
 function downloadWord(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}const css=document.getElementById('kd-original-master-override')?.outerHTML||'';const html='<!doctype html><html><head><meta charset="utf-8"><title>Laporan Kunjungan Lapangan '+esc(monthNameFromPeriod(data.docs?.drp?.parsed?.header?.periode||periodLabel()))+'</title>'+css+'</head><body>'+reportHtml+'</body></html>';const blob=new Blob([html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Laporan_Kunjungan_Lapangan_'+(monthNameFromPeriod(data.docs?.drp?.parsed?.header?.periode||periodLabel()))+'_2026.doc';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
