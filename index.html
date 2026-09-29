@@ -44,12 +44,14 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
 .print-report{font-family:"Times New Roman",Times,serif;background:#fff;color:#000}
 .report-page{width:210mm;min-height:267mm;margin:0 auto;padding:0;box-sizing:border-box;background:#fff;break-after:page;page-break-after:always}
 .portrait-page{page:portrait}.landscape-page{width:297mm;min-height:186mm;page:landscape}
-.cover-head{height:267mm;padding-top:2mm;text-align:center;font-weight:700}
-.cover-instansi{font-family:"Times New Roman",serif;font-size:15pt;line-height:1.42;margin:0 auto}
-.cover-logo{width:72mm;height:72mm;object-fit:contain;display:block;margin:27mm auto 20mm}
-.cover-title{font-size:13.5pt;margin:0 0 19mm;font-weight:700}
-.cover-name{font-size:16pt;margin-bottom:6mm;font-weight:700}.cover-position{font-size:14pt}
-.cover-region{font-size:13pt;line-height:1.65;margin-top:24mm}.cover-footer-title{font-size:13pt;font-weight:700;margin-top:16mm}
+.cover-head{position:relative;height:267mm;padding:0;text-align:center;font-weight:700;box-sizing:border-box}
+.cover-instansi{position:absolute;top:1mm;left:0;right:0;font-family:"Times New Roman",serif;font-size:7pt;line-height:1.28;margin:0 auto}
+.cover-logo{position:absolute;top:63mm;left:50%;transform:translateX(-50%);width:38mm;height:38mm;object-fit:contain;display:block;margin:0}
+.cover-title{position:absolute;top:202mm;left:0;right:0;font-size:8pt;line-height:1.15;margin:0;font-weight:700}
+.cover-name{position:absolute;top:208mm;left:0;right:0;font-size:7.5pt;line-height:1.1;margin:0;font-weight:700}
+.cover-position{position:absolute;top:212mm;left:0;right:0;font-size:7.5pt;line-height:1.1}
+.cover-region{position:absolute;top:216mm;left:0;right:0;font-size:7.5pt;line-height:1.38;margin:0}
+.cover-footer-title{position:absolute;top:247mm;left:0;right:0;font-size:7.5pt;line-height:1.15;font-weight:700;margin:0}
 .report-page h2{font-size:13pt;text-align:center;margin:0 0 3mm}.report-subtitle{font-size:12pt;text-align:center;font-weight:700;line-height:1.35}
 .report-page h3{font-size:13pt;margin:0 0 4mm}.report-page p,.report-page li{font-size:11pt;line-height:1.35;text-align:justify}
 .identity-table{width:100%;border-collapse:collapse;margin:3mm 0 7mm}.identity-table td{border:0;padding:1.2mm 0;font-size:11pt}.identity-table td:first-child{width:42mm}
