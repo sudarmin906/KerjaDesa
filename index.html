@@ -2,7 +2,7 @@
 <html lang="id"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0f766e"><link rel="manifest" href="manifest.json">
-<title>KerjaDesa V25 Professional - Sistem Kerja Pendamping Desa</title>
+<title>KerjaDesa V26 Professional - Sistem Kerja Pendamping Desa</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f4f7f8;color:#17202a}header{background:#0f766e;color:#fff;padding:18px 16px;position:sticky;top:0;z-index:5}header h1{margin:0;font-size:24px}header small{opacity:.9}main{max-width:900px;margin:auto;padding:16px}.card{background:#fff;border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 10px #00000010}input,textarea,select,button{width:100%;padding:13px;margin:6px 0;border-radius:10px;border:1px solid #ccd5d8;font-size:15px}button{background:#0f766e;color:#fff;border:0;font-weight:bold}.secondary{background:#e6f3f1;color:#0f766e}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{font-size:26px;font-weight:bold}.muted{color:#667}.item{border-left:4px solid #0f766e;padding:10px;background:#f8fbfb;margin:8px 0;border-radius:8px}#app{display:none}.hide{display:none}.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;padding:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;z-index:10}.nav button{margin:0;padding:10px 4px;font-size:13px}body{padding-bottom:82px}.drop{border:2px dashed #a8c8c4;padding:14px;border-radius:12px;background:#f7fbfb;margin:8px 0}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#e6f3f1;color:#0f766e;font-size:12px}.ok{color:#137333}.warn{color:#9a6700}.small{font-size:12px}.report{white-space:pre-wrap;background:#f8fafb;border-radius:10px;padding:14px;font-size:13px;line-height:1.5;max-height:500px;overflow:auto}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pill{padding:10px;border-radius:10px;background:#eef7f5;margin:6px 0}.loading{padding:10px;border-radius:10px;background:#fff8e6}.tablewrap{overflow:auto}.simpletable{width:100%;border-collapse:collapse;font-size:12px}.simpletable th,.simpletable td{border:1px solid #cdd7d9;padding:7px;vertical-align:top}.simpletable th{background:#eef7f5}.report-print{display:none}
 @media(max-width:600px){.grid,.row,.actions{grid-template-columns:1fr}.nav button{font-size:11px}}
@@ -29,12 +29,31 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
 .nav{background:rgba(9,32,58,.96);border-top:0;padding:8px max(8px,calc((100vw - 1120px)/2));box-shadow:0 -8px 24px rgba(10,37,69,.15);backdrop-filter:blur(10px)}.nav button{background:transparent;color:#eaf3fb;border:0;border-radius:12px}.nav button:hover{background:rgba(255,255,255,.1)}
 @media(max-width:760px){.brand-sub{display:none}.profile-chip div{display:none}.login-card{grid-template-columns:1fr}.login-hero{min-height:310px;padding:30px}.login-hero h2{font-size:34px}.login-form{padding:25px}.welcome{grid-template-columns:1fr}.welcome-profile{display:none}.stats{grid-template-columns:repeat(2,1fr)}.feature-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:430px){.brand-logo{width:44px;height:44px}.brand-name{font-size:22px}.stats{gap:8px}.stat-card{padding:12px}.feature{min-height:120px;padding:13px}}
-</style></head><body>
+<style>
+.kd-data-center{border:1px solid rgba(25,118,210,.12);background:linear-gradient(135deg,#fff,#f4f9ff)}
+.kd-data-center .grid{margin-top:8px}
+.kd-data-center button{min-height:46px}
+.kd-progress{height:8px;border-radius:99px;background:#e7eef3;overflow:hidden;margin-top:7px}
+.kd-progress>span{display:block;height:100%;background:linear-gradient(90deg,#1976d2,#0f766e)}
+.kd-empty{padding:18px;text-align:center;color:#66788a;border:1px dashed #c9d6dc;border-radius:12px;background:#fafcfd}
+@media(max-width:600px){.kd-data-center .grid{grid-template-columns:1fr 1fr}}
+</style></style></head><body>
 <header><div class="brandbar"><div class="brand-left"><img class="brand-logo" src="foto_profil.jpg" alt="Profil"><div><div class="brand-name">Kerja<span>Desa</span></div><div class="brand-sub">Sistem Kerja Pendamping Desa • Kecamatan Sendana • Kabupaten Majene</div></div></div><div class="profile-chip"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"><div><b>SUDARMIN ARIPUDDIN</b><small>Pendamping Lokal Desa</small></div></div></div></header>
 <main>
 <section id="login" class="card login-card"><div class="login-hero"><span class="login-tag">Sistem Kerja Pendamping Desa</span><img class="login-photo" src="foto_profil.jpg" alt="Sudarmin Aripuddin"><h2>Selamat Datang di<br><span style="color:#ffd34d">KerjaDesa</span></h2><p>Administrasi, dokumentasi, monitoring, DRP, laporan bulanan, dan SPPD dalam satu aplikasi yang dapat digunakan dari HP.</p><div style="margin-top:10px;font-size:12px;opacity:.85">Kecamatan Sendana • Kabupaten Majene • Sulawesi Barat</div></div><div class="login-form"><h2>Masuk ke Aplikasi</h2><p class="muted">Gunakan akun Anda untuk membuka dashboard KerjaDesa.</p><input id="user" value="admin" placeholder="Username"><input id="pass" value="admin123" type="password" placeholder="Password"><button onclick="doLogin()">🔐 Masuk ke KerjaDesa</button><p id="loginMsg" class="muted"></p><div style="margin-top:22px;padding:13px;border-radius:14px;background:#f2f7fb;font-size:12px;color:#66788a"><b>Offline Ready</b><br>Data kerja tetap dapat disimpan di perangkat saat koneksi internet tidak tersedia.</div></div></section><section id="app">
-<div id="home"><div class="welcome card"><div class="welcome-copy"><span class="tag">Mendampingi Desa • Membangun Negeri</span><h2>Selamat Datang di <span>KerjaDesa</span></h2><p class="muted" style="font-size:15px;max-width:650px">Ruang kerja digital untuk mengelola kegiatan, monitoring lapangan, dokumen, laporan bulanan, dan SPPD Pendamping Desa.</p><div style="margin-top:18px;font-weight:800">SUDARMIN ARIPUDDIN</div><div class="muted" style="font-size:13px">Pendamping Lokal Desa • Kecamatan Sendana • Kabupaten Majene</div></div><div class="welcome-profile"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"></div></div><div class="stats"><div class="stat-card"><div class="stat-icon si-blue">📋</div><div><div class="stat" id="jmlK">0</div><div class="muted">Kegiatan</div></div></div><div class="stat-card"><div class="stat-icon si-green">📍</div><div><div class="stat" id="jmlM">0</div><div class="muted">Monitoring</div></div></div><div class="stat-card"><div class="stat-icon si-orange">📄</div><div><div class="stat">SPPD</div><div class="muted">Template asli</div></div></div><div class="stat-card"><div class="stat-icon si-purple">📷</div><div><div class="stat">Foto</div><div class="muted">Dokumentasi</div></div></div></div><div class="section-title"><h3>Menu Utama</h3><span>Akses cepat KerjaDesa</span></div><div class="feature-grid"><div class="feature feature-blue"><div class="fi">🧾</div><h3>SPPD</h3><p>Pengaturan identitas dan pembuatan SPPD dari template Word asli.</p></div><div class="feature feature-green"><div class="fi">📅</div><h3>Agenda Kegiatan</h3><p>Pencatatan kegiatan dan jadwal lapangan.</p></div><div class="feature feature-purple"><div class="fi">📑</div><h3>Laporan Bulanan</h3><p>Pengolahan DRP menjadi laporan bulanan.</p></div><div class="feature feature-orange"><div class="fi">🗂️</div><h3>Dokumen Desa</h3><p>Pusat penyimpanan dokumen kerja dan administrasi.</p></div><div class="feature feature-red"><div class="fi">📊</div><h3>Monitoring</h3><p>Pencatatan progres dan hasil monitoring lapangan.</p></div><div class="feature feature-green"><div class="fi">📸</div><h3>Galeri Kegiatan</h3><p>Dokumentasi foto kegiatan lapangan.</p></div><div class="feature feature-blue"><div class="fi">📍</div><h3>GPS Lapangan</h3><p>Catat koordinat lokasi kegiatan saat diperlukan.</p></div><div class="feature feature-purple"><div class="fi">⚙️</div><h3>Pengaturan</h3><p>Data dan preferensi aplikasi tersimpan di perangkat.</p></div></div><div class="card" style="margin-top:14px;background:linear-gradient(135deg,#0b3158,#1266a5);color:#fff"><h3 style="margin-top:0">Status Perangkat</h3><div id="online">Memeriksa...</div><button class="secondary" onclick="installApp()" style="margin-top:10px;background:#fff;color:#1261a0">📱 Pasang ke Layar Utama</button></div><div class="card" style="margin-top:14px"><h3 style="margin-top:0">Desa Dampingan</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="pill"><b>01</b> Desa Paminggalan<br><span class="muted">Kecamatan Sendana</span></div><div class="pill"><b>02</b> Desa Tallu Banua Utara<br><span class="muted">Kecamatan Sendana</span></div></div></div></div><div id="kegiatan" class="hide"><div class="card"><h2>Data Kegiatan</h2><input id="knama" placeholder="Nama kegiatan"><input id="kdesa" placeholder="Desa"><input id="ktgl" type="date"><textarea id="kcat" placeholder="Catatan"></textarea><button onclick="addKegiatan()">Simpan Kegiatan</button></div><div id="klist"></div></div>
-<div id="monitoring" class="hide"><div class="card"><h2>Monitoring Lapangan</h2><input id="mkeg" placeholder="ID / nama kegiatan"><input id="mpet" placeholder="Nama petugas"><input id="mprog" type="number" min="0" max="100" placeholder="Progres 0-100"><textarea id="mcat" placeholder="Catatan hasil monitoring"></textarea><button onclick="gps()">📍 Ambil Lokasi GPS</button><p id="gpsout" class="muted">Lokasi belum diambil</p><button onclick="addMonitoring()">Simpan Monitoring</button></div><div id="mlist"></div></div>
+<div id="home"><div class="welcome card"><div class="welcome-copy"><span class="tag">Mendampingi Desa • Membangun Negeri</span><h2>Selamat Datang di <span>KerjaDesa</span></h2><p class="muted" style="font-size:15px;max-width:650px">Ruang kerja digital untuk mengelola kegiatan, monitoring lapangan, dokumen, laporan bulanan, dan SPPD Pendamping Desa.</p><div style="margin-top:18px;font-weight:800">SUDARMIN ARIPUDDIN</div><div class="muted" style="font-size:13px">Pendamping Lokal Desa • Kecamatan Sendana • Kabupaten Majene</div></div><div class="welcome-profile"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"></div></div><div class="stats"><div class="stat-card"><div class="stat-icon si-blue">📋</div><div><div class="stat" id="jmlK">0</div><div class="muted">Kegiatan</div></div></div><div class="stat-card"><div class="stat-icon si-green">📍</div><div><div class="stat" id="jmlM">0</div><div class="muted">Monitoring</div></div></div><div class="stat-card"><div class="stat-icon si-orange">📄</div><div><div class="stat">SPPD</div><div class="muted">Template asli</div></div></div><div class="stat-card"><div class="stat-icon si-purple">📷</div><div><div class="stat">Foto</div><div class="muted">Dokumentasi</div></div></div></div><div class="section-title"><h3>Menu Utama</h3><span>Akses cepat KerjaDesa</span></div><div class="feature-grid"><div class="feature feature-blue"><div class="fi">🧾</div><h3>SPPD</h3><p>Pengaturan identitas dan pembuatan SPPD dari template Word asli.</p></div><div class="feature feature-green"><div class="fi">📅</div><h3>Agenda Kegiatan</h3><p>Pencatatan kegiatan dan jadwal lapangan.</p></div><div class="feature feature-purple"><div class="fi">📑</div><h3>Laporan Bulanan</h3><p>Pengolahan DRP menjadi laporan bulanan.</p></div><div class="feature feature-orange"><div class="fi">🗂️</div><h3>Dokumen Desa</h3><p>Pusat penyimpanan dokumen kerja dan administrasi.</p></div><div class="feature feature-red"><div class="fi">📊</div><h3>Monitoring</h3><p>Pencatatan progres dan hasil monitoring lapangan.</p></div><div class="feature feature-green"><div class="fi">📸</div><h3>Galeri Kegiatan</h3><p>Dokumentasi foto kegiatan lapangan.</p></div><div class="feature feature-blue"><div class="fi">📍</div><h3>GPS Lapangan</h3><p>Catat koordinat lokasi kegiatan saat diperlukan.</p></div><div class="feature feature-purple"><div class="fi">⚙️</div><h3>Pengaturan</h3><p>Data dan preferensi aplikasi tersimpan di perangkat.</p></div></div><div class="card" style="margin-top:14px;background:linear-gradient(135deg,#0b3158,#1266a5);color:#fff"><h3 style="margin-top:0">Status Perangkat</h3><div id="online">Memeriksa...</div><button class="secondary" onclick="installApp()" style="margin-top:10px;background:#fff;color:#1261a0">📱 Pasang ke Layar Utama</button></div><div class="card kd-data-center" style="margin-top:14px">
+<h3 style="margin-top:0">🛠️ Pusat Data KerjaDesa</h3>
+<p class="small muted">Kelola data yang tersimpan di HP. Backup dapat dipindahkan ke perangkat lain dan dipulihkan kembali.</p>
+<div class="grid">
+<button type="button" class="secondary" onclick="kdBackup()">💾 Backup Data</button>
+<button type="button" class="secondary" onclick="document.getElementById('kdRestoreFile').click()">📥 Pulihkan Data</button>
+<button type="button" class="secondary" onclick="kdLogout()">🔐 Keluar</button>
+<button type="button" class="secondary" onclick="kdRefresh()">🔄 Segarkan Dashboard</button>
+</div>
+<input id="kdRestoreFile" type="file" accept=".json,application/json" style="display:none" onchange="kdRestore(this)">
+<div id="kdDataStatus" class="small muted"></div>
+</div><div class="card" style="margin-top:14px"><h3 style="margin-top:0">Desa Dampingan</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div class="pill"><b>01</b> Desa Paminggalan<br><span class="muted">Kecamatan Sendana</span></div><div class="pill"><b>02</b> Desa Tallu Banua Utara<br><span class="muted">Kecamatan Sendana</span></div></div></div></div><div id="kegiatan" class="hide"><div class="card"><h2>Data Kegiatan</h2><input id="knama" placeholder="Nama kegiatan"><input id="kdesa" placeholder="Desa"><input id="ktgl" type="date"><textarea id="kcat" placeholder="Catatan"></textarea><button onclick="addKegiatan()">Simpan Kegiatan</button></div><input id="kSearch" placeholder="🔎 Cari kegiatan atau desa..." oninput="kdFilterLists()"><div id="klist"></div></div>
+<div id="monitoring" class="hide"><div class="card"><h2>Monitoring Lapangan</h2><input id="mkeg" placeholder="ID / nama kegiatan"><input id="mpet" placeholder="Nama petugas"><input id="mprog" type="number" min="0" max="100" placeholder="Progres 0-100"><textarea id="mcat" placeholder="Catatan hasil monitoring"></textarea><button onclick="gps()">📍 Ambil Lokasi GPS</button><p id="gpsout" class="muted">Lokasi belum diambil</p><button onclick="addMonitoring()">Simpan Monitoring</button></div><input id="mSearch" placeholder="🔎 Cari monitoring, petugas, atau kegiatan..." oninput="kdFilterLists()"><div id="mlist"></div></div>
 <div id="dokumen" class="hide">
 <div class="card print-area"><h2>📄 Dokumen & Laporan Bulanan</h2><p class="muted">Upload DRP Bulanan untuk membuat laporan. Untuk SPPD, gunakan template Word asli di bawah; tidak perlu mengunggah SPPD setiap kali.</p>
 <div class="drop"><b>1. Upload DRP Bulanan</b><input id="drpFile" type="file" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt" onchange="autoProcessOne('drp')"><div id="drpStatus" class="small muted">Belum ada DRP.</div></div>
@@ -274,7 +293,7 @@ function makeReport(){
 }
 function downloadWord(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}const html='<!doctype html><html><head><meta charset="utf-8"><title>Laporan Bulanan KerjaDesa</title><style>body{font-family:Arial;font-size:11pt;line-height:1.45}h1{text-align:center;font-size:16pt}h2{text-align:center;font-size:13pt}table{width:100%;border-collapse:collapse}th,td{border:1px solid #555;padding:5px;vertical-align:top}</style></head><body>'+reportHtml+'</body></html>';const blob=new Blob([html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Laporan_Bulanan_KerjaDesa.doc';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function printPdf(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}window.print()}
-const SPPD_DEFAULT={nik:'760503312910050',nama:'SUDARMIN ARIPUDDIN',kabupaten:'Majene',provinsi:'Sulawesi Barat',posisi:'Pendamping Desa',jabatan:'Pendamping lokal Desa',bulan:'SEPTEMBER',tahun:'2027',tiba:'Tallu Banua Utara',berangkat:'Paminggalan',kedudukan:'Paminggalan'};
+const SPPD_DEFAULT={nik:'760503312910050',nama:'SUDARMIN ARIPUDDIN',kabupaten:'Majene',provinsi:'Sulawesi Barat',posisi:'Pendamping Desa',jabatan:'Pendamping lokal Desa',bulan:'SEPTEMBER',tahun:'2026',tiba:'Tallu Banua Utara',berangkat:'Paminggalan',kedudukan:'Paminggalan'};
 const sppdIds=['sppdNIK','sppdNama','sppdKabupaten','sppdProvinsi','sppdPosisi','sppdJabatan','sppdBulan','sppdTahun','sppdTiba','sppdBerangkat','sppdKedudukan'];
 const sppdGet=id=>document.getElementById(id);
 function capName(v){return String(v||'').trim().toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())}
@@ -290,7 +309,71 @@ function visitDates(){return loadVisitDates()}
 function loadSppdData(){let d={...SPPD_DEFAULT,...JSON.parse(localStorage.getItem('kerjadesa_sppd_editable')||'{}')};const map={sppdNIK:'nik',sppdNama:'nama',sppdKabupaten:'kabupaten',sppdProvinsi:'provinsi',sppdPosisi:'posisi',sppdJabatan:'jabatan',sppdBulan:'bulan',sppdTahun:'tahun',sppdTiba:'tiba',sppdBerangkat:'berangkat',sppdKedudukan:'kedudukan'};Object.entries(map).forEach(([id,k])=>sppdGet(id).value=d[k]||'');renderSppd()}
 function saveSppdIdentity(){const d=sppdData();localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(d));const st=document.getElementById('sppdIdentityStatus');if(st)st.textContent='✅ Nama, Jabatan, lokasi, dan Tiba di tersimpan di HP. Huruf besar/kecil dipertahankan.';document.getElementById('sppdStatus').textContent='Identitas SPPD tersimpan.';renderSppd()}
 function saveSppdData(){localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(sppdData()));document.getElementById('sppdStatus').textContent='Data SPPD tersimpan di perangkat.';renderSppd()}
-function resetSppdData(){localStorage.removeItem('kerjadesa_sppd_editable');loadSppdData();document.getElementById('sppdStatus').textContent='Data SPPD dikembalikan ke data awal.'}
+function resetSppdData(){localStorage.removeItem('kerjadesa_sppd_editable');
+// === KerjaDesa V26 enhancement ===
+function kdStatus(msg){
+  const el=document.getElementById('kdDataStatus');
+  if(el) el.textContent=msg;
+}
+function kdBackup(){
+  try{
+    const payload={version:26,createdAt:new Date().toISOString(),app:'KerjaDesa',data:data};
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='KerjaDesa_Backup_'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+    kdStatus('✅ Backup data berhasil dibuat.');
+  }catch(e){kdStatus('❌ Backup gagal: '+(e.message||e));}
+}
+function kdRestore(input){
+  const f=input?.files?.[0]; if(!f)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const p=JSON.parse(reader.result);
+      const incoming=p?.data||p;
+      if(!incoming||!Array.isArray(incoming.kegiatan)||!Array.isArray(incoming.monitoring)) throw Error('Format backup KerjaDesa tidak dikenali.');
+      if(!confirm('Pulihkan backup? Data kegiatan dan monitoring yang sekarang akan diganti.')){input.value='';return;}
+      data={kegiatan:incoming.kegiatan||[],monitoring:incoming.monitoring||[],gps:incoming.gps||null,docs:incoming.docs||{}};
+      save();
+      kdStatus('✅ Data berhasil dipulihkan. Jumlah kegiatan: '+data.kegiatan.length+' • monitoring: '+data.monitoring.length);
+      input.value='';
+    }catch(e){kdStatus('❌ Gagal memulihkan: '+(e.message||e));}
+  };
+  reader.readAsText(f);
+}
+function kdLogout(){
+  if(!confirm('Keluar dari KerjaDesa pada perangkat ini?'))return;
+  localStorage.removeItem('kd_login');
+  document.getElementById('app').style.display='none';
+  document.getElementById('nav').classList.add('hide');
+  document.getElementById('login').style.display='';
+}
+function kdRefresh(){render();renderMediaPreviews();updateDocStatus();kdStatus('✅ Dashboard diperbarui.');}
+function kdFilterLists(){
+  const ks=(document.getElementById('kSearch')?.value||'').toLowerCase();
+  const ms=(document.getElementById('mSearch')?.value||'').toLowerCase();
+  const k=data.kegiatan.filter(x=>!ks||[x.nama,x.desa,x.tanggal,x.catatan].join(' ').toLowerCase().includes(ks));
+  const m=data.monitoring.slice().reverse().filter(x=>!ms||[x.kegiatan,x.petugas,x.tanggal,x.catatan].join(' ').toLowerCase().includes(ms));
+  const kl=document.getElementById('klist'),ml=document.getElementById('mlist');
+  if(kl) kl.innerHTML=k.length?k.map(x=>'<div class="card item"><b>'+esc(x.nama)+'</b><br>'+esc(x.desa||'-')+' • '+esc(x.tanggal||'-')+'<br><span class="muted">'+esc(x.catatan||'')+'</span></div>').join(''):'<div class="kd-empty">Belum ada kegiatan yang cocok.</div>';
+  if(ml) ml.innerHTML=m.length?m.map(x=>'<div class="card item"><b>Monitoring '+Number(x.progres||0)+'%</b><div class="kd-progress"><span style="width:'+Math.max(0,Math.min(100,Number(x.progres||0)))+'%"></span></div><br>Petugas: '+esc(x.petugas||'-')+'<br>'+esc(x.tanggal||'-')+'<br>'+esc(x.catatan||'')+'<br><span class="muted">'+(x.gps?'GPS: '+Number(x.gps.lat).toFixed(5)+', '+Number(x.gps.lon).toFixed(5):'GPS belum ada')+' • '+(x.synced?'Tersinkron':'Tersimpan di perangkat')+'</span></div>').join(''):'<div class="kd-empty">Belum ada monitoring yang cocok.</div>';
+}
+function kdInitIdentity(){
+  const d=sppdData();
+  const vals={rNama:d.nama||'SUDARMIN ARIPUDDIN',rPosisi:d.posisi||'Pendamping Desa',rKec:'Sendana',rKab:d.kabupaten||'Majene',rProv:d.provinsi||'Sulawesi Barat'};
+  Object.entries(vals).forEach(([id,v])=>{const el=document.getElementById(id);if(el&&!el.value)el.value=v});
+}
+const kdOldRender=render;
+render=function(){
+  kdOldRender();
+  kdFilterLists();
+  kdInitIdentity();
+  const s=document.getElementById('online');
+  if(s)s.textContent=navigator.onLine?'🟢 Online':'🔴 Offline — data tetap tersimpan di HP';
+};
+loadSppdData();
+kdInitIdentity();document.getElementById('sppdStatus').textContent='Data SPPD dikembalikan ke data awal.'}
 sppdIds.forEach(id=>sppdGet(id).addEventListener('input',renderSppd));
 sppdGet('sppdBulan').addEventListener('change',renderSppd);
 function kdReplaceSppdTextNodes(p,target,replacement){const ms=[...p.matchAll(/<w:t(?=[\s>])([^>]*)>([\s\S]*?)<\/w:t>/g)];if(!ms.length)return p;const joined=ms.map(m=>m[2]).join('');const start=joined.indexOf(target);if(start<0)return p;const end=start+target.length;let cursor=0,inserted=false;return p.replace(/<w:t(?=[\s>])([^>]*)>([\s\S]*?)<\/w:t>/g,(m,attrs,t)=>{const a=cursor,b=cursor+t.length;cursor=b;if(b<=start||a>=end)return m;const left=t.slice(0,Math.max(0,start-a));const right=t.slice(Math.max(0,end-a));const rawMid=!inserted?String(replacement):'';const mid=!inserted?sppdXmlEsc(rawMid):'';let newAttrs=attrs;if(!/xml:space="preserve"/.test(newAttrs)&&(rawMid.startsWith(' ')||rawMid.endsWith(' ')))newAttrs+=' xml:space="preserve"';inserted=true;return `<w:t${newAttrs}>${left}${mid}${right}</w:t>`})}
