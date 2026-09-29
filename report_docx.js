@@ -23,7 +23,10 @@
     ppr+='</w:pPr>';
     return '<w:p>'+ppr+parts+'</w:p>';
   }
-  function textPara(text,o={}){return para(rtext(text,o),o)}
+  function textPara(text,o={}){
+    const parts=String(text??'').split(/\n/).map((x,i)=>(i?'<w:r><w:br/></w:r>':'')+rtext(x,o)).join('');
+    return para(parts,o);
+  }
   function blank(n=1){let s='';for(let i=0;i<n;i++)s+=para('',{after:0,line:1});return s}
 
   const borders='<w:tblBorders><w:top w:val="single" w:sz="6" w:space="0" w:color="555555"/><w:left w:val="single" w:sz="6" w:space="0" w:color="555555"/><w:bottom w:val="single" w:sz="6" w:space="0" w:color="555555"/><w:right w:val="single" w:sz="6" w:space="0" w:color="555555"/><w:insideH w:val="single" w:sz="6" w:space="0" w:color="555555"/><w:insideV w:val="single" w:sz="6" w:space="0" w:color="555555"/></w:tblBorders>';
@@ -42,11 +45,15 @@
     return '<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/>'+borders+'<w:tblLayout w:type="'+(autofit?'autofit':'fixed')+'"/></w:tblPr><w:tblGrid>'+widths.map(w=>'<w:gridCol w:w="'+w+'"/>').join('')+'</w:tblGrid>'+rows.join('')+'</w:tbl>';
   }
   function inlineField(){}
-  function imgSize(dataUrl,maxW,maxH){
+  function imgSize(dataUrl,maxWIn,maxHIn){
     return new Promise(resolve=>{
       const im=new Image();
-      im.onload=()=>{const w=im.naturalWidth||1,h=im.naturalHeight||1,scale=Math.min(maxW/w,maxH/h);resolve({w:Math.max(1,w*scale),h:Math.max(1,h*scale)})};
-      im.onerror=()=>resolve({w:maxW,h:maxH});
+      im.onload=()=>{
+        const w=im.naturalWidth||1,h=im.naturalHeight||1;
+        const scale=Math.min((maxWIn*96)/w,(maxHIn*96)/h);
+        resolve({w:Math.max(0.1,w*scale/96),h:Math.max(0.1,h*scale/96)});
+      };
+      im.onerror=()=>resolve({w:maxWIn,h:maxHIn});
       im.src=dataUrl;
     });
   }
@@ -66,9 +73,9 @@
       const keyobj={id,name,mime};
       ridMap.set(key,keyobj);images.push(keyobj);return keyobj;
     }
-    async function drawing(dataUrl,maxW,maxH,ext){
+    async function drawing(dataUrl,maxWIn,maxHIn,ext){
       const im=await regImage(dataUrl,ext);if(!im)return '';
-      const dim=await imgSize(dataUrl,maxW,maxH),cx=Math.round(dim.w*914400),cy=Math.round(dim.h*914400),docId=100+images.length;
+      const dim=await imgSize(dataUrl,maxWIn,maxHIn),cx=Math.round(dim.w*914400),cy=Math.round(dim.h*914400),docId=100+images.length;
       return '<w:r><w:rPr><w:noProof/></w:rPr><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+cx+'" cy="'+cy+'"/><wp:docPr id="'+docId+'" name="Picture '+docId+'"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="'+docId+'" name="'+xe(im.name)+'"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="'+im.id+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
     }
     function sectPr(orientation='portrait',next=true){
@@ -102,7 +109,7 @@
       body+=textPara('KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA',{align:'center',bold:true,size:15,before:20,after:20,line:170});
       body+=textPara('BADAN PENGEMBANGAN SUMBERDAYA MANUSIA DAN PEMBERDAYAAN MASYARAKAT DESA DAN DAERAH TERTINGGAL',{align:'center',bold:true,size:14,before:0,after:0,line:170});
       body+=blank(10);
-      if(logoPhoto){body+=para(await drawing(logoPhoto,720000,720000,'png'),{align:'center',after:80})}else body+=blank(6);
+      if(logoPhoto){body+=para(await drawing(logoPhoto,1.5,1.5,'png'),{align:'center',after:80})}else body+=blank(6);
       body+=blank(12);
       body+=textPara('LAPORAN KUNJUNGAN LAPANGAN '+month.toUpperCase(),{align:'center',bold:true,size:16,before:0,after:360,line:200});
       body+=textPara(nama,{align:'center',bold:true,size:16,before:0,after:120});
@@ -175,7 +182,7 @@
           for(const a of pair){
             const pics=photoBy[dateKey(a.tanggal)]||[];
             let pc='';
-            for(const p of pics)pc+=para(await drawing(p.url,2900000,3200000,p.url.startsWith('data:image/png')?'png':'jpg'),{align:'center',after:30});
+            for(const p of pics)pc+=para(await drawing(p.url,3.0,3.25,p.url.startsWith('data:image/png')?'png':'jpg'),{align:'center',after:30});
             bot.push(cell(pc||textPara('Dokumentasi tidak tersedia',{align:'center',size:18}),4700,{valign:'center'}));
           }
           if(pair.length===1)bot.push(cell('',4700));
