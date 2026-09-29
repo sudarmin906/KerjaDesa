@@ -304,7 +304,7 @@ function mergeDrpRecords(aktivitas,kunlap){
 }
 function normalizeParsedDrp(drp){
  if(!drp)return null;
- if(drp.parserVersion!==4)return null;
+ if(drp.parserVersion!==5)return null;
  const aktivitas=Array.isArray(drp.aktivitas)?drp.aktivitas:[];
  const kunlap=Array.isArray(drp.kunlap)?drp.kunlap:[];
  const all=mergeDrpRecords(aktivitas,kunlap);
@@ -316,34 +316,30 @@ function normalizeParsedDrp(drp){
 function parseDRP(text){
  const header=parseDrpHeader(text);
  const raw=normalizeDrpRaw(text);
- const re=/(?:^|\s)(\d{1,2})\s+(\d{2}\/\d{2}\/\d{2})\s+(\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2})\s+(\d+)\s*Jam,\s*(\d+)\s*Menit\s+(.+?)\s+Deskripsi kegiatan:\s*\(([^)]*)\)\s+Lokasi:\s*(.+?)(?=\s+\d{1,2}\s+\d{2}\/\d{2}\/\d{2}\s+\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2}\s+\d+\s*Jam,|\s+Total Laporan\b|\s*$)/g;
- const found=[];let m;
+ const re=/(?:^|\\s)(\\d{1,2})\\s+(\\d{2}\\/\\d{2}\\/\\d{2})\\s+(\\d{2}\\.\\d{2}\\s*-\\s*\\d{2}\\.\\d{2})\\s+(\\d+)\\s*Jam,\\s*(\\d+)\\s*Menit\\s+(.+?)\\s+Deskripsi kegiatan:\\s*\\(([^)]*)\\)\\s+Lokasi:\\s*(.+?)(?=\\s+\\d{1,2}\\s+\\d{2}\\/\\d{2}\\/\\d{2}\\s+\\d{2}\\.\\d{2}\\s*-\\s*\\d{2}\\.\\d{2}\\s+\\d+\\s*Jam,|\\s+Total Laporan\\b|\\s*$)/g;
+ const map=new Map();let m;
  while((m=re.exec(raw))){
    const no=Number(m[1]);if(!no)continue;
    const marker=String(m[7]||'').trim();
-   const locDesc=String(m[8]||'').replace(/\s+/g,' ').trim();
+   let locDesc=String(m[8]||'').replace(/\\s+/g,' ').trim();
    let lokasi=locDesc,desc='';
-   const dm=locDesc.match(/^(.*?)(?:\s+)(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.\s*(.*)$/i);
-   if(dm){lokasi=dm[1].trim();desc=dm[2].trim();}
-   else{
-     const dm2=locDesc.match(/^(.*?)\s+[A-Z][^.]{0,80}\.\s+(.*)$/);
-     if(dm2&&/(Penugasan|Pelaksanaan|Koordinasi|Kegiatan)/i.test(dm2[0])){lokasi=dm2[1].trim();desc=dm2[2].trim();}
+   const dm=locDesc.match(/^(.*?)(?:\\s+)(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\\.\\s*(.*)$/i);
+   if(dm){lokasi=dm[1].trim();desc=dm[2].trim()}
+   if(!desc){
+     const dm2=locDesc.match(/^(.*?)(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\\.\\s*(.*)$/i);
+     if(dm2){lokasi=dm2[1].trim();desc=dm2[2].trim()}
    }
    if(!desc)desc=locDesc;
-   desc=cleanText(desc).replace(/^(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.\s*/i,'').trim();
-   lokasi=lokasi.replace(/\s+/g,' ').trim();
-   const kun=!/bukan\s+kunjungan/i.test(marker);
-   if(lokasi&&desc)found.push({no,tanggal:parseDateShort(m[2]),waktu:m[3].replace(/\s+/g,' '),durasi:m[4]+' Jam, '+m[5]+' Menit',jenis:String(m[6]||'').trim(),kunjungan:kun,jenisKunjungan:marker,lokasi,deskripsi:desc});
+   desc=cleanText(desc).trim();lokasi=lokasi.replace(/\\s+/g,' ').trim();
+   if(!lokasi||!desc)continue;
+   const rec={no,tanggal:parseDateShort(m[2]),waktu:m[3].replace(/\\s+/g,' '),durasi:m[4]+' Jam, '+m[5]+' Menit',jenis:String(m[6]||'').trim(),kunjungan:!(/bukan\\s+kunjungan/i.test(marker)),jenisKunjungan:marker,lokasi,deskripsi:desc};
+   const key=drpRecordKey(rec);
+   if(!map.has(key))map.set(key,rec);
  }
- const map=new Map();
- for(const x of found){
-   const k=drpRecordKey(x);
-   if(!map.has(k)||(!map.get(k).kunjungan&&x.kunjungan))map.set(k,x);
- }
- const all=[...map.values()].sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no);
+ const all=[...map.values()].sort((x,y)=>x.tanggal.localeCompare(y.tanggal)||x.no-y.no).map((x,i)=>({...x,no:i+1}));
  const expected=Number(header.totalLaporan||0);
  const aktivitas=all.filter(x=>!x.kunjungan),kunlap=all.filter(x=>x.kunjungan);
- return {header,aktivitas,kunlap,all:all.map((x,i)=>({...x,no:i+1})),count:all.length,source:"DRP",parserVersion:4,expected,complete:expected?all.length===expected:true};
+ return {header,aktivitas,kunlap,all,count:all.length,source:"DRP",parserVersion:5,expected,complete:expected?all.length===expected:true};
 }
 function renderDrpPreview(drp){
   if(!drp)return;
@@ -483,19 +479,19 @@ function reportActivitySummary(desc){
  return d.length>220?d.slice(0,217).replace(/\\s+\\S*$/,"")+"…":d;
 }
 function summarizeHasilAI(acts){
- const all=acts.map(x=>String(x.deskripsi||'').replace(/\s+/g,' ').trim().toLowerCase()).join(' ');
+ const all=acts.map(x=>String(x.deskripsi||'').replace(/\\s+/g,' ').trim().toLowerCase()).join(' ');
  const has=(...keys)=>keys.some(k=>all.includes(k));
  const out=[];
- if(has('pembangunan','rabat beton','jembatan','drainase','gedung koperasi'))out.push('Pada aspek pembangunan fisik desa, dilakukan monitoring terhadap perkembangan Gedung Koperasi Desa Merah Putih, pekerjaan rabat beton Jalan Poros Paminggalan menuju Desa Limbua, pembangunan Jembatan Dekker Dusun Palla-Pallang, serta pembangunan drainase. Pemantauan diarahkan pada perkembangan tahapan pekerjaan dan kebutuhan penyelesaian lanjutan.');
- if(has('indeks desa','verval','verifikasi-validasi','pemutakhiran data'))out.push('Pada aspek Pendataan Indeks Desa Tahun 2026, dilakukan perbaikan, verifikasi, validasi, dan pemutakhiran data. Kegiatan tersebut ditujukan untuk meningkatkan ketepatan dan kesesuaian data dengan kondisi aktual serta memastikan bagian yang masih memerlukan perbaikan dapat diselesaikan.');
- if(has('pra-musrenbang','pra musrenbang','musrenbang desa','musrenbangdes','rkpdes'))out.push('Dalam proses perencanaan pembangunan desa, dilakukan pendampingan pada persiapan Pra-Musrenbang Dusun dan pelaksanaan Musrenbang Desa. Pembahasan diarahkan pada pemantapan usulan, penentuan prioritas, serta penyusunan bahan RKPDes dan DU-RKPDes Tahun Anggaran 2027.');
- if(has('sembako','pkh','blt dana desa','penerima bantuan'))out.push('Pada pendampingan program bantuan masyarakat, dilakukan sinkronisasi dan verifikasi data penerima sembako/PKH dengan data penerima BLT Dana Desa untuk memastikan kesesuaian data dan mengurangi potensi ketidaktepatan penerima.');
- if(has('titik nol','rehabilitasi jalan setapak'))out.push('Monitoring titik nol rehabilitasi jalan setapak memberikan gambaran kondisi awal pekerjaan sebagai bahan perencanaan dan penganggaran Tahun Anggaran 2027.');
- if(has('monev','monitoring dan evaluasi dana desa'))out.push('Pada aspek koordinasi pendampingan, dilakukan rapat TPP P3MD terkait percepatan penginputan Monitoring dan Evaluasi Dana Desa, termasuk pembahasan perkembangan, kendala, dan langkah tindak lanjut.');
- if(has('perubahan apbdes'))out.push('Pada aspek penganggaran desa, dilakukan koordinasi mengenai persiapan Perubahan APBDes Tahun Anggaran 2026 serta penyelarasan program dan kegiatan dengan kebutuhan dan prioritas pembangunan desa.');
- if(has('rancangan apbdes'))out.push('Dilakukan pendampingan penyusunan Rancangan APBDes dengan penekanan pada kesesuaian terhadap ketentuan yang berlaku dan prioritas penggunaan Dana Desa.');
- if(has('baliho','infografis apbdes','transparansi'))out.push('Pada aspek keterbukaan informasi, dilakukan koordinasi terkait pemasangan baliho atau infografis APBDes sebagai sarana transparansi informasi desa dan dukungan terhadap tertib administrasi.');
- out.push('Secara umum, kegiatan kunjungan lapangan memperkuat koordinasi dan pendampingan kepada Pemerintah Desa, masyarakat, tim pendata, pelaksana kegiatan, dan unsur terkait. Hasil pemantauan menjadi bahan untuk tindak lanjut sesuai kondisi dan kebutuhan yang ditemukan.');
+ if(has('pembangunan','rabat beton','jembatan','drainase','gedung koperasi'))out.push('Pada aspek pembangunan fisik, monitoring dilakukan terhadap Gedung Koperasi Desa Merah Putih, pekerjaan rabat beton Jalan Poros Paminggalan menuju Desa Limbua, Jembatan Dekker Dusun Palla-Pallang, serta pembangunan drainase. Hasil pemantauan menjadi bahan untuk memastikan tahapan pekerjaan berjalan sesuai rencana dan kebutuhan penyelesaian dapat ditindaklanjuti.');
+ if(has('indeks desa','verval','verifikasi-validasi','pemutakhiran data'))out.push('Pendataan Indeks Desa Tahun 2026 menjadi salah satu fokus pendampingan melalui perbaikan, verifikasi, validasi, dan pemutakhiran data agar informasi yang tersedia lebih akurat dan sesuai kondisi aktual.');
+ if(has('pra-musrenbang','pra musrenbang','musrenbang desa','musrenbangdes','rkpdes'))out.push('Dalam bidang perencanaan pembangunan, pendampingan diarahkan pada persiapan Pra-Musrenbang Dusun dan pelaksanaan Musrenbang Desa untuk memantapkan usulan serta menjadi bahan penyusunan RKPDes dan DU-RKPDes Tahun Anggaran 2027.');
+ if(has('sembako','pkh','blt dana desa','penerima bantuan'))out.push('Pada pendampingan bantuan masyarakat, dilakukan sinkronisasi dan verifikasi data penerima sembako/PKH dengan data penerima BLT Dana Desa sebagai upaya menjaga ketepatan dan kesesuaian data penerima.');
+ if(has('titik nol','rehabilitasi jalan setapak'))out.push('Monitoring titik nol rehabilitasi jalan setapak memberikan gambaran kondisi awal pekerjaan yang dapat digunakan sebagai bahan perencanaan dan penganggaran Tahun Anggaran 2027.');
+ if(has('monev','monitoring dan evaluasi dana desa'))out.push('Koordinasi TPP P3MD membahas percepatan penginputan Monitoring dan Evaluasi Dana Desa, termasuk perkembangan, kendala, dan langkah tindak lanjut penyelesaiannya.');
+ if(has('perubahan apbdes'))out.push('Koordinasi persiapan Perubahan APBDes Tahun Anggaran 2026 dilakukan untuk mendukung kesiapan dokumen dan penyelarasan program dengan kebutuhan serta prioritas pembangunan desa.');
+ if(has('rancangan apbdes'))out.push('Penyusunan Rancangan APBDes mendapat pendampingan agar prosesnya berpedoman pada ketentuan yang berlaku serta memperhatikan prioritas penggunaan Dana Desa.');
+ if(has('baliho','infografis apbdes','transparansi'))out.push('Pada aspek transparansi, dilakukan koordinasi terkait percepatan pemasangan baliho atau infografis APBDes sebagai sarana keterbukaan informasi dan tertib administrasi.');
+ out.push('Secara keseluruhan, kegiatan memperkuat koordinasi dan pendampingan dengan Pemerintah Desa, masyarakat, tim pendata, pelaksana pembangunan, dan unsur terkait. Hasil kunjungan menjadi dasar penyusunan tindak lanjut pada periode berikutnya.');
  return out;
 }
 function deriveNarratives(acts){
