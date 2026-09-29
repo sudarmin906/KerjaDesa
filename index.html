@@ -124,6 +124,18 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
     margin:auto!important;
   }
 }
+</style><style id="kd-drp-exact-description">
+/* Kolom Kegiatan pada D mengambil isi deskripsi DRP secara utuh; tidak dipotong/diringkas. */
+.result-table td:last-child{
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:normal;
+  line-height:1.28;
+}
+.result-table tr{
+  break-inside:auto;
+  page-break-inside:auto;
+}
 </style></style></head><body>
 <header><div class="brandbar"><div class="brand-left"><img class="brand-logo" src="foto_profil.jpg" alt="Profil"><div><div class="brand-name">Kerja<span>Desa</span></div><div class="brand-sub">Sistem Kerja Pendamping Desa • Kecamatan Sendana • Kabupaten Majene</div></div></div><div class="profile-chip"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"><div><b>SUDARMIN ARIPUDDIN</b><small>Pendamping Lokal Desa</small></div></div></div></header>
 <main>
@@ -480,7 +492,7 @@ function shortActivityTitle(x){
   const cut=s.slice(0,85).replace(/\s+\S*$/,'').trim();
   return (cut||s.slice(0,82)).replace(/[,:;.-]+$/,'')+'…';
 }
-function buildVisitRows(acts){return acts.map((x,i)=>'<tr><td>'+ (i+1) +'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(locationVillage(x.lokasi))+'</td><td>'+esc(shortActivityTitle(x))+'</td></tr>').join('')}
+function buildVisitRows(acts){return acts.map((x,i)=>'<tr><td>'+ (i+1) +'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(locationVillage(x.lokasi))+'</td><td>'+esc(x.deskripsi||x.judul||'-')+'</td></tr>').join('')}
 function buildVisitDays(acts){const u=[],s=new Set();acts.forEach(x=>{const k=dateKey(x.tanggal);if(k&&!s.has(k)){s.add(k);u.push(x)}});return u.map((x,i)=>{const p=String(x.lokasi||'').split('/').map(v=>v.trim()).filter(Boolean);const kec=p.length>=3?p[2]:(p[1]||'-');return '<tr><td>Hari ke-'+(i+1)+'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(kec)+'</td><td>'+esc(locationVillage(x.lokasi))+'</td></tr>'}).join('')}
 function buildDocumentation(acts){
  const groups=[],by={};activityPhotos.forEach(p=>{if(!p.date)return;(by[dateKey(p.date)]??=[]).push(p)});
