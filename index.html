@@ -217,10 +217,20 @@ async function readPdfBasic(file){
   }
   return (out||'').replace(/\u0000/g,' ').replace(/[ \t]+/g,' ').replace(/\n+/g,'\n').trim();
 }
-function cleanText(t){return String(t||'').replace(/\u0000/g,' ').replace(/\r/g,'\n').replace(/\b\d+\s*\/\s*\d+\s+No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim()}
-function normText(t){return cleanText(t).replace(/\s+/g,' ').trim()}
-function escReg(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
-function parseDateShort(s){const m=s.match(/^(\d{2})\/(\d{2})\/(\d{2})$/);return m?`${m[1]}/${m[2]}/20${m[3]}`:s}
+function cleanText(t){
+ return String(t||"")
+  .replace(/\u0000/g," ")
+  .replace(/\r/g,"\n")
+  .replace(/\b\d+\s*\/\s*\d+\s+No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi," ")
+  .replace(/No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi," ")
+  .replace(/\s+Total Laporan (?:Aktivitas|Kunjungan Lapangan)\s+\d+\s+laporan(?:\s+\d+\s*\/\s*\d+)?/gi," ")
+  .replace(/[ \t]+/g," ")
+  .replace(/\n{2,}/g,"\n")
+  .trim();
+}
+function normText(t){return cleanText(t).replace(/\s+/g," ").trim()}
+function escReg(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}
+function parseDateShort(s){const m=String(s||"").match(/^(\d{2})\/(\d{2})\/(\d{2})$/);return m?m[1]+"/"+m[2]+"/20"+m[3]:s}
 function parseDrpHeader(t){
   const x=normText(t);
   const get=(label,next)=>{const re=new RegExp(label+'\\s*([^]+?)(?=\\s+(?:'+next.join('|')+')|$)','i');const m=x.match(re);return m?m[1].trim():''};
@@ -241,27 +251,39 @@ function parseDrpHeader(t){
   return h;
 }
 function parseDrpActivities(text, sectionTitle, totalTitle, kunlap){
-  const raw=normText(text);
-  const a=raw.indexOf(sectionTitle); if(a<0)return [];
-  const b=raw.indexOf(totalTitle,a+sectionTitle.length); const sec=raw.slice(a+sectionTitle.length,b>0?b:raw.length);
-  const re=/(\d+)\s+(\d{2}\/\d{2}\/\d{2})\s+(\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2})\s+(\d+)\s+Jam,\s*(\d+)\s+Menit\s+(.+?)\s+Deskripsi kegiatan:\s*\(([^)]*)\)\s+Lokasi:\s*(SULAWESI BARAT\s*\/\s*[^]+?)(?=\s+(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.?\s)/g;
-  const out=[];let m;
-  while((m=re.exec(sec))){
-    const type=m[6].trim(); const loc=m[8].replace(/\s+/g,' ').trim();
-    let end=sec.length; const nm=sec.slice(re.lastIndex).match(/\s+\d+\s+\d{2}\/\d{2}\/\d{2}\s+\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2}\s+\d+\s+Jam,/); if(nm) end=re.lastIndex+nm.index;
-    let desc=sec.slice(re.lastIndex,end).trim();
-    desc=desc.replace(/^(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.\s*/i,'');
-    out.push({no:Number(m[1]),tanggal:parseDateShort(m[2]),waktu:m[3].replace(/\s+/g,' '),durasi:`${m[4]} Jam, ${m[5]} Menit`,jenis:type,kunjungan:kunlap,jenisKunjungan:m[7].trim(),lokasi:loc,deskripsi:desc});
-  }
-  return out;
+ const raw=normText(text);
+ const a=raw.indexOf(sectionTitle); if(a<0)return [];
+ const b=raw.indexOf(totalTitle,a+sectionTitle.length);
+ let sec=raw.slice(a+sectionTitle.length,b>0?b:raw.length)
+   .replace(/\b\d+\s*\/\s*\d+\s+No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi," ")
+   .replace(/No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi," ")
+   .replace(/\s+/g," ").trim();
+ const re=/(?:^|\s)(\d{1,2})\s+(\d{2}\/\d{2}\/\d{2})\s+(\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2})\s+(\d+)\s+Jam,\s*(\d+)\s+Menit\s+(.+?)\s+Deskripsi kegiatan:\s*\(([^)]*)\)\s+Lokasi:\s*(.+?)(?=\s+\d{1,2}\s+\d{2}\/\d{2}\/\d{2}\s+\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2}\s+\d+\s+Jam,|\s*$)/g;
+ const out=[]; let m;
+ while((m=re.exec(sec))){
+   const no=Number(m[1]), date=m[2]; if(no<1||no>999)continue;
+   const type=m[6].trim(), marker=m[7].trim(), locDesc=String(m[8]||"").replace(/\s+/g," ").trim();
+   let lokasi=locDesc, desc="";
+   const dm=locDesc.match(/^(.*?\s+)(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.\s*(.*)$/i);
+   if(dm){lokasi=dm[1].trim();desc=dm[2].trim();} else {
+     const dm2=locDesc.match(/^(.*?)(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.\s*(.*)$/i);
+     if(dm2){lokasi=dm2[1].trim();desc=dm2[2].trim();}
+   }
+   if(!desc)desc=locDesc;
+   desc=desc.replace(/^(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.\s*/i,"").trim();
+   if(!lokasi||!desc)continue;
+   out.push({no:no,tanggal:parseDateShort(date),waktu:m[3].replace(/\s+/g," "),durasi:m[4]+" Jam, "+m[5]+" Menit",jenis:type,kunjungan:kunlap,jenisKunjungan:marker,lokasi:lokasi,deskripsi:cleanText(desc)});
+ }
+ return out.sort((x,y)=>x.tanggal.localeCompare(y.tanggal)||x.no-y.no);
 }
 function parseDRP(text){
-  const header=parseDrpHeader(text);
-  const aktivitas=parseDrpActivities(text,'DAFTAR LAPORAN AKTIVITAS','Total Laporan Aktivitas',false);
-  const kunlap=parseDrpActivities(text,'DAFTAR LAPORAN KUNJUNGAN LAPANGAN','Total Laporan Kunjungan Lapangan',true);
-  const all=aktivitas.concat(kunlap).sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no).map((x,i)=>({...x,no:i+1,deskripsi:cleanText(x.deskripsi)}));
-  const cleanGroup=(arr)=>arr.map(x=>all.find(y=>y.tanggal===x.tanggal&&y.deskripsi===x.deskripsi)||x);
-  return {header,aktivitas:cleanGroup(aktivitas),kunlap:cleanGroup(kunlap),all,count:all.length,source:'DRP'}
+ const header=parseDrpHeader(text);
+ const aktivitas=parseDrpActivities(text,"DAFTAR LAPORAN AKTIVITAS","Total Laporan Aktivitas",false);
+ const kunlap=parseDrpActivities(text,"DAFTAR LAPORAN KUNJUNGAN LAPANGAN","Total Laporan Kunjungan Lapangan",true);
+ const all=aktivitas.concat(kunlap).sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no).map((x,i)=>({...x,no:i+1,deskripsi:cleanText(x.deskripsi)}));
+ const cleanGroup=(arr)=>arr.map(x=>all.find(y=>y.tanggal===x.tanggal&&y.deskripsi===x.deskripsi)||x);
+ const expected=Number(header.totalLaporan||0);
+ return {header,aktivitas:cleanGroup(aktivitas),kunlap:cleanGroup(kunlap),all,count:all.length,source:"DRP",expected:expected,complete:expected===all.length};
 }
 function renderDrpPreview(drp){
   if(!drp)return;
