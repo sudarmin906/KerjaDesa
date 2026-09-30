@@ -57,6 +57,7 @@ function create(resource, payload) {
     id: payload.id || cryptoRandomId(),
     created_at: payload.created_at || new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    version: Number(payload.version || 1),
     ...payload
   };
   items.push(item);
@@ -70,7 +71,7 @@ function update(resource, id, patch) {
   const items = store[resource] || [];
   const index = items.findIndex(item => String(item.id) === String(id));
   if (index < 0) return null;
-  items[index] = { ...items[index], ...patch, id: items[index].id, updated_at: new Date().toISOString() };
+  items[index] = { ...items[index], ...patch, id: items[index].id, updated_at: new Date().toISOString(), version: Number(items[index].version || 1) + 1 };
   store[resource] = items;
   writeStore(store);
   return items[index];
