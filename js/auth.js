@@ -1,39 +1,31 @@
-/* KerjaDesa Pro Authentication Module
-   Upgrade Login v1
+/* KerjaDesa Pro Authentication Compatibility Layer
+   Active authentication is server-backed through js/api-auth.js.
+   This file keeps a small compatibility API for older UI code.
 */
 
 const KerjaDesaAuth = {
-  defaultUser: {
-    username: "admin",
-    password: "admin123",
-    role: "Administrator"
-  },
-
-  init(){
-    if(!localStorage.getItem("kerjadesa_users")){
-      localStorage.setItem("kerjadesa_users", JSON.stringify([this.defaultUser]));
-    }
-  },
-
-  login(username,password){
-    const users = JSON.parse(localStorage.getItem("kerjadesa_users") || "[]");
-    const user = users.find(u => u.username === username && u.password === password);
-    if(user){
-      localStorage.setItem("kerjadesa_session", JSON.stringify(user));
-      return true;
+  async login(username, password){
+    if(window.KerjaDesaAuthAPI){
+      const result=await window.KerjaDesaAuthAPI.login(username,password);
+      return !!result?.success;
     }
     return false;
   },
 
   logout(){
-    localStorage.removeItem("kerjadesa_session");
+    localStorage.removeItem('kd_login');
+    localStorage.removeItem('kd_auth_token');
+    localStorage.removeItem('kd_user');
     location.reload();
   },
 
   current(){
-    return JSON.parse(localStorage.getItem("kerjadesa_session") || "null");
+    try{
+      return JSON.parse(localStorage.getItem('kd_user') || 'null');
+    }catch(_){
+      return null;
+    }
   }
 };
 
 window.KerjaDesaAuth = KerjaDesaAuth;
-KerjaDesaAuth.init();
