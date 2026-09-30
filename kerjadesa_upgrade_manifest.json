@@ -63,6 +63,21 @@
       "id": "backend-ci-smoke-v30",
       "name": "Backend syntax validation and API health smoke test",
       "status": "implemented"
+    },
+    {
+      "id": "frontend-crud-v30",
+      "name": "Frontend activity and monitoring creation connected to server API",
+      "status": "implemented"
+    },
+    {
+      "id": "frontend-hydration-v30",
+      "name": "Authenticated frontend hydrates activity and monitoring data from API",
+      "status": "implemented"
+    },
+    {
+      "id": "offline-api-bridge-v30",
+      "name": "Reusable API CRUD and offline sync bridge",
+      "status": "implemented"
     }
   ],
   "planned_domains": [
