@@ -10,7 +10,8 @@ const DEFAULT_STORE = {
   kegiatan: [],
   monitoring: [],
   dokumen: [],
-  laporan: []
+  laporan: [],
+  audit_log: []
 };
 
 function clone(value) {
