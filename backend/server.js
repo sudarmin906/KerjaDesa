@@ -5,6 +5,7 @@
 const http = require('http');
 const { URL } = require('url');
 const { ensureStore } = require('./database/jsonStore');
+const { health: postgresHealth } = require('./database/postgres');
 const { authenticate, requireAuth, sendJson } = require('./middleware/auth');
 const { login, logout, dashboard, resourceHandler } = require('./controllers/apiController');
 
@@ -35,12 +36,13 @@ function route(req, res) {
   const path = url.pathname.replace(/\/+$/, '') || '/';
 
   if (req.method === 'GET' && path === '/api/health') {
-    return sendJson(res, 200, {
+    return postgresHealth().then(db => sendJson(res, 200, {
       app: 'KerjaDesa Pro',
       status: 'online',
       stage: 'server-backed api',
-      timestamp: new Date().toISOString()
-    });
+      timestamp: new Date().toISOString(),
+      database: db
+    }));
   }
 
   if (req.method === 'POST' && path === '/api/auth/login') return login(req, res);
