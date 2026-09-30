@@ -75,6 +75,16 @@
       "status": "implemented"
     },
     {
+      "id": "postgres-adapter-v33",
+      "name": "Optional PostgreSQL adapter with health reporting and JSON fallback",
+      "status": "implemented"
+    },
+    {
+      "id": "dashboard-analytics-v33",
+      "name": "Dashboard operational metrics and CRUD audit logging",
+      "status": "implemented"
+    },
+    {
       "id": "server-backed-data-v32",
       "name": "Desa, Dokumen, Laporan and SPPD server-backed integration",
       "status": "implemented"
