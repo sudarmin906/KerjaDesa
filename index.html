@@ -983,4 +983,56 @@ function kdAddHomeQuick(){
 const kdOldShow=show;
 show=function(){kdOldShow();kdWorkflowSetup();kdAddHomeQuick();workflowPage('drp');}
 kdWorkflowSetup();kdAddHomeQuick();
+
+
+/* === KerjaDesa TAHAP 475: DIGITAL TWIN 2.0 === */
+(function(){
+  const KEY='kerjadesa_digital_twin_v20';
+  const defaults={
+    village:'Desa Paminggalan',
+    region:'Kecamatan Sendana, Kabupaten Majene, Sulawesi Barat',
+    zones:[
+      {name:'Pemerintahan Desa',type:'government',status:'Aktif'},
+      {name:'Infrastruktur',type:'infrastructure',status:'Monitoring'},
+      {name:'Pertanian',type:'agriculture',status:'Aktif'},
+      {name:'Lingkungan',type:'environment',status:'Monitoring'},
+      {name:'Ekonomi & UMKM',type:'economy',status:'Aktif'}
+    ],
+    scenario:'normal'
+  };
+  function getTwin(){try{return Object.assign({},defaults,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){return Object.assign({},defaults)}}
+  function saveTwin(x){localStorage.setItem(KEY,JSON.stringify(x));return x}
+  function twinCard(){
+    if(document.getElementById('kdTwinCard'))return;
+    const home=document.getElementById('home'); if(!home)return;
+    const card=document.createElement('div'); card.id='kdTwinCard'; card.className='card';
+    card.innerHTML=
+      '<h2 style="margin-top:0">🌐 Digital Twin 2.0</h2>'+
+      '<p class="muted">Representasi digital desa untuk melihat zona, kondisi, dan simulasi sederhana. Data tersimpan di perangkat dan tidak mengubah data DRP.</p>'+
+      '<div id="kdTwinView"></div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'+
+      '<button onclick="kdTwinScenario(\'normal\')">🟢 Kondisi Normal</button>'+
+      '<button onclick="kdTwinScenario(\'monitoring\')">🟡 Mode Monitoring</button>'+
+      '<button onclick="kdTwinScenario(\'emergency\')">🔴 Simulasi Darurat</button>'+
+      '<button onclick="kdTwinReset()">↺ Reset</button></div>';
+    const anchor=home.querySelector('.kd-data-center'); if(anchor)anchor.before(card); else home.appendChild(card);
+    renderTwin();
+  }
+  function renderTwin(){
+    const box=document.getElementById('kdTwinView'); if(!box)return;
+    const d=getTwin(), scenario=d.scenario||'normal';
+    const labels={normal:'Kondisi Normal',monitoring:'Mode Monitoring',emergency:'Simulasi Darurat'};
+    box.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">'+
+      d.zones.map((z,i)=>'<div style="padding:12px;border:1px solid #d8e3ea;border-radius:12px;background:linear-gradient(135deg,#f8fbff,#f3faf7)">'+
+      '<b>'+z.name+'</b><div class="small muted" style="margin-top:5px">'+z.type+'</div><div style="margin-top:8px"><span style="font-weight:700">'+(scenario==='emergency'&&i===1?'Perlu Respons':scenario==='monitoring'?'Dipantau':z.status)+'</span></div></div>').join('')+
+      '</div><div style="margin-top:10px;padding:10px;border-radius:10px;background:#f4f7fb"><b>Simulasi aktif:</b> '+labels[scenario]+'<br><span class="small muted">Simulasi tidak mengirim perintah ke perangkat fisik.</span></div>';
+  }
+  window.kdTwinScenario=function(s){const d=getTwin();d.scenario=s;saveTwin(d);renderTwin()};
+  window.kdTwinReset=function(){saveTwin(defaults);renderTwin()};
+  window.kdDigitalTwin=twinCard;
+  const oldShow=window.show;
+  if(typeof oldShow==='function') window.show=function(){oldShow();setTimeout(twinCard,0)};
+  if(document.readyState!=='loading')setTimeout(twinCard,0);else document.addEventListener('DOMContentLoaded',twinCard);
+})();
+
 </script></body></html>
