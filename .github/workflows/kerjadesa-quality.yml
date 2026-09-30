@@ -80,6 +80,30 @@ jobs:
           print("Referenced local assets OK")
           PY
 
+      - name: Validate backend JavaScript
+        shell: bash
+        run: |
+          for f in backend/server.js backend/database/*.js backend/controllers/*.js backend/middleware/*.js; do
+            echo "Checking $f"
+            node --check "$f"
+          done
+
+      - name: Backend smoke test
+        shell: bash
+        run: |
+          PORT=4317 node backend/server.js > /tmp/kerjadesa-api.log 2>&1 &
+          pid=$!
+          trap "kill $pid" EXIT
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:4317/api/health > /tmp/health.json; then
+              cat /tmp/health.json
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/kerjadesa-api.log
+          exit 1
+
       - name: Validate service worker cache manifest
         shell: bash
         run: |
