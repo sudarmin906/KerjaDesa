@@ -13,9 +13,26 @@
         api.get('monitoring')
       ]);
       const local = JSON.parse(localStorage.getItem('kerjadesa') || '{"kegiatan":[],"monitoring":[],"gps":null,"docs":{}}');
-      local.kegiatan = activities.data || [];
-      local.monitoring = monitoring.data || [];
+      const serverKegiatan = activities.data || [];
+      const serverMonitoring = monitoring.data || [];
+      const queue = window.KerjaDesaOfflineSync?.readQueue?.() || [];
+      const pending = queue.filter(x => ['PENDING','SYNCING','FAILED','CONFLICT'].includes(x.status));
+      const mergePending = (serverItems, resource) => {
+        const localItems = Array.isArray(local[resource]) ? local[resource] : [];
+        const pendingItems = pending.filter(q => q.resource === resource).map(q => q.payload).filter(Boolean);
+        const merged = serverItems.slice();
+        pendingItems.forEach(item => {
+          const i = merged.findIndex(x => String(x.id) === String(item.id) || String(x.serverId || '') === String(item.id));
+          if (i >= 0) merged[i] = Object.assign({}, merged[i], item, { synced: false });
+          else merged.push(Object.assign({}, item, { synced: false }));
+        });
+        localItems.filter(x => x && x.synced === false && !pendingItems.some(p => String(p.id) === String(x.id))).forEach(item => merged.push(item));
+        return merged;
+      };
+      local.kegiatan = mergePending(serverKegiatan, 'kegiatan');
+      local.monitoring = mergePending(serverMonitoring, 'monitoring');
       localStorage.setItem('kerjadesa', JSON.stringify(local));
+      window.KerjaDesaOfflineSync?.processQueue?.();
       return {online:true, kegiatan:local.kegiatan.length, monitoring:local.monitoring.length};
     }catch(error){
       console.warn('KerjaDesa hydration skipped:', error.message);
