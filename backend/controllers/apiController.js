@@ -182,6 +182,19 @@ async function resourceHandler(req, res, resource, id, method, auth) {
       delete body.password;
     }
     delete body.id;
+    const current = get(resource, id);
+    if (!current) return sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
+    if (body.base_version !== undefined && Number(body.base_version) !== Number(current.version || 1)) {
+      return sendJson(res, 409, {
+        success: false,
+        message: 'Konflik data: versi server sudah berubah.',
+        code: 'SYNC_CONFLICT',
+        server_id: current.id,
+        server_version: Number(current.version || 1),
+        server_data: resource === 'users' ? publicUser(current) : current
+      });
+    }
+    delete body.base_version;
     const item = update(resource, id, body);
     return item
       ? sendJson(res, 200, { success: true, data: resource === 'users' ? publicUser(item) : item })
