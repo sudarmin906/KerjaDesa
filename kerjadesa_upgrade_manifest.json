@@ -75,6 +75,16 @@
       "status": "implemented"
     },
     {
+      "id": "offline-sync-engine-v31",
+      "name": "Durable offline queue with retry, online reconciliation and local record preservation",
+      "status": "implemented"
+    },
+    {
+      "id": "sync-conflict-v31",
+      "name": "Server record versioning and stale-update conflict detection",
+      "status": "implemented"
+    },
+    {
       "id": "offline-api-bridge-v30",
       "name": "Reusable API CRUD and offline sync bridge",
       "status": "implemented"
