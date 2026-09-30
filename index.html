@@ -1085,7 +1085,7 @@ kdWorkflowSetup();kdAddHomeQuick();
     if(document.getElementById('kdUpgradeCenter'))return;
     const home=document.getElementById('home');if(!home)return;
     const card=document.createElement('div');card.id='kdUpgradeCenter';card.className='card kd-data-center';
-    card.innerHTML='<h2 style="margin-top:0">🧭 Upgrade Control Center</h2><p class="muted">Pusat pemeriksaan upgrade KerjaDesa Pro. Menampilkan kondisi aplikasi dan milestone yang benar-benar ada di repository.</p><div id="kdUpgradeCenterView"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button onclick="kdUpgradeRefresh()">↻ Perbarui Status</button><button class="secondary" onclick="window.open('kerjadesa_upgrade_manifest.json','_blank')">📋 Lihat Registry</button></div>';
+    card.innerHTML='<h2 style="margin-top:0">🧭 Upgrade Control Center</h2><p class="muted">Pusat pemeriksaan upgrade KerjaDesa Pro. Menampilkan kondisi aplikasi dan milestone yang benar-benar ada di repository.</p><div id="kdUpgradeCenterView"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button onclick="kdUpgradeRefresh()">↻ Perbarui Status</button><button class="secondary" onclick="window.open("kerjadesa_upgrade_manifest.json","_blank")">📋 Lihat Registry</button></div>';
     const twin=document.getElementById('kdTwinCard');
     if(twin&&twin.parentNode) twin.parentNode.insertBefore(card,twin.nextSibling);
     else {const anchor=home.querySelector('.kd-data-center');if(anchor)anchor.after(card);else home.appendChild(card);}
