@@ -16,6 +16,31 @@ const {
   sendJson
 } = require('../middleware/auth');
 
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 10;
+const loginAttempts = new Map();
+
+function loginAllowed(key) {
+  const now = Date.now();
+  const item = loginAttempts.get(key);
+  if (!item || now - item.startedAt > LOGIN_WINDOW_MS) {
+    loginAttempts.set(key, { startedAt: now, count: 0 });
+    return true;
+  }
+  return item.count < LOGIN_MAX_ATTEMPTS;
+}
+
+function recordLoginFailure(key) {
+  const now = Date.now();
+  const item = loginAttempts.get(key) || { startedAt: now, count: 0 };
+  if (now - item.startedAt > LOGIN_WINDOW_MS) {
+    loginAttempts.set(key, { startedAt: now, count: 1 });
+  } else {
+    item.count += 1;
+    loginAttempts.set(key, item);
+  }
+}
+
 const RESOURCE_RULES = {
   desa: { read: ['ADMIN', 'PLD', 'PEMDES', 'OPERATOR'], write: ['ADMIN', 'PEMDES'] },
   kegiatan: { read: ['ADMIN', 'PLD', 'PEMDES', 'OPERATOR'], write: ['ADMIN', 'PLD', 'OPERATOR'] },
@@ -94,12 +119,17 @@ async function login(req, res) {
     const body = await parseJsonBody(req);
     const username = String(body.username || '').trim();
     const password = String(body.password || '');
+    const key = username.toLowerCase() || 'anonymous';
+    if (!loginAllowed(key)) return sendJson(res, 429, { success: false, message: 'Terlalu banyak percobaan login. Coba lagi beberapa menit.' });
     const user = list('users').find(item => item.username === username && item.status !== 'INACTIVE');
 
     if (!user || !verifyPassword(password, user.password_hash)) {
+      recordLoginFailure(key);
       return sendJson(res, 401, { success: false, message: 'Username atau password tidak sesuai.' });
     }
 
+    loginAttempts.delete(key);
+    writeAudit({ user, action: 'LOGIN', resource: 'auth' });
     const token = issueSession(user);
     return sendJson(res, 200, {
       success: true,
@@ -175,6 +205,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
         desa: body.desa || '',
         status: body.status || 'ACTIVE'
       });
+      writeAudit({ user: auth.user, action: 'CREATE', resource: 'users', recordId: item.id });
       return sendJson(res, 201, { success: true, data: publicUser(item) });
     }
 
