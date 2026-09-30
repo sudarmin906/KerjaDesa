@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "product": "KerjaDesa Pro",
-  "baseline": "KerjaDesa V29 Professional",
+  "baseline": "KerjaDesa V30 Server-Backed Professional",
   "purpose": "Machine-readable upgrade registry for the existing repository. This is a registry, not a claim that every roadmap stage is implemented.",
   "roadmap": {
     "foundation": "A1-A9",
@@ -42,6 +42,26 @@
     {
       "id": "upgrade-control-center",
       "name": "Upgrade Control Center",
+      "status": "implemented"
+    },
+    {
+      "id": "server-api-v30",
+      "name": "Server-backed API routing, session authentication and CRUD",
+      "status": "implemented"
+    },
+    {
+      "id": "auth-scrypt-v30",
+      "name": "Scrypt password hashing and opaque bearer sessions",
+      "status": "implemented"
+    },
+    {
+      "id": "frontend-api-session-v30",
+      "name": "Frontend login/logout API integration with offline fallback",
+      "status": "implemented"
+    },
+    {
+      "id": "backend-ci-smoke-v30",
+      "name": "Backend syntax validation and API health smoke test",
       "status": "implemented"
     }
   ],
