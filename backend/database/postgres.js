@@ -2,8 +2,7 @@
  * Optional PostgreSQL adapter.
  * Enable with DATABASE_URL. JSON store remains the default fallback.
  */
-const { Pool } = require('pg');
-
+let Pool = null;
 let pool = null;
 
 function enabled() {
@@ -12,6 +11,10 @@ function enabled() {
 
 function getPool() {
   if (!enabled()) return null;
+  if (!Pool) {
+    try { Pool = require('pg').Pool; }
+    catch { throw new Error('PostgreSQL adapter membutuhkan dependency pg saat DATABASE_URL digunakan.'); }
+  }
   if (!pool) pool = new Pool({ connectionString: process.env.DATABASE_URL, max: Number(process.env.PG_POOL_MAX || 10) });
   return pool;
 }
