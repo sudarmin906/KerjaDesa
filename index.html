@@ -1035,4 +1035,63 @@ kdWorkflowSetup();kdAddHomeQuick();
   if(document.readyState!=='loading')setTimeout(twinCard,0);else document.addEventListener('DOMContentLoaded',twinCard);
 })();
 
+
+
+/* === KerjaDesa TAHAP 476: UPGRADE CONTROL CENTER === */
+(function(){
+  const KEY='kerjadesa_upgrade_center_v1';
+  const milestones=[
+    ['V29','KerjaDesa V29 Professional baseline','Aktif'],
+    ['REPORT','Master-style report & print engine','Aktif'],
+    ['DRP-OCR','DRP/photo OCR matching & date normalization','Aktif'],
+    ['CI','Repository quality validation','Aktif'],
+    ['PAGES','GitHub Pages smoke test','Aktif'],
+    ['TWIN','Digital Twin 2.0 safe simulation','Aktif'],
+    ['ROADMAP','A1-A9 + 1-600 registry foundation','Terdaftar']
+  ];
+  function esc(v){return String(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+  function storageStats(){
+    let bytes=0,keys=0;
+    try{
+      for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i)||'',v=localStorage.getItem(k)||'';
+        keys++;bytes+=(k.length+v.length)*2;
+      }
+    }catch(e){}
+    return {keys,bytes};
+  }
+  function render(){
+    const box=document.getElementById('kdUpgradeCenterView');if(!box)return;
+    const s=storageStats();
+    const online=navigator.onLine;
+    const sw='serviceWorker' in navigator;
+    box.innerHTML=
+      '<div class="grid">'+
+      '<div class="pill"><b>Status koneksi</b><br>'+ (online?'🟢 Online':'🟠 Offline') +'</div>'+
+      '<div class="pill"><b>PWA / Service Worker</b><br>'+ (sw?'🟢 Tersedia':'⚪ Tidak tersedia') +'</div>'+
+      '<div class="pill"><b>Penyimpanan lokal</b><br>'+s.keys+' item · '+Math.round(s.bytes/1024)+' KB</div>'+
+      '<div class="pill"><b>Mode aplikasi</b><br>KerjaDesa Pro Existing + Upgrade</div>'+
+      '</div>'+
+      '<div class="tablewrap" style="margin-top:10px"><table class="simpletable"><thead><tr><th>Komponen</th><th>Status</th></tr></thead><tbody>'+
+      milestones.map(x=>'<tr><td><b>'+esc(x[0])+'</b><br>'+esc(x[1])+'</td><td><span class="badge">'+esc(x[2])+'</span></td></tr>').join('')+
+      '</tbody></table></div>'+
+      '<div class="ai-box"><b>Catatan roadmap</b><br><span class="small">Registry ini menjaga agar pengembangan berikutnya melanjutkan source code yang sama. Tahap yang belum benar-benar masuk repository tidak diberi status selesai.</span></div>';
+  }
+  function mount(){
+    if(document.getElementById('kdUpgradeCenter'))return;
+    const home=document.getElementById('home');if(!home)return;
+    const card=document.createElement('div');card.id='kdUpgradeCenter';card.className='card kd-data-center';
+    card.innerHTML='<h2 style="margin-top:0">🧭 Upgrade Control Center</h2><p class="muted">Pusat pemeriksaan upgrade KerjaDesa Pro. Menampilkan kondisi aplikasi dan milestone yang benar-benar ada di repository.</p><div id="kdUpgradeCenterView"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button onclick="kdUpgradeRefresh()">↻ Perbarui Status</button><button class="secondary" onclick="window.open('kerjadesa_upgrade_manifest.json','_blank')">📋 Lihat Registry</button></div>';
+    const twin=document.getElementById('kdTwinCard');
+    if(twin&&twin.parentNode) twin.parentNode.insertBefore(card,twin.nextSibling);
+    else {const anchor=home.querySelector('.kd-data-center');if(anchor)anchor.after(card);else home.appendChild(card);}
+    render();
+  }
+  window.kdUpgradeRefresh=render;
+  window.kdUpgradeCenter=mount;
+  const oldShow=window.show;
+  if(typeof oldShow==='function')window.show=function(){oldShow();setTimeout(mount,0)};
+  window.addEventListener('online',render);window.addEventListener('offline',render);
+  if(document.readyState!=='loading')setTimeout(mount,0);else document.addEventListener('DOMContentLoaded',mount);
+})();
 </script></body></html>
