@@ -193,7 +193,7 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
 <div id="desaDocStatus" class="small muted"></div>
 <div id="desaDocList"></div>
 </div>
-<div class="card no-print" id="aiSettingsPanel" style="display:none"><h3>🤖 Koneksi AI GPT</h3><p class="small muted">Masukkan URL proxy/server AI yang aman. API key OpenAI jangan ditaruh langsung di GitHub Pages.</p><input id="setAiEndpoint" placeholder="https://domain-anda/api/rewrite"><input id="setAiModel" value="gpt-5.6" placeholder="Model di server"><div class="actions"><button type="button" class="secondary" onclick="saveAISettings()">💾 Simpan Koneksi AI</button><button type="button" class="secondary" onclick="testAIConnection()">🔌 Tes Koneksi</button></div><div id="aiSettingsStatus" class="small muted"></div></div><div id="pengaturanPanel" class="card no-print" style="display:none">
+<div class="card no-print" id="aiSettingsPanel" style="display:none"><h3>🤖 Koneksi AI GPT</h3><p class="small muted">Masukkan URL proxy/server AI yang aman. API key OpenAI jangan ditaruh langsung di GitHub Pages.</p><input id="setAiEndpoint" placeholder="https://domain-anda/api/rewrite"><input id="setAiModel" value="gpt-5.6" placeholder="Model di server"><div class="actions"><button type="button" class="secondary" onclick="saveAISettings()">💾 Simpan Koneksi AI</button><button type="button" class="secondary" onclick="testAIConnection()">🔌 Tes Koneksi</button></div><div id="aiSettingsStatus" class="small muted"></div></div><div class="card no-print" style="margin-top:12px"><h3>👥 Manajemen Pengguna</h3><div class="actions"><button type="button" class="secondary" onclick="kdLoadUsers()">↻ Muat Pengguna</button><button type="button" onclick="kdCreateUser()">＋ Tambah Pengguna</button></div><div id="kdUserList" style="margin-top:10px"></div></div><div id="pengaturanPanel" class="card no-print" style="display:none">
 <h3>⚙️ Pengaturan KerjaDesa</h3>
 <p class="small muted">Pengaturan profil dan data perangkat. Perubahan tersimpan lokal di HP.</p>
 <div class="grid"><input id="setNama" placeholder="Nama Pendamping"><input id="setJabatan" placeholder="Jabatan"><input id="setKecamatan" value="Sendana" placeholder="Kecamatan"><input id="setKabupaten" value="Majene" placeholder="Kabupaten"><input id="setProvinsi" value="Sulawesi Barat" placeholder="Provinsi"></div>
@@ -239,6 +239,20 @@ function page(x){
 function openGpsFromHome(){page('monitoring');setTimeout(()=>gps(),150)}
 function saveAISettings(){const endpoint=(document.getElementById('setAiEndpoint')?.value||'').trim(),model=(document.getElementById('setAiModel')?.value||'gpt-5.6').trim();localStorage.setItem('kerjadesa_ai_settings',JSON.stringify({endpoint,model}));const st=document.getElementById('aiSettingsStatus');if(st)st.textContent=endpoint?'✅ Endpoint AI tersimpan. API key tetap berada di server/proxy.':'Endpoint AI dikosongkan; laporan lokal tetap dapat digunakan.'}
 async function testAIConnection(){const endpoint=(document.getElementById('setAiEndpoint')?.value||'').trim(),st=document.getElementById('aiSettingsStatus');if(!endpoint){if(st)st.textContent='Masukkan endpoint AI terlebih dahulu.';return}if(st)st.textContent='⏳ Menguji...';try{const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({test:true,task:'kerjadesa_ping'})});if(!r.ok)throw new Error('HTTP '+r.status);if(st)st.textContent='✅ Endpoint merespons.'}catch(e){if(st)st.textContent='❌ Tes gagal: '+e.message}}
+async function kdLoadUsers(){
+  const el=document.getElementById('kdUserList');
+  if(!el||!localStorage.getItem('kd_auth_token'))return;
+  try{
+    const r=await KerjaDesaAPI.get('users');
+    el.innerHTML=(r.data||[]).map(u=>'<div class="card item"><b>'+esc(u.nama_lengkap||u.username)+'</b><br>'+esc(u.username)+' • '+esc(u.role||'-')+' • '+esc(u.status||'-')+'</div>').join('')||'<div class="kd-empty">Belum ada pengguna.</div>';
+  }catch(e){el.innerHTML='<div class="small muted">Data pengguna hanya dapat diakses ADMIN.</div>'}
+}
+async function kdCreateUser(){
+  const username=prompt('Username pengguna baru:');if(!username)return;
+  const password=prompt('Password sementara:');if(!password)return;
+  const role=(prompt('Role (ADMIN/PLD/PEMDES/OPERATOR):','OPERATOR')||'OPERATOR').toUpperCase();
+  try{await KerjaDesaAPI.create('users',{username,password,role,nama_lengkap:username,status:'ACTIVE'});kdLoadUsers();alert('Pengguna berhasil dibuat.')}catch(e){alert('Gagal membuat pengguna: '+e.message)}
+}
 function loadAppSettings(){
   const s=JSON.parse(localStorage.getItem('kerjadesa_settings')||'{}'); const ai=JSON.parse(localStorage.getItem('kerjadesa_ai_settings')||'{}'); const ae=document.getElementById('setAiEndpoint'),am=document.getElementById('setAiModel'); if(ae)ae.value=ai.endpoint||''; if(am)am.value=ai.model||'gpt-5.6';
   const vals={setNama:s.nama||'SUDARMIN ARIPUDDIN',setJabatan:s.jabatan||'Pendamping Lokal Desa',setKecamatan:s.kecamatan||'Sendana',setKabupaten:s.kabupaten||'Majene',setProvinsi:s.provinsi||'Sulawesi Barat'};
