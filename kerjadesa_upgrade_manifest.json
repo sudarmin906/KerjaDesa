@@ -75,6 +75,16 @@
       "status": "implemented"
     },
     {
+      "id": "server-backed-data-v32",
+      "name": "Desa, Dokumen, Laporan and SPPD server-backed integration",
+      "status": "implemented"
+    },
+    {
+      "id": "user-role-management-v32",
+      "name": "Admin user and role management through authenticated API",
+      "status": "implemented"
+    },
+    {
       "id": "offline-sync-engine-v31",
       "name": "Durable offline queue with retry, online reconciliation and local record preservation",
       "status": "implemented"
