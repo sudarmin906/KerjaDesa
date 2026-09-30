@@ -654,8 +654,17 @@ function renderVisitDates(){const old=loadVisitDates();let d=sppdData(),h='<div 
 function saveOneVisit(i){saveVisitDates();const st=document.getElementById('sppdStatus');if(st)st.textContent='✅ Data Kunjungan '+i+' tersimpan. Nama dan Jabatan dapat berbeda untuk setiap kunjungan.'}
 function visitDates(){return loadVisitDates()}
 function loadSppdData(){let d={...SPPD_DEFAULT,...JSON.parse(localStorage.getItem('kerjadesa_sppd_editable')||'{}')};const map={sppdNIK:'nik',sppdNama:'nama',sppdKabupaten:'kabupaten',sppdProvinsi:'provinsi',sppdPosisi:'posisi',sppdJabatan:'jabatan',sppdBulan:'bulan',sppdTahun:'tahun',sppdTiba:'tiba',sppdBerangkat:'berangkat',sppdKedudukan:'kedudukan'};Object.entries(map).forEach(([id,k])=>sppdGet(id).value=d[k]||'');renderSppd()}
-function saveSppdIdentity(){const d=sppdData();localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(d));const st=document.getElementById('sppdIdentityStatus');if(st)st.textContent='✅ Nama, Jabatan, lokasi, dan Tiba di tersimpan di HP. Huruf besar/kecil dipertahankan.';document.getElementById('sppdStatus').textContent='Identitas SPPD tersimpan.';renderSppd()}
-function saveSppdData(){localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(sppdData()));document.getElementById('sppdStatus').textContent='Data SPPD tersimpan di perangkat.';renderSppd()}
+async function syncSppdToServer(){
+  if(!localStorage.getItem('kd_auth_token')||!navigator.onLine)return false;
+  try{
+    const payload={type:'SPPD',title:'Data SPPD',content:sppdData(),createdAt:new Date().toISOString()};
+    await KerjaDesaAPI.create('dokumen',payload);
+    const st=document.getElementById('sppdStatus');if(st)st.textContent='✅ Data SPPD tersinkron ke server.';
+    return true;
+  }catch(e){console.warn('SPPD server sync:',e.message);return false}
+}
+function saveSppdIdentity(){const d=sppdData();localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(d));syncSppdToServer();const st=document.getElementById('sppdIdentityStatus');if(st)st.textContent='✅ Nama, Jabatan, lokasi, dan Tiba di tersimpan di HP. Huruf besar/kecil dipertahankan.';document.getElementById('sppdStatus').textContent='Identitas SPPD tersimpan.';renderSppd()}
+function saveSppdData(){localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(sppdData()));syncSppdToServer();document.getElementById('sppdStatus').textContent='Data SPPD tersimpan di perangkat.';renderSppd()}
 function resetSppdData(){localStorage.removeItem('kerjadesa_sppd_editable');
 // === KerjaDesa V26 enhancement ===
 function kdStatus(msg){
