@@ -1,30 +1,56 @@
-// KerjaDesa API Authentication Connector
-// Menghubungkan frontend dengan backend authentication
+// KerjaDesa Pro Authentication Connector
+// Server-backed session with offline-safe fallback handled by index.html.
 
-const KerjaDesaAuth = {
+const KerjaDesaAuthAPI = {
+  baseURL() {
+    return window.KERJADESA_API_BASE || '/api';
+  },
+
+  token() {
+    return localStorage.getItem('kd_auth_token') || '';
+  },
+
   async login(username, password) {
-    const API_URL = window.KERJADESA_API_URL || '/api/auth/login';
-
-    const response = await fetch(API_URL, {
+    const response = await fetch(this.baseURL() + '/auth/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
-
-    if (!response.ok) {
-      throw new Error('Login gagal');
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Login gagal');
     }
-
-    const data = await response.json();
-    localStorage.setItem('kerjadesa_user', JSON.stringify(data));
+    localStorage.setItem('kd_auth_token', data.token || '');
+    localStorage.setItem('kd_user', JSON.stringify(data.user || {}));
+    localStorage.setItem('kd_login', '1');
     return data;
   },
 
-  logout() {
-    localStorage.removeItem('kerjadesa_user');
+  async me() {
+    const token = this.token();
+    if (!token) return null;
+    const response = await fetch(this.baseURL() + '/auth/me', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.user || null;
+  },
+
+  async logout() {
+    const token = this.token();
+    if (token) {
+      try {
+        await fetch(this.baseURL() + '/auth/logout', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token }
+        });
+      } catch (_) {}
+    }
+    localStorage.removeItem('kd_login');
+    localStorage.removeItem('kd_auth_token');
+    localStorage.removeItem('kd_user');
   }
 };
 
-window.KerjaDesaAuth = KerjaDesaAuth;
+window.KerjaDesaAuthAPI = KerjaDesaAuthAPI;
