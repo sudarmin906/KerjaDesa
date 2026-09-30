@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0",
+  "product": "KerjaDesa Pro",
+  "baseline": "KerjaDesa V29 Professional",
+  "purpose": "Machine-readable upgrade registry for the existing repository. This is a registry, not a claim that every roadmap stage is implemented.",
+  "roadmap": {
+    "foundation": "A1-A9",
+    "long_term_range": "1-600",
+    "rule": "Only repository changes that have actually been merged are marked implemented."
+  },
+  "implemented_milestones": [
+    {
+      "id": "repo-v29",
+      "name": "KerjaDesa V29 Professional baseline",
+      "status": "implemented"
+    },
+    {
+      "id": "report-master",
+      "name": "Master-style report generation and print layout",
+      "status": "implemented"
+    },
+    {
+      "id": "drp-photo-ocr",
+      "name": "DRP/photo matching with OCR and date normalization",
+      "status": "implemented"
+    },
+    {
+      "id": "quality-ci",
+      "name": "Repository quality validation workflow",
+      "status": "implemented"
+    },
+    {
+      "id": "pages-smoke",
+      "name": "GitHub Pages smoke test workflow",
+      "status": "implemented"
+    },
+    {
+      "id": "digital-twin-v20",
+      "name": "Digital Twin 2.0 safe local simulation",
+      "status": "implemented"
+    },
+    {
+      "id": "upgrade-control-center",
+      "name": "Upgrade Control Center",
+      "status": "implemented"
+    }
+  ],
+  "planned_domains": [
+    "authentication-and-roles",
+    "server-backed-data",
+    "village-profile",
+    "development-monitoring",
+    "village-finance",
+    "administration-and-documents",
+    "pld-assistance",
+    "bumdes-and-umkm",
+    "agriculture",
+    "health",
+    "education",
+    "tourism",
+    "ai-assistance",
+    "mobile-application"
+  ]
+}
