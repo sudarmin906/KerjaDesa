@@ -20,6 +20,10 @@ const ALLOWED_HEADERS = 'Content-Type, Authorization';
 function cors(res) {
   const origin = process.env.CORS_ORIGIN || '*';
   res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Access-Control-Allow-Headers', ALLOWED_HEADERS);
   res.setHeader('Access-Control-Allow-Methods', ALLOWED_METHODS);
   res.setHeader('Access-Control-Max-Age', '86400');
