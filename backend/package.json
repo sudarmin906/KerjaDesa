@@ -1,0 +1,14 @@
+{
+  "name": "kerjadesa-pro-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Server-backed API for KerjaDesa Pro",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
