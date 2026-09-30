@@ -172,7 +172,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
     }
 
     const item = create(resource, normalizeResourcePayload(resource, body, auth.user));
-    return sendJson(res, 201, { success: true, data: item });
+    return sendJson(res, 201, { success: true, data: resource === 'users' ? publicUser(item) : item });
   }
 
   if (method === 'PATCH' && id) {
