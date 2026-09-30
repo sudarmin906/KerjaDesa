@@ -1,27 +1,83 @@
-// KerjaDesa Pro Backend API Foundation
-// Stage: Upgrade Full - API Server Preparation
+// KerjaDesa Pro API Server
+// Stage: Server-backed authentication + CRUD + dashboard.
+// No external runtime dependency: Node.js built-ins only.
 
 const http = require('http');
+const { URL } = require('url');
+const { ensureStore } = require('./database/jsonStore');
+const { authenticate, requireAuth, sendJson } = require('./middleware/auth');
+const { login, logout, dashboard, resourceHandler } = require('./controllers/apiController');
 
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT || 3000);
+const HOST = process.env.HOST || '0.0.0.0';
 
-const server = http.createServer((req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+ensureStore();
 
-  if (req.url === '/api/health') {
-    res.end(JSON.stringify({
-      app: 'KerjaDesa Pro',
-      status: 'online',
-      stage: 'backend foundation'
-    }));
-    return;
+const ALLOWED_METHODS = 'GET,POST,PATCH,DELETE,OPTIONS';
+const ALLOWED_HEADERS = 'Content-Type, Authorization';
+
+function cors(res) {
+  const origin = process.env.CORS_ORIGIN || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Headers', ALLOWED_HEADERS);
+  res.setHeader('Access-Control-Allow-Methods', ALLOWED_METHODS);
+  res.setHeader('Access-Control-Max-Age', '86400');
+}
+
+function route(req, res) {
+  cors(res);
+  if (req.method === 'OPTIONS') {
+    res.statusCode = 204;
+    return res.end();
   }
 
-  res.statusCode = 404;
-  res.end(JSON.stringify({message:'API route not found'}));
+  const url = new URL(req.url, 'http://localhost');
+  const path = url.pathname.replace(/\/+$/, '') || '/';
+
+  if (req.method === 'GET' && path === '/api/health') {
+    return sendJson(res, 200, {
+      app: 'KerjaDesa Pro',
+      status: 'online',
+      stage: 'server-backed api',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  if (req.method === 'POST' && path === '/api/auth/login') return login(req, res);
+  if (req.method === 'POST' && path === '/api/auth/logout') return logout(req, res);
+  if (req.method === 'GET' && path === '/api/auth/me') {
+    const auth = requireAuth(req, res);
+    return auth && sendJson(res, 200, { success: true, user: auth.user });
+  }
+
+  const auth = authenticate(req);
+  if (!auth) {
+    return sendJson(res, 401, { success: false, message: 'Authentication diperlukan.' });
+  }
+
+  if (req.method === 'GET' && path === '/api/dashboard') {
+    return dashboard(req, res);
+  }
+
+  const match = path.match(/^\/api\/(desa|kegiatan|monitoring|dokumen|laporan|users)(?:\/([^/]+))?$/);
+  if (match) {
+    return resourceHandler(req, res, match[1], match[2], req.method, auth);
+  }
+
+  return sendJson(res, 404, { success: false, message: 'API route not found.' });
+}
+
+const server = http.createServer((req, res) => {
+  Promise.resolve(route(req, res)).catch(error => {
+    console.error(error);
+    if (!res.headersSent) {
+      sendJson(res, 500, { success: false, message: 'Internal server error.' });
+    }
+  });
 });
 
-server.listen(PORT, () => {
-  console.log(`KerjaDesa API running on port ${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log('KerjaDesa Pro API running at http://' + HOST + ':' + PORT);
 });
+
+module.exports = server;
