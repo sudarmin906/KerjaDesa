@@ -1,39 +1,6 @@
-// KerjaDesa Pro - Authentication Controller Foundation
-// Tahap: API Authentication Multi User
+// Compatibility wrapper for the active server-backed authentication module.
+// The previous in-memory/plaintext implementation is retired.
 
-const users = [
-  {
-    id: 1,
-    username: 'admin',
-    password: 'admin123',
-    role: 'ADMIN',
-    name: 'Administrator KerjaDesa'
-  }
-];
+const { login } = require('./apiController');
 
-function login(username, password) {
-  const user = users.find(
-    (item) => item.username === username && item.password === password
-  );
-
-  if (!user) {
-    return {
-      success: false,
-      message: 'Username atau password tidak sesuai'
-    };
-  }
-
-  return {
-    success: true,
-    user: {
-      id: user.id,
-      username: user.username,
-      role: user.role,
-      name: user.name
-    }
-  };
-}
-
-module.exports = {
-  login
-};
+module.exports = { login };
