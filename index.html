@@ -210,7 +210,7 @@ main{max-width:1120px;padding:18px 16px 105px}.card{border-radius:20px;box-shado
 let data=JSON.parse(localStorage.getItem('kerjadesa')||'{"kegiatan":[],"monitoring":[],"gps":null,"docs":{}}');let deferred=null;let reportHtml='';let reportText='';let profilePhoto='foto_profil.jpg';let logoPhoto='';let activityPhotos=[];
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
 function save(){localStorage.setItem('kerjadesa',JSON.stringify(data));render()}
-function doLogin(){const u=(document.getElementById('user')?.value||'').trim(),pw=document.getElementById('pass')?.value||'',msg=document.getElementById('loginMsg');if(u==='admin'&&pw==='admin123'){try{localStorage.setItem('kd_login','1')}catch(e){}show()}else{if(msg)msg.textContent='Username atau password salah. Gunakan admin / admin123.'}}
+async function doLogin(){const u=(document.getElementById('user')?.value||'').trim(),pw=document.getElementById('pass')?.value||'',msg=document.getElementById('loginMsg');if(!u||!pw){if(msg)msg.textContent='Username dan password wajib diisi.';return}if(msg)msg.textContent='Menghubungkan ke server...';try{const base=window.KERJADESA_API_BASE||'/api';const response=await fetch(base+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:pw})});const data=await response.json().catch(()=>({}));if(response.ok&&data.success){localStorage.setItem('kd_login','1');localStorage.setItem('kd_auth_token',data.token||'');localStorage.setItem('kd_user',JSON.stringify(data.user||{}));show();return}if(response.status!==404&&response.status!==405){if(msg)msg.textContent=data.message||'Login gagal.';return}}catch(e){console.warn('Backend tidak tersedia, memakai mode offline.',e)}if(u==='admin'&&pw==='admin123'){try{localStorage.setItem('kd_login','1');localStorage.removeItem('kd_auth_token');localStorage.setItem('kd_user',JSON.stringify({username:'admin',role:'ADMIN',name:'Administrator KerjaDesa',offline:true}))}catch(e){}show()}else{if(msg)msg.textContent='Username atau password salah.'}}
 function show(){document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';document.getElementById('nav').classList.remove('hide');try{render()}catch(e){console.error(e)}}
 function page(x){
   ['home','kegiatan','monitoring','dokumen'].forEach(y=>{const el=document.getElementById(y);if(el)el.classList.toggle('hide',x!==y)});
@@ -682,9 +682,13 @@ function kdRestore(input){
   };
   reader.readAsText(f);
 }
-function kdLogout(){
+async function kdLogout(){
   if(!confirm('Keluar dari KerjaDesa pada perangkat ini?'))return;
+  const token=localStorage.getItem('kd_auth_token');
+  if(token){try{await fetch((window.KERJADESA_API_BASE||'/api')+'/auth/logout',{method:'POST',headers:{Authorization:'Bearer '+token}})}catch(e){}}
   localStorage.removeItem('kd_login');
+  localStorage.removeItem('kd_auth_token');
+  localStorage.removeItem('kd_user');
   document.getElementById('app').style.display='none';
   document.getElementById('nav').classList.add('hide');
   document.getElementById('login').style.display='';
