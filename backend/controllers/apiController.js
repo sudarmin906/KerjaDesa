@@ -8,6 +8,7 @@ const {
   update,
   remove
 } = require('../database/jsonStore');
+const { writeAudit, listAudit } = require('../middleware/audit');
 const {
   issueSession,
   revokeSession,
@@ -21,7 +22,8 @@ const RESOURCE_RULES = {
   monitoring: { read: ['ADMIN', 'PLD', 'PEMDES', 'OPERATOR'], write: ['ADMIN', 'PLD', 'OPERATOR'] },
   dokumen: { read: ['ADMIN', 'PLD', 'PEMDES', 'OPERATOR'], write: ['ADMIN', 'PLD', 'OPERATOR'] },
   laporan: { read: ['ADMIN', 'PLD', 'PEMDES', 'OPERATOR'], write: ['ADMIN', 'PLD'] },
-  users: { read: ['ADMIN'], write: ['ADMIN'] }
+  users: { read: ['ADMIN'], write: ['ADMIN'] },
+  audit_log: { read: ['ADMIN'], write: [] }
 };
 
 function parseJsonBody(req) {
@@ -118,6 +120,8 @@ function logout(req, res) {
 
 function dashboard(req, res) {
   const store = readStore();
+  const kegiatanSelesai = store.kegiatan.filter(x => String(x.status || '').toUpperCase() === 'SELESAI').length;
+  const monitoringProgres = store.monitoring.length ? Math.round(store.monitoring.reduce((a,x) => a + Number(x.progres || 0), 0) / store.monitoring.length) : 0;
   return sendJson(res, 200, {
     success: true,
     data: {
@@ -126,7 +130,10 @@ function dashboard(req, res) {
       monitoring: store.monitoring.length,
       dokumen: store.dokumen.length,
       laporan: store.laporan.length,
-      users: store.users.length
+      users: store.users.length,
+      kegiatan_selesai: kegiatanSelesai,
+      rata_rata_progres: monitoringProgres,
+      audit_log: (store.audit_log || []).length
     }
   });
 }
@@ -147,7 +154,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
         ? sendJson(res, 200, { success: true, data: item })
         : sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
     }
-    return sendJson(res, 200, { success: true, data: list(resource) });
+    return sendJson(res, 200, { success: true, data: resource === 'audit_log' ? listAudit(200) : list(resource) });
   }
 
   if (method === 'POST') {
@@ -172,6 +179,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
     }
 
     const item = create(resource, normalizeResourcePayload(resource, body, auth.user));
+    writeAudit({ user: auth.user, action: 'CREATE', resource, recordId: item.id });
     return sendJson(res, 201, { success: true, data: resource === 'users' ? publicUser(item) : item });
   }
 
@@ -196,6 +204,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
     }
     delete body.base_version;
     const item = update(resource, id, body);
+    if (item) writeAudit({ user: auth.user, action: 'UPDATE', resource, recordId: item.id });
     return item
       ? sendJson(res, 200, { success: true, data: resource === 'users' ? publicUser(item) : item })
       : sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
@@ -203,6 +212,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
 
   if (method === 'DELETE' && id) {
     const ok = remove(resource, id);
+    if (ok) writeAudit({ user: auth.user, action: 'DELETE', resource, recordId: id });
     return sendJson(res, ok ? 200 : 404, {
       success: ok,
       message: ok ? 'Data dihapus.' : 'Data tidak ditemukan.'
