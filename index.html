@@ -256,9 +256,15 @@ async function saveVillageDocument(){
   if(!file)return alert('Pilih dokumen terlebih dahulu.');
   try{
     const url=await readAsDataURL(file);
-    villageDocs().push({id:Date.now(),name:file.name,desa,kategori:kat,size:file.size,url,createdAt:new Date().toISOString()});
+    const item={id:Date.now(),name:file.name,desa,kategori:kat,size:file.size,url,createdAt:new Date().toISOString(),synced:false};
+    let remote=false;
+    if(window.KerjaDesaAPI&&localStorage.getItem('kd_auth_token')&&navigator.onLine){
+      try{const r=await KerjaDesaAPI.create('dokumen',{id:item.id,name:item.name,desa:item.desa,kategori:item.kategori,size:item.size,createdAt:item.createdAt});Object.assign(item,r.data||{}, {url:item.url,synced:true});remote=true}catch(e){console.warn('Dokumen offline:',e.message)}
+    }
+    villageDocs().push(item);
+    if(!remote)window.KerjaDesaOfflineSync?.enqueue('dokumen','CREATE',{id:item.id,name:item.name,desa:item.desa,kategori:item.kategori,size:item.size,createdAt:item.createdAt},item.id);
     save();document.getElementById('desaDocFile').value='';document.getElementById('docKategori').value='';
-    const st=document.getElementById('desaDocStatus');if(st)st.textContent='✅ Dokumen berhasil disimpan di perangkat.';
+    const st=document.getElementById('desaDocStatus');if(st)st.textContent=remote?'✅ Dokumen tersimpan ke server.':'📱 Dokumen tersimpan di perangkat dan menunggu sinkronisasi.';
     renderVillageDocuments();
   }catch(e){alert('Gagal menyimpan dokumen: '+(e.message||e))}
 }
