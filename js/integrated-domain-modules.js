@@ -51,10 +51,10 @@
       ['tahun','Tahun','number'],['desa','Desa','text'],['apbdes_id','APBDes ID','text'],['kegiatan_id','Kegiatan ID','text'],['kegiatan','Kegiatan','text'],['uraian','Uraian Pekerjaan/Barang','textarea'],['volume','Volume','number'],['satuan','Satuan','text'],['harga_satuan','Harga Satuan','number'],['jumlah','Jumlah','number'],['status','Status','select:DRAFT|DIPERIKSA|DISETUJUI']
     ],
     realisasi:[
-      ['tanggal','Tanggal','date'],['desa','Desa','text'],['apbdes_id','APBDes ID','text'],['kegiatan_id','Kegiatan ID','text'],['kegiatan','Kegiatan','text'],['sumber_dana','Sumber Dana','text'],['nilai','Nilai Realisasi','number'],['progres_fisik','Progres Fisik %','number'],['progres_keuangan','Progres Keuangan %','number'],['status','Status Monev','select:BERJALAN|SELESAI|TERTUNDA|PERLU_TINDAK_LANJUT'],['temuan','Temuan','textarea'],['tindak_lanjut','Tindak Lanjut','textarea']
+      ['tanggal','Tanggal','date'],['desa','Desa','text'],['apbdes_id','APBDes ID','text'],['rab_id','RAB ID','text'],['kegiatan_id','Kegiatan ID','text'],['kegiatan','Kegiatan','text'],['sumber_dana','Sumber Dana','text'],['nilai','Nilai Realisasi','number'],['progres_fisik','Progres Fisik %','number'],['progres_keuangan','Progres Keuangan %','number'],['status','Status Monev','select:BERJALAN|SELESAI|TERTUNDA|PERLU_TINDAK_LANJUT'],['temuan','Temuan','textarea'],['tindak_lanjut','Tindak Lanjut','textarea']
     ],
     lpj:[
-      ['tahun','Tahun','number'],['desa','Desa','text'],['periode','Periode','text'],['kegiatan','Kegiatan','text'],['nilai','Nilai LPJ','number'],['status','Status','select:DRAFT|DIPERIKSA|DISETUJUI|PERLU_PERBAIKAN'],['catatan','Catatan','textarea']
+      ['tahun','Tahun','number'],['desa','Desa','text'],['periode','Periode','text'],['apbdes_id','APBDes ID','text'],['rab_id','RAB ID','text'],['kegiatan_id','Kegiatan ID','text'],['kegiatan','Kegiatan','text'],['nilai','Nilai LPJ','number'],['status','Status','select:DRAFT|DIPERIKSA|DISETUJUI|PERLU_PERBAIKAN'],['catatan','Catatan','textarea']
     ],
     penduduk:[
       ['nik','NIK','text'],['nama','Nama Lengkap','text'],['desa','Desa','text'],['dusun','Dusun','text'],['jenis_kelamin','Jenis Kelamin','select:L|P'],['tanggal_lahir','Tanggal Lahir','date'],['status','Status','select:AKTIF|PINDAH|MENINGGAL']
@@ -138,7 +138,8 @@
         const opts=type.slice(7).split('|');
         return '<label>'+esc(label)+'<select data-kd-field="'+esc(k)+'"><option value="">- pilih -</option>'+opts.map(o=>'<option '+(String(o)===String(val)?'selected':'')+' value="'+esc(o)+'">'+esc(o)+'</option>').join('')+'</select></label>';
       }
-      const input=type==='textarea'?'<textarea data-kd-field="'+esc(k)+'" rows="3">'+esc(val)+'</textarea>':'<input data-kd-field="'+esc(k)+'" type="'+esc(type)+'" value="'+esc(val)+'">';
+      const calc=(r==='rab'&&k==='jumlah')?' oninput="kdRabRecalc()" readonly':(r==='rab'&&(k==='volume'||k==='harga_satuan'))?' oninput="kdRabRecalc()"':'';
+      const input=type==='textarea'?'<textarea data-kd-field="'+esc(k)+'" rows="3">'+esc(val)+'</textarea>':'<input data-kd-field="'+esc(k)+'" type="'+esc(type)+'" value="'+esc(val)+'"'+calc+'>';
       return '<label>'+esc(label)+input+'</label>';
     }).join('');
   }
@@ -152,9 +153,17 @@
       const p=rows.reduce((a,x)=>a+Number(x.pagu||0),0),z=rows.reduce((a,x)=>a+Number(x.realisasi||0),0);
       return '<div class="grid"><div class="pill"><b>Total Pagu</b><br>Rp '+money(p)+'</div><div class="pill"><b>Total Realisasi</b><br>Rp '+money(z)+'</div><div class="pill"><b>Sisa</b><br>Rp '+money(p-z)+'</div><div class="pill"><b>Serapan</b><br>'+ (p?Math.round(z/p*100):0)+'%</div></div>';
     }
+    if(r==='rab'){
+      const total=rows.reduce((a,x)=>a+Number(x.jumlah||Number(x.volume||0)*Number(x.harga_satuan||0)),0);
+      return '<div class="grid"><div class="pill"><b>Total RAB</b><br>Rp '+money(total)+'</div><div class="pill"><b>Item</b><br>'+rows.length+'</div></div>';
+    }
     if(r==='realisasi'){
       const v=rows.reduce((a,x)=>a+Number(x.nilai||0),0),done=rows.filter(x=>x.status==='SELESAI').length;
       return '<div class="grid"><div class="pill"><b>Total Realisasi</b><br>Rp '+money(v)+'</div><div class="pill"><b>Monev Selesai</b><br>'+done+'</div></div>';
+    }
+    if(r==='lpj'){
+      const v=rows.reduce((a,x)=>a+Number(x.nilai||0),0),approved=rows.filter(x=>x.status==='DISETUJUI').length;
+      return '<div class="grid"><div class="pill"><b>Total LPJ</b><br>Rp '+money(v)+'</div><div class="pill"><b>Disetujui</b><br>'+approved+'</div></div>';
     }
     return '<div class="pill"><b>Total '+esc(label(r))+'</b><br>'+rows.length+' data</div>';
   }
@@ -168,9 +177,45 @@
     const rows=state.rows||[];
     box.querySelector('#kdDomainBody').innerHTML=form()+summary(state.resource,rows)+'<div class="card"><div class="section-title"><h3>Data '+esc(label(state.resource))+'</h3><input style="max-width:280px" placeholder="Cari..." value="'+esc(state.filter)+'" oninput="kdDomainFilter(this.value)"></div>'+table(state.resource,rows)+'</div>';
   }
+  function financePayload(r,p){
+    const rows=(schemas[r]||[]).map(x=>x[0]);
+    if(r==='rab'){
+      p.jumlah=Number(p.volume||0)*Number(p.harga_satuan||0);
+      if(p.kegiatan_id){const k=cacheRows('kegiatan').find(x=>String(x.id)===String(p.kegiatan_id));if(k){p.kegiatan=p.kegiatan||k.nama_kegiatan;p.apbdes_id=p.apbdes_id||k.apbdes_id||'';p.desa=p.desa||k.desa||'';p.tahun=p.tahun||k.tahun||'';}}
+    }
+    if(r==='realisasi'){
+      if(p.rab_id){const rab=cacheRows('rab').find(x=>String(x.id)===String(p.rab_id));if(rab){p.apbdes_id=p.apbdes_id||rab.apbdes_id||'';p.kegiatan_id=p.kegiatan_id||rab.kegiatan_id||'';p.kegiatan=p.kegiatan||rab.kegiatan||'';p.desa=p.desa||rab.desa||'';}}
+      if(p.apbdes_id){const apb=cacheRows('apbdes').find(x=>String(x.id)===String(p.apbdes_id));if(apb){p.sumber_dana=p.sumber_dana||apb.sumber_dana||'';p.desa=p.desa||apb.desa||'';}}
+    }
+    if(r==='lpj'){
+      if(p.rab_id){const rab=cacheRows('rab').find(x=>String(x.id)===String(p.rab_id));if(rab){p.apbdes_id=p.apbdes_id||rab.apbdes_id||'';p.kegiatan_id=p.kegiatan_id||rab.kegiatan_id||'';p.kegiatan=p.kegiatan||rab.kegiatan||'';p.desa=p.desa||rab.desa||'';}}
+      if(p.apbdes_id){const apb=cacheRows('apbdes').find(x=>String(x.id)===String(p.apbdes_id));if(apb){p.desa=p.desa||apb.desa||'';p.tahun=p.tahun||apb.tahun||'';}}
+    }
+    return p;
+  }
+  async function refreshApbdesAggregate(apbdesId){
+    if(!apbdesId||!API()||!localStorage.getItem('kd_auth_token')||!navigator.onLine)return;
+    try{
+      const out=await API().get('realisasi');
+      const rows=Array.isArray(out.data)?out.data:[];
+      const linked=rows.filter(x=>String(x.apbdes_id||'')===String(apbdesId));
+      const total=linked.reduce((a,x)=>a+Number(x.nilai||0),0);
+      const apbRows=cacheRows('apbdes');const apb=apbRows.find(x=>String(x.id)===String(apbdesId));
+      if(!apb)return;
+      const progress=Number(apb.pagu||0)?Math.min(100,Math.round(total/Number(apb.pagu)*100)):0;
+      const updated=await API().update('apbdes',apbdesId,{realisasi:total,progres_keuangan:progress});
+      if(updated?.data)localUpsert('apbdes',updated.data);
+    }catch(e){console.warn('refresh APBDes aggregate',e)}
+  }
+  function kdRabRecalc(){
+    const v=document.querySelector('[data-kd-field="volume"]'),h=document.querySelector('[data-kd-field="harga_satuan"]'),j=document.querySelector('[data-kd-field="jumlah"]');
+    if(v&&h&&j)j.value=String(Number(v.value||0)*Number(h.value||0));
+  }
+  window.kdRabRecalc=kdRabRecalc;
   async function save(){
     const r=state.resource,p={};
     document.querySelectorAll('[data-kd-field]').forEach(el=>{p[el.dataset.kdField]=el.value});
+    financePayload(r,p);
     const id=state.editing?.id;
     const isLocalId=id && String(id).startsWith('local-');
     try{
@@ -187,10 +232,19 @@
       else setCacheRows(r,state.rows=cacheRows(r).map(x=>String(x.id)===String(item.id)?item:x));
       state.editing=null;state.rows=cacheRows(r);render();
       try{ if(typeof window.loadDashboard==='function') window.loadDashboard(); else if(typeof window.refreshDashboard==='function') window.refreshDashboard(); }catch(e){}
+      if(r==='realisasi'&&item.apbdes_id) await refreshApbdesAggregate(item.apbdes_id);
       toast('Data '+(id?'diperbarui':'ditambahkan')+'.');
     }catch(e){
+      if(e && e.status){
+        if(e.status===409){toast('Konflik data: versi server sudah berubah. Muat ulang lalu periksa data.');return;}
+        toast(e.message||'Server menolak perubahan. Data tidak dimasukkan ke antrean offline.');return;
+      }
       const item=Object.assign({id:id||('local-'+Date.now()),updated_at:new Date().toISOString()},p);
       const localId=String(item.id).startsWith('local-');
+      if(id&&!isLocalId){
+        const current=state.rows.find(x=>String(x.id)===String(id))||{};
+        if(current.version!==undefined)p.base_version=Number(current.version||1);
+      }
       localUpsert(r,item);queue(id&&!localId?'UPDATE':'CREATE',r,p,item.id);state.editing=null;state.rows=cacheRows(r);render();toast('Tersimpan offline; akan disinkronkan saat online.');
     }
   }
@@ -198,7 +252,10 @@
     if(!confirm('Hapus data ini?'))return;
     try{
       if(API()&&localStorage.getItem('kd_auth_token')&&navigator.onLine)await API().remove(state.resource,id);else queue('DELETE',state.resource,{},id);
-    }catch(e){queue('DELETE',state.resource,{},id)}
+    }catch(e){
+      if(e&&e.status){toast(e.message||'Server menolak penghapusan.');return;}
+      queue('DELETE',state.resource,{},id);
+    }
     localRemove(state.resource,id);state.rows=cacheRows(state.resource);render();
     try{ if(typeof window.loadDashboard==='function') window.loadDashboard(); else if(typeof window.refreshDashboard==='function') window.refreshDashboard(); }catch(e){}
   }
