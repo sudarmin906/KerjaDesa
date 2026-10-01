@@ -114,7 +114,7 @@
     const signDate=allActs.length?dLong(allActs[allActs.length-1].tanggal):('30 '+month+' '+year);
     const lp=(typeof logoPhoto!=='undefined')?logoPhoto:''; const logo=lp?'<img class="cover-logo" src="'+lp+'" alt="Logo Kemendesa">':'<div class="cover-logo placeholder">LOGO KEMENDESA PDT</div>';
 
-    // COVER: original master is A4 LANDSCAPE.
+    // COVER: authoritative user master is A4 PORTRAIT.
     const cover='<section class="'+reportPageClass('landscape')+' master-cover"><div class="cover-head">'+
       '<div class="cover-instansi">KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA<br><br>BADAN PENGEMBANGAN SUMBERDAYA MANUSIA DAN PEMBERDAYAAN<br>MASYARAKAT DESA DAN DAERAH TERTINGGAL</div>'+
       logo+
