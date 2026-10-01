@@ -108,6 +108,31 @@
       "id": "offline-api-bridge-v30",
       "name": "Reusable API CRUD and offline sync bridge",
       "status": "implemented"
+    },
+    {
+      "id": "dashboard-server-analytics-v34",
+      "name": "Frontend dashboard connected to authenticated server analytics",
+      "status": "implemented"
+    },
+    {
+      "id": "pwa-api-cache-safety-v34",
+      "name": "Service worker excludes API responses from cache",
+      "status": "implemented"
+    },
+    {
+      "id": "production-deployment-v34",
+      "name": "Production Docker/runtime configuration and deployment documentation",
+      "status": "implemented"
+    },
+    {
+      "id": "postgres-production-v35",
+      "name": "Real PostgreSQL persistence repository with JSON development fallback",
+      "status": "implemented"
+    },
+    {
+      "id": "deployment-config-v35",
+      "name": "Separate frontend/API deployment configuration and production environment template",
+      "status": "implemented"
     }
   ],
   "planned_domains": [
@@ -126,18 +151,4 @@
     "ai-assistance",
     "mobile-application"
   ]
-}    ,{
-      "id": "dashboard-server-analytics-v34",
-      "name": "Frontend dashboard connected to authenticated server analytics",
-      "status": "implemented"
-    },
-    {
-      "id": "pwa-api-cache-safety-v34",
-      "name": "Service worker excludes API responses from cache",
-      "status": "implemented"
-    },
-    {
-      "id": "production-deployment-v34",
-      "name": "Production Docker/runtime configuration and deployment documentation",
-      "status": "implemented"
-    }
+}
