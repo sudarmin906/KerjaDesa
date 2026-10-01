@@ -33,6 +33,32 @@ function recordLoginFailure(key) {
   }
 }
 
+const VILLAGE_SCOPED_RESOURCES = new Set([
+  'desa','wilayah','kegiatan','monitoring','dokumen','laporan','sppd','rkpdes',
+  'apbdes','rab','realisasi','lpj','penduduk','kpm','blt','stunting','bumdes',
+  'koperasi','agenda','gps_points','drp'
+]);
+
+function userVillages(user) {
+  return String(user?.desa || '').split(/[,;|]/).map(x => x.trim().toLowerCase()).filter(Boolean);
+}
+function itemVillage(item) {
+  return String(item?.desa || item?.nama_desa || item?.desa_id || '').trim().toLowerCase();
+}
+function canAccessVillage(resource, item, user) {
+  if (user?.role === 'ADMIN' || !VILLAGE_SCOPED_RESOURCES.has(resource)) return true;
+  const allowed = userVillages(user);
+  if (!allowed.length) return true;
+  const village = itemVillage(item);
+  return !!village && allowed.includes(village);
+}
+function scopeRows(resource, rows, user) {
+  if (user?.role === 'ADMIN' || !VILLAGE_SCOPED_RESOURCES.has(resource)) return rows;
+  const allowed = userVillages(user);
+  if (!allowed.length) return rows;
+  return rows.filter(item => canAccessVillage(resource, item, user));
+}
+
 const RESOURCE_RULES = {
   desa: { read: ['ADMIN', 'PLD', 'PEMDES', 'OPERATOR'], write: ['ADMIN', 'PEMDES'] },
   kegiatan: { read: ['ADMIN', 'PLD', 'PEMDES', 'OPERATOR'], write: ['ADMIN', 'PLD', 'OPERATOR'] },
@@ -158,8 +184,9 @@ async function logout(req, res) {
 }
 
 async function dashboard(req, res) {
+  const reqUser = res.__kdAuthUser || null;
   const resources=['desa','wilayah','rkpdes','apbdes','rab','realisasi','lpj','penduduk','kpm','blt','stunting','bumdes','koperasi','agenda','gps_points','drp','dokumen','laporan','kegiatan','monitoring','users'];
-  const rows=await Promise.all(resources.map(r=>list(r)));
+  const rows=await Promise.all(resources.map(r=>scopeRows(r,list(r),reqUser)));
   const by=Object.fromEntries(resources.map((r,i)=>[r,rows[i]]));
   const kegiatanSelesai=by.kegiatan.filter(x=>String(x.status||'').toUpperCase()==='SELESAI').length;
   const monitoringProgres=by.monitoring.length?Math.round(by.monitoring.reduce((a,x)=>a+Number(x.progres||0),0)/by.monitoring.length):0;
@@ -191,10 +218,10 @@ async function resourceHandler(req, res, resource, id, method, auth) {
   if (method === 'GET') {
     if (id) {
       const item = await get(resource, id);
-      if (!item) return sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
+      if (!item || !canAccessVillage(resource, item, auth.user)) return sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
       return sendJson(res, 200, { success: true, data: resource === 'users' ? publicUser(item) : item });
     }
-    const rows = resource === 'audit_log' ? await listAudit(200) : await list(resource);
+    const rows = resource === 'audit_log' ? await listAudit(200) : scopeRows(resource, await list(resource), auth.user);
     return sendJson(res, 200, { success: true, data: resource === 'users' ? rows.map(publicUser) : rows });
   }
 
@@ -220,7 +247,12 @@ async function resourceHandler(req, res, resource, id, method, auth) {
       return sendJson(res, 201, { success: true, data: publicUser(item) });
     }
 
-    const item = await create(resource, normalizeResourcePayload(resource, body, auth.user));
+    const payload = normalizeResourcePayload(resource, body, auth.user);
+    if (VILLAGE_SCOPED_RESOURCES.has(resource) && userVillages(auth.user).length) {
+      if (payload.desa && !userVillages(auth.user).includes(String(payload.desa).trim().toLowerCase())) return sendJson(res, 403, { success: false, message: 'Data hanya boleh dibuat untuk desa yang menjadi kewenangan akun.' });
+      if (!payload.desa) payload.desa = auth.user.desa;
+    }
+    const item = await create(resource, payload);
     await writeAudit({ user: auth.user, action: 'CREATE', resource, recordId: item.id });
     return sendJson(res, 201, { success: true, data: resource === 'users' ? publicUser(item) : item });
   }
@@ -233,7 +265,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
     }
     delete body.id;
     const current = await get(resource, id);
-    if (!current) return sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
+    if (!current || !canAccessVillage(resource, current, auth.user)) return sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
     if (body.base_version !== undefined && Number(body.base_version) !== Number(current.version || 1)) {
       return sendJson(res, 409, {
         success: false,
@@ -245,6 +277,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
       });
     }
     delete body.base_version;
+    if (VILLAGE_SCOPED_RESOURCES.has(resource) && userVillages(auth.user).length && body.desa && !userVillages(auth.user).includes(String(body.desa).trim().toLowerCase())) return sendJson(res, 403, { success: false, message: 'Data hanya boleh dipindahkan ke desa yang menjadi kewenangan akun.' });
     const item = await update(resource, id, body);
     if (item) await writeAudit({ user: auth.user, action: 'UPDATE', resource, recordId: item.id });
     return item
@@ -253,6 +286,8 @@ async function resourceHandler(req, res, resource, id, method, auth) {
   }
 
   if (method === 'DELETE' && id) {
+    const current = await get(resource, id);
+    if (!current || !canAccessVillage(resource, current, auth.user)) return sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
     const ok = await remove(resource, id);
     if (ok) await writeAudit({ user: auth.user, action: 'DELETE', resource, recordId: id });
     return sendJson(res, ok ? 200 : 404, {
