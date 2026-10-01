@@ -33,7 +33,7 @@
 .print-report .master-doc-info div{margin-bottom:2mm}
 .print-report .master-doc-photos{border-top:1px solid #333;padding:3mm;display:flex;flex-direction:column;align-items:center;gap:3mm;min-height:45mm}
 .print-report .master-doc-photo{width:100%;display:flex;justify-content:center;align-items:center;overflow:hidden}
-.print-report .master-doc-photo img{display:block;width:auto;max-width:78mm;height:auto;max-height:62mm;object-fit:contain}
+.print-report .master-doc-photo img{display:block;width:auto;max-width:45mm;height:auto;max-height:58mm;object-fit:contain}
 .print-report .master-doc-empty{width:100%;min-height:30mm;display:flex;align-items:center;justify-content:center;color:#666;font-style:italic;text-align:center}
 .print-report .signature{text-align:center;margin-top:12mm;font-size:11pt}
 .print-report .master-note{font-size:9pt!important;text-align:left!important;margin-bottom:3mm}
@@ -111,23 +111,34 @@
     if(!c)return;
     const {nama,posisi,nik,jabatan,kec,kab,prov,month,year,acts}=c;
     const allActs=safeArr(c.allActs).length?safeArr(c.allActs):safeArr(acts);
+    const visitActs=safeArr(acts);
     const signDate=allActs.length?dLong(allActs[allActs.length-1].tanggal):('30 '+month+' '+year);
-    const lp=(typeof logoPhoto!=='undefined')?logoPhoto:''; const logo=lp?'<img class="cover-logo" src="'+lp+'" alt="Logo Kemendesa">':'<div class="cover-logo placeholder">LOGO KEMENDESA PDT</div>';
+    const lp=(typeof logoPhoto!=='undefined')?logoPhoto:'';
+    const logo=lp
+      ? '<img class="cover-logo" src="'+lp+'" alt="Logo Kemendesa">'
+      : '<div class="cover-logo placeholder">LOGO KEMENDESA PDT</div>';
 
-    // COVER: authoritative user master is A4 PORTRAIT.
-    const cover='<section class="'+reportPageClass('landscape')+' master-cover"><div class="cover-head">'+
-      '<div class="cover-instansi">KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA<br><br>BADAN PENGEMBANGAN SUMBERDAYA MANUSIA DAN PEMBERDAYAAN<br>MASYARAKAT DESA DAN DAERAH TERTINGGAL</div>'+
+    // 1) COVER — A4 PORTRAIT, matching the supplied original.
+    const cover='<section class="'+reportPageClass('portrait')+' master-cover"><div class="cover-head">'+
+      '<div class="cover-instansi">KEMENTERIAN DESA DAN PEMBANGUNAN DAERAH TERTINGGAL REPUBLIK INDONESIA<br><br>'+
+      'BADAN PENGEMBANGAN SUMBERDAYA MANUSIA DAN PEMBERDAYAAN<br>'+
+      'MASYARAKAT DESA DAN DAERAH TERTINGGAL</div>'+
       logo+
       '<div class="cover-title">LAPORAN KUNJUNGAN LAPANGAN '+monthUpper(month)+'</div>'+
       '<div class="cover-name">'+esc2(nama).toUpperCase()+'</div>'+
       '<div class="cover-position">'+esc2(posisi).toUpperCase()+'</div>'+
-      '<div class="cover-region">KECAMATAN '+esc2(kec).toUpperCase()+'<br>KABUPATEN '+esc2(kab).toUpperCase()+'<br>PROVINSI '+esc2(prov).toUpperCase()+'<br><br>TAHUN '+esc2(year)+'</div>'+
-      '<div class="cover-footer-title">LAPORAN KUNJUNGAN LAPANGAN BULANAN</div></div></section>';
+      '<div class="cover-region">KECAMATAN '+esc2(kec).toUpperCase()+'<br>'+
+      'KABUPATEN '+esc2(kab).toUpperCase()+'<br>'+
+      'PROVINSI '+esc2(prov).toUpperCase()+'<br><br>TAHUN '+esc2(year)+'</div>'+
+      '<div class="cover-footer-title">LAPORAN KUNJUNGAN LAPANGAN BULANAN</div>'+
+      '</div></section>';
 
-    // A + B: original master uses A4 PORTRAIT.
+    // 2) IDENTITAS + WAKTU — A4 PORTRAIT. The original flows across pages 2–3.
     const ident='<section class="'+reportPageClass('portrait')+'">'+
-      '<div>LAPORAN KUNJUNGAN LAPANGAN BULANAN</div><div>PENDAMPING DESA<br>BULAN '+monthUpper(month)+' TAHUN '+esc2(year)+'</div><hr>'+
-      '<h3>A. Identitas</h3><table class="identity-table">'+
+      '<div class="report-subtitle" style="text-align:center;font-weight:700;line-height:1.2">'+
+      'LAPORAN KUNJUNGAN LAPANGAN BULANAN<br>PENDAMPING DESA<br>BULAN '+monthUpper(month)+' TAHUN '+esc2(year)+'</div>'+
+      '<hr>'+
+      '<h3>1. Identitas</h3><table class="identity-table">'+
       '<tr><td>NIK</td><td>: '+esc2(nik)+'</td></tr>'+
       '<tr><td>Nama Lengkap</td><td>: <b>'+esc2(nama).toUpperCase()+'</b></td></tr>'+
       '<tr><td>Kecamatan</td><td>: '+esc2(kec)+'</td></tr>'+
@@ -135,42 +146,59 @@
       '<tr><td>Provinsi</td><td>: '+esc2(prov)+'</td></tr>'+
       '<tr><td>Posisi</td><td>: '+esc2(posisi)+'</td></tr>'+
       '<tr><td>Jabatan</td><td>: '+esc2(jabatan)+'</td></tr></table>'+
-      '<h3>B. Waktu Pelaksanaan Kunjungan Lapangan</h3>'+
-      '<table class="wide-table"><thead><tr><th>Hari ke</th><th>Waktu (Tgl/Bln/Thn)</th><th colspan="2">Lokasi Kunjungan</th></tr><tr><th></th><th></th><th>Kecamatan</th><th>Desa</th></tr></thead><tbody>'+
-      ((typeof buildVisitDays==='function'?buildVisitDays(acts):''))+
-      '</tbody><tfoot><tr><th colspan="4">Total Hari Kunjungan Lapangan Bulan '+esc2(month)+' Tahun '+esc2(year)+' : '+((typeof uniqueVisitDays==='function'?uniqueVisitDays(acts):acts.length))+' Hari</th></tr></tfoot></table></section>';
+      '<h3>2. Waktu Pelaksanaan Kunjungan Lapangan</h3>'+
+      '<table class="wide-table"><thead><tr><th>Harike</th><th>Waktu(Tgl/Bln/Thn)</th><th colspan="2">LokasiKunjungan</th></tr>'+
+      '<tr><th></th><th></th><th>Kecamatan</th><th>Desa</th></tr></thead><tbody>'+
+      ((typeof buildVisitDays==='function'?buildVisitDays(visitActs):''))+
+      '</tbody><tfoot><tr><th colspan="4">Total Hari Kunjungan Lapangan Bulan '+esc2(month)+' Tahun '+esc2(year)+' : '+
+      ((typeof uniqueVisitDays==='function'?uniqueVisitDays(visitActs):visitActs.length))+' Hari</th></tr></tfoot></table></section>';
 
-    // C: original master is A4 PORTRAIT and starts on a new page.
-    const csec='<section class="'+reportPageClass('portrait')+'"><h3>C. Tujuan Kunjungan Lapangan</h3>'+
-      '<p>Kunjungan lapangan dilaksanakan untuk melakukan pendampingan, monitoring, verifikasi, dan evaluasi terhadap kegiatan yang tercatat dalam DRP bulan '+esc2(month)+' '+esc2(year)+'. Secara khusus, kunjungan bertujuan untuk:</p>'+
-      '<ol>'+safeArr(nar?.tujuan).map(x=>'<li>'+esc2(x)+'</li>').join('')+'</ol></section>';
+    // 3) C — A4 PORTRAIT, preserving the source's structure and six specific objectives.
+    const csec='<section class="'+reportPageClass('portrait')+'"><h3>C. TUJUAN KUNJUNGAN LAPANGAN</h3>'+
+      '<p>Pelaksanaan kunjungan lapangan pada bulan '+esc2(month)+' Tahun '+esc2(year)+' di wilayah pendampingan Desa Tallu Banua Utara, Desa Limboro Rambu-Rambu, dan Desa Paminggalan Kecamatan Sendana Kabupaten Majene bertujuan untuk melaksanakan kegiatan pendampingan, monitoring, koordinasi, serta memastikan proses penyelenggaraan pemerintahan desa, pelaksanaan pembangunan, dan pengelolaan Dana Desa berjalan sesuai dengan perencanaan, ketentuan, dan regulasi yang berlaku.</p>'+
+      '<p>Kegiatan kunjungan lapangan dilaksanakan sebagai bentuk dukungan terhadap Pemerintah Desa dalam meningkatkan kualitas tata kelola pemerintahan desa, percepatan pembangunan desa, pemberdayaan masyarakat, serta penguatan administrasi dan pelaporan kegiatan desa.</p>'+
+      '<p>Adapun tujuan khusus pelaksanaan kunjungan lapangan yaitu:</p>'+
+      '<ol>'+
+      '<li>Melakukan monitoring dan evaluasi terhadap progres pelaksanaan kegiatan pembangunan fisik desa, seperti pembangunan Gedung Koperasi Desa Merah Putih, pembangunan rabat beton jalan, pembangunan jembatan dekker, serta pembangunan drainase desa.</li>'+
+      '<li>Memastikan pelaksanaan kegiatan pembangunan desa berjalan sesuai dengan dokumen perencanaan, standar teknis, volume pekerjaan, serta target waktu yang telah ditetapkan.</li>'+
+      '<li>Melaksanakan koordinasi dan pendampingan bersama Pemerintah Desa dalam rangka persiapan dan pelaksanaan Pra Musrenbang Dusun, Musrenbang Desa, penyusunan RKPDes Tahun Anggaran 2027, serta penyusunan dokumen perencanaan pembangunan desa.</li>'+
+      '<li>Mendampingi Pemerintah Desa dalam proses penyusunan, pembahasan, dan penyesuaian dokumen APBDes serta memastikan perencanaan penggunaan Dana Desa tetap memperhatikan ketentuan dan prioritas pembangunan desa.</li>'+
+      '<li>Melakukan pendampingan dalam pengelolaan administrasi Dana Desa melalui pemutakhiran data realisasi kegiatan dan penginputan laporan pada aplikasi Monitoring dan Evaluasi Dana Desa (Monev DD).</li>'+
+      '<li>Mengidentifikasi kondisi, kendala, serta kebutuhan tindak lanjut yang ditemukan di lapangan sebagai bahan evaluasi dan perbaikan pelaksanaan program pembangunan Desa.</li>'+
+      '</ol></section>';
 
-    // D: original master is A4 LANDSCAPE because the table is wide.
-    const dsec='<section class="'+reportPageClass('landscape')+'"><h3>D. Hasil Kunjungan Lapangan</h3>'+
+    // 4) D — A4 LANDSCAPE. Only the detailed result table belongs here.
+    const dsec='<section class="'+reportPageClass('landscape')+'"><h3>D. Hasil Kunjugan Lapangan</h3>'+
       '<table class="result-table"><thead><tr><th>No</th><th>Tanggal</th><th>Desa</th><th>Kegiatan</th></tr></thead><tbody>'+
-      ((typeof buildVisitRows==='function'?buildVisitRows(acts):''))+
-      '</tbody></table>'+
-      '<p><b>Hasil kunjungan lapangan menunjukkan beberapa capaian dan temuan sebagai berikut:</b></p>'+
-      '<ol>'+safeArr(nar?.hasil).map(x=>'<li>'+esc2(x)+'</li>').join('')+'</ol></section>';
+      ((typeof buildVisitRows==='function'?buildVisitRows(visitActs):''))+
+      '</tbody></table></section>';
 
-    // E + F: original master is A4 PORTRAIT.
-    const ef='<section class="'+reportPageClass('portrait')+'"><h3>E. Langkah Tindak Lanjut Penanganan Lapangan</h3>'+
-      '<p>Berdasarkan hasil kunjungan lapangan selama bulan '+esc2(month)+' '+esc2(year)+', tindak lanjut diarahkan pada penyelesaian temuan, penyempurnaan data, pemantauan kegiatan pembangunan, penguatan administrasi, serta koordinasi dengan unsur terkait sesuai kondisi yang tercatat dalam DRP.</p>'+
-      '<ol>'+safeArr(nar?.follow).map(x=>'<li>'+esc2(x)+'</li>').join('')+'</ol>'+
-      '<h3>F. Rekomendasi</h3><p>Berdasarkan keseluruhan kegiatan dan hasil kunjungan lapangan, rekomendasi disusun sebagai bahan perbaikan dan tindak lanjut pada periode berikutnya.</p>'+
-      '<ol>'+safeArr(nar?.recs).map(x=>'<li>'+esc2(x)+'</li>').join('')+'</ol>'+
-      '<p><b>Kesimpulan:</b> Secara keseluruhan, kunjungan lapangan bulan '+esc2(month)+' '+esc2(year)+' diarahkan pada kegiatan yang tercatat dalam DRP, dengan tindak lanjut dan rekomendasi yang menyesuaikan hasil verifikasi, monitoring, koordinasi, dan kondisi yang ditemukan di lapangan.</p>'+
-      '<div class="signature"><p>Sendana, '+esc2(signDate)+'</p><p>Penyusun Laporan</p><br><b>'+esc2(nama).toUpperCase()+'</b></div></section>';
+    // 5) E + F — A4 PORTRAIT, following the source's result summary, follow-up and recommendations.
+    const hasil=safeArr(nar?.hasil);
+    const follow=safeArr(nar?.follow);
+    const recs=safeArr(nar?.recs);
+    const resultSummary=hasil.length
+      ? '<p><b>Berdasarkan hasil pelaksanaan kunjungan lapangan selama bulan '+esc2(month)+' Tahun '+esc2(year)+', kegiatan pendampingan telah berjalan dengan baik dan menghasilkan beberapa capaian sebagai berikut:</b></p>'+
+        '<ol>'+hasil.map(x=>'<li>'+esc2(x)+'</li>').join('')+'</ol>'
+      : '';
+    const ef='<section class="'+reportPageClass('portrait')+'">'+
+      resultSummary+
+      '<h3>E. LANGKAH TINDAK LANJUT PENANGANAN LAPANGAN</h3>'+
+      '<p>Berdasarkan hasil monitoring dan pendampingan yang telah dilakukan, langkah tindak lanjut yang perlu dilakukan adalah sebagai berikut:</p>'+
+      '<ol>'+follow.map(x=>'<li>'+esc2(x)+'</li>').join('')+'</ol>'+
+      '<h3>F. REKOMENDASI</h3>'+
+      '<p>Berdasarkan hasil pelaksanaan kunjungan lapangan bulan '+esc2(month)+' Tahun '+esc2(year)+', maka direkomendasikan beberapa hal sebagai berikut:</p>'+
+      '<ol>'+recs.map(x=>'<li>'+esc2(x)+'</li>').join('')+'</ol>'+
+      '<div class="signature"><p>Sendana, '+esc2(signDate)+'</p><p>Penyusun Laporan</p><br><b>'+esc2(nama).toUpperCase()+'</b></div>'+
+      '</section>';
 
-    // G: original master is A4 LANDSCAPE. Keep G as documentation, but include ALL DRP activities.
-    const g='<section class="'+reportPageClass('portrait')+'"><h3>G. Dokumentasi Kunjungan Lapangan</h3>'+
-      '<p class="small master-note">Dokumentasi disusun mengikuti urutan kegiatan pada DRP. Seluruh aktivitas DRP tetap dicatat; apabila foto belum tersedia, ruang dokumentasi diberi keterangan.</p>'+
-      buildAllActivityDocumentation(allActs)+'</section>';
+    // 6) G — A4 PORTRAIT. Two-column documentation cards, portrait photos, concise activity title.
+    const g='<section class="'+reportPageClass('portrait')+'"><h3>G. Dokumentasi Kunjugan Lapangan</h3>'+
+      buildAllActivityDocumentation(allActs)+
+      '</section>';
 
-    // H: appendix keeps the original A-G order intact while satisfying the requirement that all 24 DRP activities are visible in one final report.
-    const h=buildAllActivityRecap(allActs,month,year);
-
-    const html='<div class="print-report">'+cover+ident+csec+dsec+ef+g+h+'</div>';
+    // IMPORTANT: no invented H section. The supplied master ends at G.
+    const html='<div class="print-report">'+cover+ident+csec+dsec+ef+g+'</div>';
     reportHtml=html;
     const rp=document.getElementById('reportPrint'); if(rp)rp.innerHTML=html;
     const dr=document.getElementById('docResult2'); if(dr)dr.innerHTML='<div class="card no-print"><h3>Pratinjau Laporan Sesuai Format Master</h3>'+html+'</div>';
