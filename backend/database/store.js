@@ -19,8 +19,8 @@ async function ensureDatabase() {
   // Managed databases can become reachable a few seconds after the app starts.
   // Retry schema initialization instead of terminating the whole service on the
   // first ECONNREFUSED / transient connection error.
-  const attempts = Math.max(1, Number(process.env.DB_STARTUP_RETRIES || 15));
-  const delayMs = Math.max(250, Number(process.env.DB_STARTUP_RETRY_MS || 2000));
+  const attempts = Math.max(1, Number(process.env.DB_STARTUP_RETRIES || 5));
+  const delayMs = Math.max(250, Number(process.env.DB_STARTUP_RETRY_MS || 1000));
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
@@ -35,7 +35,13 @@ async function ensureDatabase() {
     }
   }
 
-  throw lastError;
+  // Do not crash the whole web application when managed PostgreSQL is temporarily
+  // unavailable or misconfigured. Fall back to the local JSON store so the UI and
+  // document/report workflows remain usable; database-backed persistence can resume
+  // automatically on the next process restart after the database is healthy.
+  process.env.KERJADESA_DB_DISABLED = '1';
+  console.error('PostgreSQL tidak tersedia; KerjaDesa beralih ke JSON store lokal:', lastError?.message || lastError);
+  return;
 }
 
 module.exports = { usingPostgres, ensureStore, ensureDatabase, list, get, findByField, create, update, remove, count };
