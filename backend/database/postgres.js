@@ -39,9 +39,15 @@ async function query(text, params = []) {
 }
 
 async function health() {
-  if (!enabled()) return { enabled: false };
-  const result = await query('SELECT NOW() AS now');
-  return { enabled: true, now: result.rows[0].now };
+  if (!enabled()) return { enabled: false, status: 'disabled' };
+  try {
+    const result = await query('SELECT NOW() AS now');
+    return { enabled: true, status: 'healthy', now: result.rows[0].now };
+  } catch (error) {
+    // The API health endpoint must stay reachable while PostgreSQL is starting
+    // or temporarily unavailable; ensureDatabase() handles the actual fallback.
+    return { enabled: true, status: 'unavailable' };
+  }
 }
 
 module.exports = { enabled, getPool, query, health };
