@@ -454,7 +454,7 @@ async function readPdfBasic(file){
 function cleanText(t){return String(t||'').replace(/\u0000/g,' ').replace(/\r/g,'\n').replace(/\b\d+\s*\/\s*\d+\s+No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim()}
 function normText(t){return cleanText(t).replace(/\s+/g,' ').trim()}
 function escReg(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}
-function parseDateShort(s){const m=s.match(/^(\d{2})\/(\d{2})\/(\d{2})$/);return m?`${m[1]}/${m[2]}/20${m[3]}`:s}
+function parseDateShort(s,fallbackYear){const m=s.match(/^(\d{2})\/(\d{2})\/(\d{2})$/);if(!m)return s;const y=String(fallbackYear||('20'+m[3]));return m[1]+'/'+m[2]+'/'+y}
 function parseDrpHeader(t){
   const x=normText(t);
   const get=(label,next)=>{const re=new RegExp(label+'\\s*([^]+?)(?=\\s+(?:'+next.join('|')+')|$)','i');const m=x.match(re);return m?m[1].trim():''};
@@ -474,7 +474,7 @@ function parseDrpHeader(t){
   h.capaian=(x.match(/CAPAIAN KINERJA[^]*?([\d.]+%)/i)||[])[1]||'';
   return h;
 }
-function parseDrpActivities(text, sectionTitle, totalTitle, kunlap){
+function parseDrpActivities(text, sectionTitle, totalTitle, kunlap, fallbackYear){
   const raw=normText(text); const a=raw.indexOf(sectionTitle); if(a<0)return [];
   const b=raw.indexOf(totalTitle,a+sectionTitle.length); const sec=raw.slice(a+sectionTitle.length,b>0?b:raw.length).trim();
   const headRe=/(\d+)\s+(\d{2}\/\d{2}\/\d{2})\s+(\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2})\s+(\d+)\s+Jam,\s*(\d+)\s+Menit\s+([^]*?)(?=\s+\d+\s+\d{2}\/\d{2}\/\d{2}\s+\d{2}\.\d{2}\s*-\s*\d{2}\.\d{2}\s+\d+\s+Jam,|$)/g;
@@ -487,14 +487,15 @@ function parseDrpActivities(text, sectionTitle, totalTitle, kunlap){
     const loc=(locMatch?locMatch[1]:tail).replace(/\s+/g,' ').trim();
     let desc=locMatch?tail.slice(locMatch[1].length).trim():tail;
     desc=desc.replace(/^(?:Penugasan Lainnya|Pelaksanaan Pembangunan Desa|Koordinasi Pendampingan|Kegiatan Perencanaan Desa)\.?\s*/i,'').trim();
-    out.push({no:Number(m[1]),tanggal:parseDateShort(m[2]),waktu:m[3].replace(/\s+/g,' '),durasi:m[4]+' Jam, '+m[5]+' Menit',jenis:type,kunjungan:kunlap,jenisKunjungan,lokasi:loc,deskripsi:desc});
+    out.push({no:Number(m[1]),tanggal:parseDateShort(m[2],fallbackYear),waktu:m[3].replace(/\s+/g,' '),durasi:m[4]+' Jam, '+m[5]+' Menit',jenis:type,kunjungan:kunlap,jenisKunjungan,lokasi:loc,deskripsi:desc});
   }
   return out;
 }
 function parseDRP(text){
   const header=parseDrpHeader(text);
-  const aktivitas=parseDrpActivities(text,'DAFTAR LAPORAN AKTIVITAS','Total Laporan Aktivitas',false);
-  const kunlap=parseDrpActivities(text,'DAFTAR LAPORAN KUNJUNGAN LAPANGAN','Total Laporan Kunjungan Lapangan',true);
+  const reportYear=(String(header.periode||'').match(/20\d{2}/)||[])[0]||'';
+  const aktivitas=parseDrpActivities(text,'DAFTAR LAPORAN AKTIVITAS','Total Laporan Aktivitas',false,reportYear);
+  const kunlap=parseDrpActivities(text,'DAFTAR LAPORAN KUNJUNGAN LAPANGAN','Total Laporan Kunjungan Lapangan',true,reportYear);
   const all=aktivitas.concat(kunlap).sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no).map((x,i)=>({...x,no:i+1,deskripsi:cleanText(x.deskripsi)}));
   const cleanGroup=(arr)=>arr.map(x=>all.find(y=>y.tanggal===x.tanggal&&y.deskripsi===x.deskripsi)||x);
   return {header,aktivitas:cleanGroup(aktivitas),kunlap:cleanGroup(kunlap),all,count:all.length,source:'DRP'}
@@ -616,10 +617,17 @@ function normalizePhotoDate(raw){
 function extractPhotoDate(name){return normalizePhotoDate(name)}
 function extractDatesFromOcr(text){const out=[];String(text||'').replace(/(20\d{2})[\/-](\d{1,2})[\/-](\d{1,2})|(\d{1,2})[\/-](\d{1,2})[\/-](20\d{2})/g,a=>{const x=normalizePhotoDate(a);if(x&&!out.includes(x))out.push(x)});return out}
 function photoTokens(s){return String(s||'').toLowerCase().replace(/[^a-z0-9à-ÿ]+/gi,' ').split(/\s+/).filter(w=>w.length>=4)}
+function sameDayMonth(a,b){
+ const x=dateKey(a),y=dateKey(b);
+ if(!x||!y)return false;
+ const px=x.split('/'),py=y.split('/');
+ return px[0]===py[0]&&px[1]===py[1];
+}
 function scorePhotoActivity(photo,act){
  let score=0;
  const pd=dateKey(photo.date),ad=dateKey(act.tanggal);
  if(pd&&ad&&pd===ad)score+=1000;
+ else if(pd&&ad&&sameDayMonth(pd,ad))score+=650;
  const photoText=((photo.ocrText||'')+' '+(photo.name||'')).toLowerCase();
  const actText=((act.judul||'')+' '+(act.deskripsi||'')+' '+(act.lokasi||'')+' '+(act.jenis||'')).toLowerCase();
  const a=new Set(photoTokens(photoText)),b=photoTokens(actText);
@@ -641,6 +649,7 @@ function matchPhotoToDrp(photo,acts){
  acts.forEach((a,i)=>{const s=scorePhotoActivity(photo,a);if(s>bestScore){bestScore=s;best=i}});
  photo.matchedActivityIndex=best>=0?best:null;
  photo.matchedActivityNo=best>=0?(acts[best].no||best+1):null;
+ photo.reportDate=best>=0?acts[best].tanggal:'';
  photo.matchScore=bestScore;
  photo.matchConfidence=bestScore>=1180?'tinggi':bestScore>=1025?'sedang':bestScore>0?'rendah':'belum cocok';
  return photo;
@@ -688,7 +697,7 @@ async function loadActivityPhotos(input){
   st.textContent=activityPhotos.length+' foto selesai dianalisis. '+(needsOcr.length?'OCR digunakan untuk '+needsOcr.length+' foto (termasuk '+ambiguous+' foto dengan tanggal yang ambigu).':'Semua foto memiliki tanggal unik sehingga OCR tidak diperlukan.');
  }
 }
-function setPhotoActivity(photoIndex,activityIndex){const p=activityPhotos[Number(photoIndex)];if(!p)return;const idx=activityIndex===''?null:Number(activityIndex);p.matchedActivityIndex=Number.isInteger(idx)&&idx>=0?idx:null;const acts=data.docs?.drp?.parsed?.kunlap||data.docs?.drp?.parsed?.all||[];p.matchedActivityNo=p.matchedActivityIndex!=null?(acts[p.matchedActivityIndex]?.no||p.matchedActivityIndex+1):null;p.matchScore=p.matchedActivityIndex!=null?scorePhotoActivity(p,acts[p.matchedActivityIndex]):0;p.matchConfidence=p.matchedActivityIndex!=null?'manual':'belum cocok';data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;save();renderMediaPreviews()}
+function setPhotoActivity(photoIndex,activityIndex){const p=activityPhotos[Number(photoIndex)];if(!p)return;const idx=activityIndex===''?null:Number(activityIndex);p.matchedActivityIndex=Number.isInteger(idx)&&idx>=0?idx:null;const acts=data.docs?.drp?.parsed?.kunlap||data.docs?.drp?.parsed?.all||[];p.matchedActivityNo=p.matchedActivityIndex!=null?(acts[p.matchedActivityIndex]?.no||p.matchedActivityIndex+1):null;p.reportDate=p.matchedActivityIndex!=null?(acts[p.matchedActivityIndex]?.tanggal||''):'';p.matchScore=p.matchedActivityIndex!=null?scorePhotoActivity(p,acts[p.matchedActivityIndex]):0;p.matchConfidence=p.matchedActivityIndex!=null?'manual':'belum cocok';data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;save();renderMediaPreviews()}
 function renderMediaPreviews(){const d=data.docs||{};profilePhoto=d.profilePhoto||profilePhoto;logoPhoto=d.logoPhoto||'';activityPhotos=d.activityPhotos||[];const pp=document.getElementById('profilePreview'),lp=document.getElementById('logoPreview'),pr=document.getElementById('photoPreview');if(pp)pp.innerHTML=profilePhoto?'<img class="profile-preview" src="'+profilePhoto+'" alt="Foto profil">':'';if(lp)lp.innerHTML=logoPhoto?'<img class="logo-preview" src="'+logoPhoto+'" alt="Logo Kemendesa">':'<span class="small muted">Belum ada logo. Upload logo resmi Kemendesa.</span>';if(pr){const acts=data.docs?.drp?.parsed?.kunlap||data.docs?.drp?.parsed?.all||[];pr.innerHTML=activityPhotos.map((p,i)=>{const a=p.matchedActivityIndex!=null?acts[p.matchedActivityIndex]:null;const options='<option value="">Pilih kegiatan DRP</option>'+acts.map((x,j)=>'<option value="'+j+'"'+(p.matchedActivityIndex===j?' selected':'')+'>'+esc((x.no||j+1)+'. '+shortActivityTitle(x))+'</option>').join('');return '<div class="photo-card"><img src="'+p.url+'" alt="Foto '+(i+1)+'"><div class="photo-meta">'+esc(p.name)+(p.date?'<br>Tanggal: '+esc(p.date):'<br><b>Tanggal belum terbaca</b>')+(a?'<br>DRP: <b>'+esc(shortActivityTitle(a))+'</b>':'<br><span class="muted">Belum cocok dengan DRP</span>')+'<br><span class="small muted">Kecocokan: '+esc(p.matchConfidence||'belum cocok')+'</span><select style="margin-top:6px" onchange="setPhotoActivity('+i+',this.value)">'+options+'</select></div></div>'}).join('')}}
 function photosForDate(date){return activityPhotos.filter(p=>p.date&&p.date===date)}
 
@@ -760,12 +769,12 @@ function shortActivityTitle(x){
 function buildVisitRows(acts){return acts.map((x,i)=>'<tr><td>'+ (i+1) +'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(locationVillage(x.lokasi))+'</td><td>'+esc(x.deskripsi||x.judul||'-')+'</td></tr>').join('')}
 function buildVisitDays(acts){const u=[],s=new Set();acts.forEach(x=>{const k=dateKey(x.tanggal);if(k&&!s.has(k)){s.add(k);u.push(x)}});return u.map((x,i)=>{const p=String(x.lokasi||'').split('/').map(v=>v.trim()).filter(Boolean);const kec=p.length>=3?p[2]:(p[1]||'-');return '<tr><td>Hari ke-'+(i+1)+'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(kec)+'</td><td>'+esc(locationVillage(x.lokasi))+'</td></tr>'}).join('')}
 function buildDocumentation(acts){
- const groups=[];acts.forEach((act,idx)=>{const photos=activityPhotos.filter(p=>p.matchedActivityIndex===idx||(p.matchedActivityIndex==null&&p.date&&dateKey(p.date)===dateKey(act.tanggal)));if(photos.length)groups.push({act,photos})});
+ const groups=[];acts.forEach((act,idx)=>{const photos=activityPhotos.filter(p=>p.matchedActivityIndex===idx||(p.matchedActivityIndex==null&&p.date&&sameDayMonth(p.date,act.tanggal)));if(photos.length)groups.push({act,photos})});
  const unmatched=activityPhotos.filter(p=>p.matchedActivityIndex==null&&!p.date);if(unmatched.length)groups.push({act:{tanggal:'',lokasi:'',deskripsi:'Dokumentasi belum dapat dicocokkan dengan DRP'},photos:unmatched});
  if(!groups.length)return '<p>Belum ada foto yang dapat dicocokkan dengan kegiatan pada DRP. Pastikan foto memiliki tanggal yang terbaca pada watermark/nama file.</p>';
  const rows=[];for(let i=0;i<groups.length;i+=2)rows.push('<tr>'+documentationCell(groups[i])+(groups[i+1]?documentationCell(groups[i+1]):'<td class="master-doc-cell empty"></td>')+'</tr>');return '<table class="master-doc-table"><tbody>'+rows.join('')+'</tbody></table>';
 }
-function documentationCell(g){const photos=g.photos.map(p=>'<div class="master-doc-photo"><img src="'+p.url+'" alt="Dokumentasi"></div>').join(''),date=g.act.tanggal?dateKey(g.act.tanggal):'Belum terdeteksi';return '<td class="master-doc-cell"><div class="master-doc-info"><div>Lokasi: <b>'+esc(locationVillage(g.act.lokasi))+'</b></div><div>Tanggal: <b>'+esc(date)+'</b></div><div>Kegiatan: <b>'+esc(shortActivityTitle(g.act))+'</b></div></div><div class="master-doc-photos">'+photos+'</div></td>'}
+function documentationCell(g){const photos=g.photos.map(p=>'<div class="master-doc-photo"><img src="'+p.url+'" alt="Dokumentasi"></div>').join(''),date=g.act.tanggal?dateKey(g.act.tanggal):'Belum terdeteksi',activity=String(g.act.deskripsi||g.act.judul||'-').replace(/\s+/g,' ').trim();return '<td class="master-doc-cell"><div class="master-doc-info"><div>Lokasi: <b>'+esc(locationVillage(g.act.lokasi))+'</b></div><div>Tanggal: <b>'+esc(date)+'</b></div><div>Kegiatan: <b>'+esc(shortActivityTitle(g.act))+'</b></div></div><div class="master-doc-photos">'+photos+'</div></td>'}
 let reportContext=null;
 function renderReportFromNarratives(nar){
  const c=reportContext;if(!c)return;const {nama,posisi,nik,jabatan,kec,kab,prov,month,year,acts}=c,signDate=acts.length?dateLongId(acts[acts.length-1].tanggal):('30 '+month+' '+year),logo=logoPhoto?'<img class="cover-logo" src="'+logoPhoto+'" alt="Logo Kemendesa">':'<div class="cover-logo placeholder">LOGO KEMENDESA PDT</div>';
