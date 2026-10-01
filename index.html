@@ -695,10 +695,11 @@ async function kdPersistGeneratedReport(){
     jumlah_kunjungan:Array.isArray(reportContext.acts)?reportContext.acts.length:0,
     narasi:reportContext.nar||{},report_text:reportText||'',updated_at:new Date().toISOString()
   };
+  let existing=null;
   try{
     const list=await KerjaDesaAPI.get('laporan');
     const rows=Array.isArray(list.data)?list.data:[];
-    const existing=rows.find(x=>String(x.periode||'')===payload.periode&&String(x.nama||'')===String(payload.nama||''));
+    existing=rows.find(x=>String(x.periode||'')===payload.periode&&String(x.nama||'')===String(payload.nama||''));
     const result=existing?await KerjaDesaAPI.update('laporan',existing.id,payload):await KerjaDesaAPI.create('laporan',payload);
     return {synced:true,data:result.data||null};
   }catch(e){
