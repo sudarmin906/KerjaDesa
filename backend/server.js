@@ -97,7 +97,7 @@ async function route(req, res) {
 
     if (req.method === 'GET' && pathName === '/api/dashboard') return dashboard(req, res);
 
-    const match = pathName.match(/^\/api\/(desa|kegiatan|monitoring|dokumen|laporan|users)(?:\/([^/]+))?$/);
+    const match = pathName.match(/^\/api\/(desa|kegiatan|monitoring|dokumen|laporan|sppd|wilayah|apbdes|rkpdes|rab|realisasi|lpj|penduduk|kpm|blt|stunting|bumdes|koperasi|agenda|notifications|ai_knowledge|gps_points|drp|users)(?:\/([^/]+))?$/);
     if (match) return resourceHandler(req, res, match[1], match[2], req.method, auth);
 
     if (req.method === 'GET' && pathName === '/api/audit_log') {
