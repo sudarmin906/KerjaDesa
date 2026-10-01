@@ -112,6 +112,10 @@
     render();
     if(!API()||!localStorage.getItem('kd_auth_token')||!navigator.onLine)return;
     try{
+      const deps=[...(schemas[r]||[])].map(x=>x[0]).filter(k=>['rkpdes_id','apbdes_id','rab_id','kegiatan_id','drp_id'].includes(k));
+      const depMap={rkpdes_id:'rkpdes',apbdes_id:'apbdes',rab_id:'rab',kegiatan_id:'kegiatan',drp_id:'drp'};
+      const unique=[...new Set(deps.map(k=>depMap[k]))];
+      await Promise.all(unique.map(async dep=>{try{const out=await API().get(dep);const rows=Array.isArray(out.data)?out.data:[];setCacheRows(dep,rows)}catch(e){}}));
       const out=await API().get(r); const rows=Array.isArray(out.data)?out.data:[];
       state.rows=rows; setCacheRows(r,rows); render();
     }catch(e){console.warn('KerjaDesa module load',r,e)}
@@ -171,7 +175,11 @@
     const isLocalId=id && String(id).startsWith('local-');
     try{
       let out;
-      if(id&&!isLocalId&&API()&&localStorage.getItem('kd_auth_token')&&navigator.onLine)out=await API().update(r,id,p);
+      if(id&&!isLocalId&&API()&&localStorage.getItem('kd_auth_token')&&navigator.onLine){
+        const current=state.rows.find(x=>String(x.id)===String(id))||{};
+        if(current.version!==undefined)p.base_version=Number(current.version||1);
+        out=await API().update(r,id,p);
+      }
       else if((!id||isLocalId)&&API()&&localStorage.getItem('kd_auth_token')&&navigator.onLine)out=await API().create(r,p);
       const item=out?.data||Object.assign({id:id||('local-'+Date.now()),updated_at:new Date().toISOString()},p);
       localUpsert(r,item);
