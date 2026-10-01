@@ -19,9 +19,11 @@ services:
   api:
     build: ./backend
     restart: unless-stopped
+    # Start the API as soon as PostgreSQL container starts so the API can
+    # apply its own retry/fallback logic when managed PostgreSQL is unavailable.
     depends_on:
       postgres:
-        condition: service_healthy
+        condition: service_started
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
