@@ -29,11 +29,11 @@
 .print-report .master-doc-table{width:100%;border-collapse:collapse;table-layout:fixed;margin-top:4mm;font-size:9pt}
 .print-report .master-doc-cell{width:50%;vertical-align:top;border:1px solid #333;padding:0;break-inside:avoid;page-break-inside:avoid}
 .print-report .master-doc-cell.empty{border:0}
-.print-report .master-doc-info{padding:3mm;line-height:1.35;min-height:25mm}
+.print-report .master-doc-info{padding:3mm;line-height:1.35;min-height:22mm}
 .print-report .master-doc-info div{margin-bottom:2mm}
-.print-report .master-doc-photos{border-top:1px solid #333;padding:3mm;display:flex;flex-direction:column;align-items:center;gap:3mm;min-height:35mm}
+.print-report .master-doc-photos{border-top:1px solid #333;padding:3mm;display:flex;flex-direction:column;align-items:center;gap:3mm;min-height:45mm}
 .print-report .master-doc-photo{width:100%;display:flex;justify-content:center;align-items:center;overflow:hidden}
-.print-report .master-doc-photo img{display:block;width:auto;max-width:92%;height:auto;max-height:58mm;object-fit:contain}
+.print-report .master-doc-photo img{display:block;width:auto;max-width:78mm;height:auto;max-height:62mm;object-fit:contain}
 .print-report .master-doc-empty{width:100%;min-height:30mm;display:flex;align-items:center;justify-content:center;color:#666;font-style:italic;text-align:center}
 .print-report .signature{text-align:center;margin-top:12mm;font-size:11pt}
 .print-report .master-note{font-size:9pt!important;text-align:left!important;margin-bottom:3mm}
@@ -78,21 +78,31 @@
   }
 
   function buildAllActivityDocumentation(allActs){
+    const photosAll=((typeof activityPhotos!=='undefined')?activityPhotos:[]);
+    const used=new Set();
     const cells = allActs.map((act, idx)=>{
-      const photos = ((typeof activityPhotos!=='undefined')?activityPhotos:[]).filter(p=>
-        p.matchedActivityIndex===idx ||
-        (p.matchedActivityIndex==null && p.date && ((typeof sameDayMonth==='function')?sameDayMonth(p.date,act.tanggal):false))
-      );
+      const photos = photosAll.filter((p,pi)=>{
+        const matched=(p.matchedActivityIndex===idx);
+        const byDate=(p.matchedActivityIndex==null && p.date && ((typeof sameDayMonth==='function')?sameDayMonth(p.date,act.tanggal):false));
+        if((matched||byDate)&&!used.has(pi)){used.add(pi);return true} return false;
+      });
       const photoHtml = photos.length
         ? photos.map(p=>'<div class="master-doc-photo"><img src="'+p.url+'" alt="Dokumentasi"></div>').join('')
         : '<div class="master-doc-empty">Foto dokumentasi belum tersedia untuk kegiatan ini.</div>';
       const village = (typeof locationVillage==='function'?locationVillage(act.lokasi):String(act.lokasi||'-'));
       const date = act.tanggal ? dLong(act.tanggal) : '-';
-      const activity = String(act.deskripsi||act.judul||'-').replace(/\s+/g,' ').trim();
+      const activity = (typeof shortActivityTitle==='function' ? shortActivityTitle(act) : String(act.judul||act.deskripsi||'-').replace(/\s+/g,' ').trim());
       return '<td class="master-doc-cell"><div class="master-doc-info"><div>Lokasi: <b>'+esc2(village)+'</b></div><div>Tanggal: <b>'+esc2(date)+'</b></div><div>Kegiatan: <b>'+esc2(activity)+'</b></div></div><div class="master-doc-photos">'+photoHtml+'</div></td>';
     });
     const rows=[];
     for(let i=0;i<cells.length;i+=2) rows.push('<tr>'+cells[i]+(cells[i+1]||'<td class="master-doc-cell empty"></td>')+'</tr>');
+    const remaining=photosAll.filter((p,pi)=>!used.has(pi));
+    if(remaining.length){
+      for(let i=0;i<remaining.length;i+=2){
+        const make=p=>'<td class="master-doc-cell"><div class="master-doc-info"><div>Lokasi: <b>Belum terdeteksi</b></div><div>Tanggal: <b>'+esc2(p.date||'-')+'</b></div><div>Kegiatan: <b>Dokumentasi belum dicocokkan</b></div></div><div class="master-doc-photos"><div class="master-doc-photo"><img src="'+p.url+'" alt="Dokumentasi"></div></div></td>';
+        rows.push('<tr>'+make(remaining[i])+(remaining[i+1]?make(remaining[i+1]):'<td class="master-doc-cell empty"></td>')+'</tr>');
+      }
+    }
     return '<table class="master-doc-table"><tbody>'+rows.join('')+'</tbody></table>';
   }
 
@@ -153,7 +163,7 @@
       '<div class="signature"><p>Sendana, '+esc2(signDate)+'</p><p>Penyusun Laporan</p><br><b>'+esc2(nama).toUpperCase()+'</b></div></section>';
 
     // G: original master is A4 LANDSCAPE. Keep G as documentation, but include ALL DRP activities.
-    const g='<section class="'+reportPageClass('landscape')+'"><h3>G. Dokumentasi Kunjungan Lapangan</h3>'+
+    const g='<section class="'+reportPageClass('portrait')+'"><h3>G. Dokumentasi Kunjungan Lapangan</h3>'+
       '<p class="small master-note">Dokumentasi disusun mengikuti urutan kegiatan pada DRP. Seluruh aktivitas DRP tetap dicatat; apabila foto belum tersedia, ruang dokumentasi diberi keterangan.</p>'+
       buildAllActivityDocumentation(allActs)+'</section>';
 
