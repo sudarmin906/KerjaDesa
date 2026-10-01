@@ -212,6 +212,7 @@ main{max-width:1180px!important;padding:18px 26px 110px!important}
 <div id="dokumen" class="hide">
 <div id="drpPanel" class="card print-area"><h2>📄 Dokumen & Laporan Bulanan</h2><p class="muted">Upload DRP Bulanan untuk membuat laporan. Untuk SPPD, gunakan template Word asli di bawah; tidak perlu mengunggah SPPD setiap kali.</p>
 <div class="drop"><b>1. Upload DRP Bulanan</b><input id="drpFile" type="file" accept=".pdf,.docx,.xlsx,.xls,.csv,.txt" onchange="autoProcessOne('drp')"><div id="drpStatus" class="small muted">Belum ada DRP.</div><div class="actions" style="margin-top:8px"><button type="button" class="secondary" onclick="clearDrpData()">🗑️ Hapus / Kosongkan DRP</button></div></div>
+<div class="drop" style="border-color:#1976d2;background:#f4f9ff"><b>⚡ Upload Paket Sekaligus</b><p class="small muted">Pilih <b>1 file DRP + semua foto dokumentasi</b> dalam satu kali pilih. KerjaDesa akan mengenali file DRP, membaca data, lalu memproses seluruh foto otomatis.</p><input id="packageFiles" type="file" multiple accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,image/*" onchange="processPackageFiles(this)"><div id="packageStatus" class="small muted">Belum ada paket yang diproses.</div></div>
 <div class="pill"><b>Status:</b> <span id="docStatus">Belum ada dokumen yang diproses.</span></div>
 <button onclick="processDocs()">⚙️ Proses Ulang Semua Dokumen</button></div>
 <div id="docResult"></div><div id="drpPreview"></div>
@@ -535,30 +536,62 @@ function clearSppdDocument(){
  const st=document.getElementById('sppdStatus');if(st)st.textContent='Dokumen SPPD dikosongkan.';
  save();updateDocStatus();
 }
+async function processDrpFile(f,st){
+  if(!f)return null;
+  const txt=await readFile(f);
+  if(!txt||!/(LAPORAN BULANAN|DAFTAR LAPORAN AKTIVITAS|DAFTAR LAPORAN KUNJUNGAN LAPANGAN|IDENTITAS TPP)/i.test(txt)){
+    throw new Error('File bukan DRP Bulanan yang dikenali. Gunakan file DRP asli, bukan laporan kunjungan lapangan hasil jadi.');
+  }
+  const parsed=parseDRP(txt);
+  if(!parsed||!parsed.count)throw new Error('DRP terbaca tetapi tidak menemukan daftar aktivitas. Periksa file DRP.');
+  data.docs=data.docs||{};
+  data.docs.drp={name:f.name,text:txt,parsed,processedAt:new Date().toISOString()};
+  data.drpActivities=parsed.all;
+  data.kegiatan=parsed.all.map((x,i)=>({id:'drp-'+(i+1)+'-'+x.tanggal,nome:x.no,nama:x.deskripsi.split(' ').slice(0,18).join(' '),desa:x.lokasi,tanggal:x.tanggal,catatan:x.deskripsi,waktu:x.waktu,durasi:x.durasi,jenis:x.jenis,kunjungan:x.kunjungan,source:'DRP'}));
+  document.getElementById('rNama').value=parsed.header.nama||'';
+  document.getElementById('rPosisi').value=parsed.header.posisi||'PLD';
+  document.getElementById('rKec').value=parsed.header.kecamatan||'';
+  document.getElementById('rKab').value=parsed.header.kabupaten||'';
+  document.getElementById('rProv').value=parsed.header.provinsi||'';
+  const pm=(parsed.header.periode||'').match(/(\d{4})/);
+  const months={'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05','Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12'};
+  const mm=Object.keys(months).find(k=>(parsed.header.periode||'').toLowerCase().includes(k.toLowerCase()));
+  if(pm&&mm)document.getElementById('rPeriode').value=pm[1]+'-'+months[mm];
+  save();renderDrpPreview(parsed);updateDocStatus();
+  if(st)st.innerHTML='<span class="ok">✓ DRP selesai dibaca: '+parsed.count+' kegiatan ditemukan.</span>';
+  return parsed;
+}
 async function autoProcessOne(kind){
-  const f=document.getElementById(kind==='drp'?'drpFile':'sppdFile').files[0];if(!f)return;
-  const st=document.getElementById(kind==='drp'?'drpStatus':'sppdStatus');st.innerHTML='<span class="loading">⏳ Memproses '+esc(f.name)+'...</span>';
+  const f=document.getElementById(kind==='drp'?'drpFile':'sppdFile')?.files?.[0];if(!f)return;
+  const st=document.getElementById(kind==='drp'?'drpStatus':'sppdStatus');
+  if(st)st.innerHTML='<span class="loading">⏳ Memproses '+esc(f.name)+'...</span>';
   try{
-    const txt=await readFile(f);data.docs=data.docs||{};
-    let parsed=null;
     if(kind==='drp'){
-      parsed=parseDRP(txt);
-      data.docs.drp={name:f.name,text:txt,parsed,processedAt:new Date().toISOString()};
-      if(parsed.count){
-        data.drpActivities=parsed.all;
-        data.kegiatan=parsed.all.map((x,i)=>({id:`drp-${i+1}-${x.tanggal}`,nome:x.no,nama:x.deskripsi.split(' ').slice(0,18).join(' '),desa:x.lokasi,tanggal:x.tanggal,catatan:x.deskripsi,waktu:x.waktu,durasi:x.durasi,jenis:x.jenis,kunjungan:x.kunjungan,source:'DRP'}));
-        document.getElementById('rNama').value=parsed.header.nama||'';document.getElementById('rPosisi').value=parsed.header.posisi||'PLD';document.getElementById('rKec').value=parsed.header.kecamatan||'';document.getElementById('rKab').value=parsed.header.kabupaten||'';document.getElementById('rProv').value=parsed.header.provinsi||'';
-        const pm=(parsed.header.periode||'').match(/(\d{4})/);const months={'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05','Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12'};const mm=Object.keys(months).find(k=>(parsed.header.periode||'').toLowerCase().includes(k.toLowerCase()));if(pm&&mm)document.getElementById('rPeriode').value=`${pm[1]}-${months[mm]}`;
-      }
-    } else {
+      await processDrpFile(f,st);
+    }else{
+      const txt=await readFile(f);data.docs=data.docs||{};
       const summary=summarizeDoc(txt);
       data.docs.sppd={name:f.name,text:txt,summary,parsed:parseSPPD(txt),processedAt:new Date().toISOString()};
+      save();if(st)st.innerHTML='<span class="ok">✓ Selesai: '+esc(f.name)+'</span>';updateDocStatus();
     }
-    save();
-    st.innerHTML=kind==='drp'?`<span class="ok">✓ DRP selesai dibaca: ${parsed?.count||0} kegiatan ditemukan.</span>`:`<span class="ok">✓ Selesai: ${esc(f.name)}</span>`;
-    if(kind==='drp')renderDrpPreview(parsed);
-    updateDocStatus()
-  }catch(e){st.innerHTML='<span class="warn">Gagal membaca: '+esc(e.message)+'</span>'}
+  }catch(e){if(st)st.innerHTML='<span class="warn">Gagal membaca: '+esc(e.message)+'</span>'}
+}
+async function processPackageFiles(input){
+  const files=[...(input.files||[])];if(!files.length)return;
+  const st=document.getElementById('packageStatus');
+  const docs=files.filter(f=>/\.(pdf|docx|xlsx|xls|csv|txt)$/i.test(f.name));
+  const photos=files.filter(f=>/^image\//i.test(f.type)||/\.(jpg|jpeg|png|webp|heic|heif)$/i.test(f.name));
+  try{
+    if(docs.length!==1)throw new Error('Paket harus berisi tepat 1 file DRP + foto dokumentasi. Ditemukan '+docs.length+' file dokumen.');
+    if(st)st.innerHTML='<span class="loading">⏳ 1/2 Membaca DRP...</span>';
+    await processDrpFile(docs[0],null);
+    if(st)st.innerHTML='<span class="loading">⏳ 2/2 Memproses '+photos.length+' foto dokumentasi...</span>';
+    if(photos.length)await loadActivityPhotoFiles(photos);
+    if(st)st.innerHTML='<span class="ok">✓ Paket selesai: 1 DRP + '+photos.length+' foto. Data siap dipakai membuat laporan.</span>';
+    workflowPage('dokumentasi');
+  }catch(e){
+    if(st)st.innerHTML='<span class="warn">❌ Paket gagal: '+esc(e.message)+'</span>';
+  }finally{input.value='';}
 }
 async function processDocs(){document.getElementById('docStatus').textContent='Memproses dokumen...';const a=document.getElementById('drpFile').files[0],b=document.getElementById('sppdFile').files[0];if(a)await autoProcessOne('drp');if(b)await autoProcessOne('sppd');updateDocStatus()}
 function updateDocStatus(){
@@ -666,7 +699,16 @@ async function ocrPhoto(file,index,total){
  }catch(e){console.warn('OCR foto gagal',e);return{text:'',date:''}}
 }
 async function loadActivityPhotos(input){
- const files=[...input.files];activityPhotos=[];photoOcrBusy=true;
+ const files=[...input.files];await loadActivityPhotoFiles(files);input.value='';
+}
+async function loadActivityPhotoFiles(files){
+ files=[...(files||[])];if(!files.length)return;
+ const existing=activityPhotos||[];
+ const existingNames=new Set(existing.map(p=>String(p.name||'').toLowerCase()));
+ const uniqueFiles=files.filter(f=>!existingNames.has(String(f.name||'').toLowerCase()));
+ const items=uniqueFiles.map((f,i)=>({f,i,date:extractPhotoDate(f.name)}));
+ if(!items.length){renderMediaPreviews();return;}
+ activityPhotos=existing;photoOcrBusy=true;
  const st=document.getElementById('photoOcrStatus');if(st)st.textContent='⚡ Menganalisis foto dan mencocokkannya dengan DRP...';
  const items=files.map((f,i)=>({f,i,date:extractPhotoDate(f.name)}));
  const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];
