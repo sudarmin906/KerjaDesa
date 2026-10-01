@@ -161,6 +161,11 @@
       "id": "docker-compose-production-v37",
       "name": "PostgreSQL + API Docker Compose deployment stack",
       "status": "implemented"
+    },
+    {
+      "id": "nginx-production-v38",
+      "name": "Production frontend and same-origin API reverse proxy",
+      "status": "implemented"
     }
   ]
 }
