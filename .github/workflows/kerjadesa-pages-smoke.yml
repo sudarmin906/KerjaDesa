@@ -3,6 +3,7 @@ name: KerjaDesa Deployment Smoke Check
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -23,7 +24,7 @@ jobs:
           for attempt in {1..10}; do
             echo "Smoke check attempt $attempt/10"
             body="$(curl -fsSL --retry 2 --connect-timeout 10 --max-time 30 "$url" || true)"
-            if printf '%s' "$body" | grep -q 'id="login"' &&                printf '%s' "$body" | grep -q 'KerjaDesa'; then
+            if [[ "$body" == *'id="login"'* && "$body" == *'KerjaDesa'* ]]; then
               echo "Published site is responding with the KerjaDesa login shell."
               exit 0
             fi
