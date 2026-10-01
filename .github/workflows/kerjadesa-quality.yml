@@ -145,6 +145,9 @@ jobs:
           node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/login.json')); if(!x.success||!x.token) process.exit(1)"
           echo "Production repository code and fallback smoke test OK"
 
+      - name: Build Railway production image
+        run: docker build -f Dockerfile.railway -t kerjadesa-railway-ci .
+
       - name: Validate service worker cache manifest
         shell: bash
         run: |
