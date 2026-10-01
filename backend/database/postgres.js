@@ -6,7 +6,7 @@ let Pool = null;
 let pool = null;
 
 function enabled() {
-  return Boolean(process.env.DATABASE_URL);
+  return Boolean(process.env.DATABASE_URL) && String(process.env.KERJADESA_DB_DISABLED || '') !== '1';
 }
 
 function getPool() {
