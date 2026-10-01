@@ -1,0 +1,56 @@
+name: KerjaDesa Production Deploy
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate backend syntax
+        run: |
+          node --check backend/server.js
+          node --check backend/controllers/apiController.js
+          node --check backend/middleware/auth.js
+          node --check backend/database/store.js
+          node --check backend/database/postgresStore.js
+
+      - name: Validate compose
+        run: docker compose -f docker-compose.yml config
+
+  deploy:
+    needs: validate
+    if: ${{ vars.PRODUCTION_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_SSH_PORT || '22' }}
+          script_stop: true
+          script: |
+            set -e
+            cd "${{ vars.PRODUCTION_APP_DIR }}"
+            git fetch origin main
+            git reset --hard origin/main
+            docker compose up -d --build --remove-orphans
+            docker compose ps
+            curl -fsS http://127.0.0.1:${WEB_PORT:-80}/api/health
