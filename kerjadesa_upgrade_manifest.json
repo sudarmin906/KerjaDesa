@@ -166,6 +166,11 @@
       "id": "nginx-production-v38",
       "name": "Production frontend and same-origin API reverse proxy",
       "status": "implemented"
+    },
+    {
+      "id": "github-actions-cicd-v39",
+      "name": "GitHub Actions production deployment",
+      "status": "implemented"
     }
   ]
 }
