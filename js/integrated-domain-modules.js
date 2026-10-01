@@ -116,9 +116,20 @@
       state.rows=rows; setCacheRows(r,rows); render();
     }catch(e){console.warn('KerjaDesa module load',r,e)}
   }
+  function relationOptions(resource,field,value){
+    const map={rkpdes_id:['rkpdes','program'],apbdes_id:['apbdes','program'],rab_id:['rab','kegiatan'],kegiatan_id:['kegiatan','nama_kegiatan'],drp_id:['drp','kegiatan']};
+    const cfg=map[field]; if(!cfg)return '';
+    const rows=cacheRows(cfg[0]).slice(0,100);
+    return '<select data-kd-field="'+esc(field)+'"><option value="">- pilih referensi -</option>'+rows.map(x=>{
+      const id=String(x.id||''); const name=String(x[cfg[1]]||x.nama_kegiatan||x.judul||id);
+      return '<option value="'+esc(id)+'" '+(id===String(value)?'selected':'')+'>'+esc(name)+' · '+esc(id.slice(0,12))+'</option>';
+    }).join('')+'</select>';
+  }
   function fields(r,item={}){
     return (schemas[r]||[]).map(([k,label,type])=>{
       const val=item[k]??'';
+      const rel=relationOptions(r,k,val);
+      if(rel)return '<label>'+esc(label)+rel+'</label>';
       if(type.startsWith('select:')){
         const opts=type.slice(7).split('|');
         return '<label>'+esc(label)+'<select data-kd-field="'+esc(k)+'"><option value="">- pilih -</option>'+opts.map(o=>'<option '+(String(o)===String(val)?'selected':'')+' value="'+esc(o)+'">'+esc(o)+'</option>').join('')+'</select></label>';
