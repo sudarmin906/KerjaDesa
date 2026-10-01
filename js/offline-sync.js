@@ -92,13 +92,13 @@
       const key='kerjadesa',local=JSON.parse(localStorage.getItem(key)||'{"kegiatan":[],"monitoring":[],"gps":null,"docs":{},"syncMeta":{}}');
       if(!Array.isArray(local[resource]))return;
       const i=local[resource].findIndex(x=>String(x.id)===String(localId)||String(x.id)===String(server.id));
-      if(i>=0)local[resource][i]=Object.assign({},local[resource][i],server,synced:true,serverId:server.id);
+      if(i>=0)local[resource][i]=Object.assign({},local[resource][i],server,{synced:true,serverId:server.id});
       localStorage.setItem(key,JSON.stringify(local));
       try{
         const domain=JSON.parse(localStorage.getItem('kd_domain_cache_v1')||'{}');
         if(Array.isArray(domain[resource])){
           const di=domain[resource].findIndex(x=>String(x.id)===String(localId)||String(x.serverId||'')===String(localId));
-          if(di>=0) domain[resource][di]=Object.assign({},domain[resource][di],server,synced:true,serverId:server.id);
+          if(di>=0) domain[resource][di]=Object.assign({},domain[resource][di],server,{synced:true,serverId:server.id});
           else domain[resource].unshift(Object.assign({},server,{synced:true,serverId:server.id}));
           localStorage.setItem('kd_domain_cache_v1',JSON.stringify(domain));
         }
