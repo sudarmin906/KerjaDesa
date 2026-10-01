@@ -40,3 +40,24 @@ CRUD memakai Bearer session token. Data lokal disimpan di `backend/data/store.js
 Lihat `config/.env.example`.
 
 Untuk frontend beda domain, set `CORS_ORIGIN` ke origin frontend, misalnya `https://contoh.pages.dev`.
+
+
+## Production deployment
+
+The API can run in a Node.js 18+ host or Docker.
+
+Required production environment:
+- `NODE_ENV=production`
+- `ADMIN_PASSWORD` — set a strong initial admin password
+- `CORS_ORIGIN` — set to the exact frontend origin when frontend and API use different domains
+- `DATABASE_URL` — optional PostgreSQL connection string; when omitted, the JSON store is used
+
+Docker:
+
+```bash
+cd backend
+docker build -t kerjadesa-api .
+docker run -p 3000:3000 -e ADMIN_PASSWORD='change-this' -e CORS_ORIGIN='https://frontend.example' kerjadesa-api
+```
+
+For PostgreSQL production, apply `database/schema.sql` first and set `DATABASE_URL`. Do not use the default `admin123` password in production.
