@@ -23,6 +23,9 @@
     ]},
     {id:'field',title:'Lapangan & Arsip',icon:'📍',items:[
       ['gps_points','Titik GPS'],['agenda','Agenda'],['dokumen','Arsip Dokumen'],['drp','DRP']
+    ]},
+    {id:'system',title:'Sistem & AI',icon:'🤖',items:[
+      ['notifications','Notifikasi'],['ai_knowledge','Basis Pengetahuan AI']
     ]}
   ];
   const schemas={
@@ -73,6 +76,12 @@
     ],
     drp:[
       ['tanggal','Tanggal','date'],['desa','Desa','text'],['kegiatan_id','Kegiatan ID','text'],['kegiatan','Kegiatan','text'],['tujuan','Tujuan Kunjungan','textarea'],['hasil','Hasil Kunjungan','textarea'],['masalah','Masalah/Temuan','textarea'],['tindak_lanjut','Tindak Lanjut','textarea'],['rekomendasi','Rekomendasi','textarea'],['status','Status','select:DRAFT|DIPERIKSA|DISETUJUI']
+    ],
+    notifications:[
+      ['user_id','User ID','text'],['judul','Judul','text'],['pesan','Pesan','textarea'],['jenis','Jenis','select:INFO|PERINGATAN|TUGAS|SISTEM'],['status','Status','select:BARU|DIBACA|SELESAI'],['tautan','Tautan/Referensi','text']
+    ],
+    ai_knowledge:[
+      ['judul','Judul Pengetahuan','text'],['kategori','Kategori','text'],['sumber','Sumber','text'],['tags','Tag','text'],['konten','Konten','textarea'],['status','Status','select:DRAFT|AKTIF|ARSIP']
     ]
   };
   function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
