@@ -185,7 +185,7 @@ async function logout(req, res) {
 
 async function dashboard(req, res, auth) {
   const reqUser = auth?.user || null;
-  const resources=['desa','wilayah','rkpdes','apbdes','rab','realisasi','lpj','penduduk','kpm','blt','stunting','bumdes','koperasi','agenda','gps_points','drp','dokumen','laporan','kegiatan','monitoring','users'];
+  const resources=['desa','wilayah','rkpdes','apbdes','rab','realisasi','lpj','penduduk','kpm','blt','stunting','bumdes','koperasi','agenda','gps_points','drp','dokumen','laporan','kegiatan','monitoring','notifications','ai_knowledge','users'];
   const rows=await Promise.all(resources.map(r=>scopeRows(r,list(r),reqUser)));
   const by=Object.fromEntries(resources.map((r,i)=>[r,rows[i]]));
   const kegiatanSelesai=by.kegiatan.filter(x=>String(x.status||'').toUpperCase()==='SELESAI').length;
@@ -202,7 +202,8 @@ async function dashboard(req, res, auth) {
     keuangan:{apbdes:by.apbdes.length,rab:by.rab.length,lpj:by.lpj.length,pagu:apbPagu,realisasi:apbRealisasi,realisasi_records:by.realisasi.length,realisasi_nilai:realisasiNilai,serapan:apbPagu?Math.round(apbRealisasi/apbPagu*100):0,monev_selesai:monevSelesai},
     sosial:{penduduk:by.penduduk.length,kpm:by.kpm.length,blt:by.blt.length,stunting:by.stunting.length},
     ekonomi:{bumdes:by.bumdes.length,koperasi:by.koperasi.length},
-    lapangan:{agenda:by.agenda.length,gps_points:by.gps_points.length,drp:by.drp.length}
+    lapangan:{agenda:by.agenda.length,gps_points:by.gps_points.length,drp:by.drp.length},
+    sistem:{notifications:by.notifications.length,ai_knowledge:by.ai_knowledge.length}
   }});
 }
 
