@@ -143,7 +143,9 @@ async function login(req, res) {
 }
 
 function logout(req, res) {
+  const auth = require('../middleware/auth').authenticate(req);
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
+  if (auth) writeAudit({ user: auth.user, action: 'LOGOUT', resource: 'auth' });
   revokeSession(token);
   return sendJson(res, 200, { success: true, message: 'Logout berhasil.' });
 }
