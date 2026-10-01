@@ -22,7 +22,9 @@ function getPool() {
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       max: Number(process.env.PG_POOL_MAX || 5),
-      ssl: process.env.NODE_ENV === 'production'
+      // Blitz managed PostgreSQL may be served without TLS. Only enable
+      // PostgreSQL SSL when it is explicitly requested by the environment.
+      ssl: /^(1|true|yes)$/i.test(String(process.env.DB_SSL || ''))
         ? { rejectUnauthorized: false }
         : undefined
     });
