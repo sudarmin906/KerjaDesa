@@ -15,7 +15,7 @@ function getPool() {
     try { Pool = require('pg').Pool; }
     catch { throw new Error('PostgreSQL adapter membutuhkan dependency pg saat DATABASE_URL digunakan.'); }
   }
-  if (!pool) pool = new Pool({ connectionString: process.env.DATABASE_URL, max: Number(process.env.PG_POOL_MAX || 10) });
+  if (!pool) pool = new Pool({\n    connectionString: process.env.DATABASE_URL,\n    max: Number(process.env.PG_POOL_MAX || 5),\n    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined\n  });
   return pool;
 }
 
