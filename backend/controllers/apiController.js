@@ -158,25 +158,25 @@ async function logout(req, res) {
 }
 
 async function dashboard(req, res) {
-  const [desaCount,kegiatanCount,monitoringCount,dokumenCount,laporanCount,usersCount,auditRows,kegiatanRows,monitoringRows] = await Promise.all([
-    count('desa'), count('kegiatan'), count('monitoring'), count('dokumen'), count('laporan'), count('users'), list('audit_log'), list('kegiatan'), list('monitoring')
-  ]);
-  const kegiatanSelesai = kegiatanRows.filter(x => String(x.status || '').toUpperCase() === 'SELESAI').length;
-  const monitoringProgres = monitoringRows.length ? Math.round(monitoringRows.reduce((a,x) => a + Number(x.progres || 0), 0) / monitoringRows.length) : 0;
-  return sendJson(res, 200, {
-    success: true,
-    data: {
-      desa: desaCount,
-      kegiatan: kegiatanCount,
-      monitoring: monitoringCount,
-      dokumen: dokumenCount,
-      laporan: laporanCount,
-      users: usersCount,
-      kegiatan_selesai: kegiatanSelesai,
-      rata_rata_progres: monitoringProgres,
-      audit_log: auditRows.length
-    }
-  });
+  const resources=['desa','wilayah','rkpdes','apbdes','rab','realisasi','lpj','penduduk','kpm','blt','stunting','bumdes','koperasi','agenda','gps_points','drp','dokumen','laporan','kegiatan','monitoring','users'];
+  const rows=await Promise.all(resources.map(r=>list(r)));
+  const by=Object.fromEntries(resources.map((r,i)=>[r,rows[i]]));
+  const kegiatanSelesai=by.kegiatan.filter(x=>String(x.status||'').toUpperCase()==='SELESAI').length;
+  const monitoringProgres=by.monitoring.length?Math.round(by.monitoring.reduce((a,x)=>a+Number(x.progres||0),0)/by.monitoring.length):0;
+  const apbPagu=by.apbdes.reduce((a,x)=>a+Number(x.pagu||0),0);
+  const apbRealisasi=by.apbdes.reduce((a,x)=>a+Number(x.realisasi||0),0);
+  const realisasiNilai=by.realisasi.reduce((a,x)=>a+Number(x.nilai||0),0);
+  const monevSelesai=by.realisasi.filter(x=>String(x.status||'').toUpperCase()==='SELESAI').length;
+  return sendJson(res,200,{success:true,data:{
+    desa:by.desa.length,wilayah:by.wilayah.length,kegiatan:by.kegiatan.length,monitoring:by.monitoring.length,
+    dokumen:by.dokumen.length,laporan:by.laporan.length,users:by.users.length,audit_log:(await list('audit_log')).length,
+    kegiatan_selesai:kegiatanSelesai,rata_rata_progres:monitoringProgres,
+    perencanaan:{rkpdes:by.rkpdes.length},
+    keuangan:{apbdes:by.apbdes.length,rab:by.rab.length,lpj:by.lpj.length,pagu:apbPagu,realisasi:apbRealisasi,realisasi_records:by.realisasi.length,realisasi_nilai:realisasiNilai,serapan:apbPagu?Math.round(apbRealisasi/apbPagu*100):0,monev_selesai:monevSelesai},
+    sosial:{penduduk:by.penduduk.length,kpm:by.kpm.length,blt:by.blt.length,stunting:by.stunting.length},
+    ekonomi:{bumdes:by.bumdes.length,koperasi:by.koperasi.length},
+    lapangan:{agenda:by.agenda.length,gps_points:by.gps_points.length,drp:by.drp.length}
+  }});
 }
 
 async function resourceHandler(req, res, resource, id, method, auth) {
