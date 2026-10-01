@@ -1,19 +1,24 @@
 services:
   - type: web
-    name: kerjadesa-pro
-    runtime: docker
+    name: kerjadesa-api
+    runtime: node
     plan: free
-    dockerfilePath: ./Dockerfile
+    rootDir: backend
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
     healthCheckPath: /api/health
-    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
       - key: HOST
         value: 0.0.0.0
+      - key: PORT
+        value: 3000
       - key: ADMIN_PASSWORD
         sync: false
       - key: DATABASE_URL
         sync: false
+      - key: CORS_ORIGIN
+        sync: false
       - key: PG_POOL_MAX
-        value: "5"
+        value: 5
