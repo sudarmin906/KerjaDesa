@@ -8,13 +8,19 @@
   async function hydrate(){
     if(!api || !localStorage.getItem('kd_auth_token')) return {online:false};
     try{
-      const [activities, monitoring] = await Promise.all([
+      const [activities, monitoring, villages, documents, reports] = await Promise.all([
         api.get('kegiatan'),
-        api.get('monitoring')
+        api.get('monitoring'),
+        api.get('desa'),
+        api.get('dokumen'),
+        api.get('laporan')
       ]);
       const local = JSON.parse(localStorage.getItem('kerjadesa') || '{"kegiatan":[],"monitoring":[],"gps":null,"docs":{}}');
       const serverKegiatan = activities.data || [];
       const serverMonitoring = monitoring.data || [];
+      const serverDesa = villages.data || [];
+      const serverDocuments = documents.data || [];
+      const serverReports = reports.data || [];
       const queue = window.KerjaDesaOfflineSync?.readQueue?.() || [];
       const pending = queue.filter(x => ['PENDING','SYNCING','FAILED','CONFLICT'].includes(x.status));
       const mergePending = (serverItems, resource) => {
@@ -31,9 +37,14 @@
       };
       local.kegiatan = mergePending(serverKegiatan, 'kegiatan');
       local.monitoring = mergePending(serverMonitoring, 'monitoring');
+      local.serverData = local.serverData || {};
+      local.serverData.desa = serverDesa;
+      local.serverData.dokumen = serverDocuments;
+      local.serverData.laporan = serverReports;
+      local.serverData.updatedAt = new Date().toISOString();
       localStorage.setItem('kerjadesa', JSON.stringify(local));
       window.KerjaDesaOfflineSync?.processQueue?.();
-      return {online:true, kegiatan:local.kegiatan.length, monitoring:local.monitoring.length};
+      return {online:true, kegiatan:local.kegiatan.length, monitoring:local.monitoring.length, desa:serverDesa.length, dokumen:serverDocuments.length, laporan:serverReports.length};
     }catch(error){
       console.warn('KerjaDesa hydration skipped:', error.message);
       return {online:false,error:error.message};
