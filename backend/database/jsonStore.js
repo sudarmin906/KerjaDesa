@@ -12,6 +12,23 @@ const DEFAULT_STORE = {
   dokumen: [],
   laporan: [],
   sppd: [],
+  wilayah: [],
+  apbdes: [],
+  rkpdes: [],
+  rab: [],
+  realisasi: [],
+  lpj: [],
+  penduduk: [],
+  kpm: [],
+  blt: [],
+  stunting: [],
+  bumdes: [],
+  koperasi: [],
+  agenda: [],
+  notifications: [],
+  ai_knowledge: [],
+  gps_points: [],
+  drp: [],
   audit_log: []
 };
 
