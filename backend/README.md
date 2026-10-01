@@ -61,3 +61,17 @@ docker run -p 3000:3000 -e ADMIN_PASSWORD='change-this' -e CORS_ORIGIN='https://
 ```
 
 For PostgreSQL production, apply `database/schema.sql` first and set `DATABASE_URL`. Do not use the default `admin123` password in production.
+
+
+## Production database
+
+When `DATABASE_URL` is set, the API uses PostgreSQL for users, desa, kegiatan, monitoring, dokumen, laporan, and audit_log through `kerjadesa_records`. Without it, local JSON storage remains the development fallback.
+
+1. Create the PostgreSQL database.
+2. Set `DATABASE_URL` and a strong `ADMIN_PASSWORD`.
+3. Start the API; the production table is created automatically.
+4. If an existing JSON `backend/data/store.json` must be retained, run `npm run migrate` once with the PostgreSQL `DATABASE_URL` set.
+5. Set `CORS_ORIGIN` to the exact frontend origin.
+6. If frontend and API are hosted separately, set `window.KERJADESA_API_BASE` in `js/deployment-config.js` to the API origin ending in `/api`.
+
+The API intentionally does not use the default `admin123` password in production: startup fails when `NODE_ENV=production` and `ADMIN_PASSWORD` is missing.
