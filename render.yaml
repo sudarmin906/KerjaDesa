@@ -14,7 +14,7 @@ services:
       - key: PORT
         value: 3000
       - key: ADMIN_PASSWORD
-        generateValue: true
+        sync: false
       - key: DATABASE_URL
         sync: false
       - key: CORS_ORIGIN
