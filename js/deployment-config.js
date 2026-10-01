@@ -3,8 +3,11 @@
 // For a separately hosted API, replace the value with the API origin ending in /api.
 window.KERJADESA_API_BASE = window.KERJADESA_API_BASE || '/api';
 
-// Load the integrated domain workspace without replacing the existing application.
 (function(){
+  var css=document.createElement('link');
+  css.rel='stylesheet';
+  css.href='./css/integrated-domain-modules.css';
+  document.head.appendChild(css);
   var s=document.createElement('script');
   s.src='./js/integrated-domain-modules.js';
   s.defer=true;
