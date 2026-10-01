@@ -220,6 +220,30 @@ main{max-width:1180px!important;padding:18px 26px 110px!important}
 <div class="card" style="margin:10px 0;border:2px solid #0f766e;background:#f7fbfb"><h3 style="margin-top:0">⚙️ Pengaturan Identitas SPPD</h3><p class="small muted">Gunakan bagian ini khusus untuk mengganti identitas. Setelah menekan Simpan Identitas, data akan tersimpan di HP dan otomatis dipakai saat membuat SPPD berikutnya.</p><div class="grid"><div><label><b>Nama Lengkap</b></label><input id="sppdNama" placeholder="Contoh: SUDARMIN ARIPUDDIN" autocomplete="off"></div><div><label><b>Jabatan</b></label><input id="sppdJabatan" placeholder="Contoh: Pendamping lokal Desa" autocomplete="off"></div><div><label><b>Berangkat Dari</b></label><input id="sppdBerangkat" placeholder="Contoh: Paminggalan"></div><div><label><b>Tempat Kedudukan</b></label><input id="sppdKedudukan" placeholder="Contoh: Paminggalan"></div><div><label><b>Tiba di</b></label><input id="sppdTiba" placeholder="Contoh: Tallu Banua Utara"></div></div><button type="button" onclick="saveSppdIdentity()">💾 Simpan Identitas SPPD</button><div id="sppdIdentityStatus" class="small muted"></div></div>
 <div class="grid"><input id="sppdNIK" placeholder="NIK"><input id="sppdKabupaten" placeholder="Kabupaten"><input id="sppdProvinsi" placeholder="Provinsi"><input id="sppdPosisi" placeholder="Posisi"><input id="sppdBulan" placeholder="Bulan, misalnya September" autocomplete="off"><span class="small muted" style="grid-column:1/-1">Bulan bebas ditulis huruf kecil/besar. Untuk judul Word, bulan otomatis menjadi HURUF BESAR.</span><input id="sppdTahun" type="number" min="2000" max="2100" placeholder="Tahun"><label>Logo SPPD <select id="sppdLogoPos"><option value="none" selected>Tanpa logo</option><option value="left">Kiri atas</option><option value="right">Kanan atas</option></select></label></div><p class="small muted">Logo SPPD dapat ditempatkan di kiri atau kanan atas halaman pertama.</p><div class="pill"><b>📅 Tanggal & Jumlah Hari per Kunjungan</b><p class="small muted">Isi tanggal mulai dan selesai untuk setiap kunjungan. Jumlah hari dihitung otomatis secara inklusif (tanggal mulai dan selesai dihitung).</p><div id="sppdVisits" class="small"></div></div><div class="actions"><button class="secondary" onclick="saveSppdData()">💾 Simpan Data SPPD</button><button class="secondary" onclick="resetSppdData()">↩️ Data Awal</button></div><div class="pill"><b>Preview:</b><div id="sppdPreview" class="small"></div></div><button onclick="makeSppdWord()">⬇️ Buat SPPD Word Asli</button><div id="sppdStatus" class="small muted"></div><p class="small muted">Template: <b>template_sppd_asli.docx</b> • Format asli dipertahankan.</p></div></div>
 <div id="laporanPanel" class="card no-print"><h3>📄 Laporan Bulanan — Format Master</h3><div class="row"><input id="rNama" placeholder="Nama Pendamping"><input id="rPosisi" value="PLD" placeholder="Posisi"></div><div class="row"><input id="rKec" placeholder="Kecamatan"><input id="rKab" placeholder="Kabupaten"></div><div class="row"><input id="rProv" placeholder="Provinsi"><input id="rPeriode" type="month"></div><textarea id="rCat" placeholder="Catatan tambahan laporan (opsional)"></textarea><button type="button" id="makeReportBtn" onclick="handleMakeReportClick(event)">📑 Buat Laporan Bulanan Otomatis</button><p class="small muted">C, D, E dan F disusun berdasarkan seluruh kegiatan DRP. G mencocokkan dokumentasi berdasarkan tanggal.</p></div>
+<div id="pusatDesaPanel" class="card no-print" style="display:none">
+<h3>🏘️ Pusat Data Desa & Arsip Kerja</h3>
+<p class="small muted">Satu tempat untuk data desa, arsip laporan, serta dokumen APBDes, RKPDes, Dana Desa, BUMDes dan Koperasi Desa. Data server menjadi sumber utama saat online; antrean lokal dipertahankan saat offline.</p>
+<div class="grid">
+<input id="desaId" type="hidden"><input id="desaNama" placeholder="Nama Desa">
+<input id="desaKecamatan" value="Sendana" placeholder="Kecamatan"><input id="desaKabupaten" value="Majene" placeholder="Kabupaten">
+<input id="desaProvinsi" value="Sulawesi Barat" placeholder="Provinsi"><input id="desaKode" placeholder="Kode Desa (opsional)">
+</div>
+<div class="actions"><button type="button" onclick="kdSaveDesa()">💾 Simpan Data Desa</button><button type="button" class="secondary" onclick="kdResetDesaForm()">↩️ Bersihkan</button><button type="button" class="secondary" onclick="kdLoadDesa()">↻ Sinkron Data Desa</button></div>
+<div id="kdDesaStatus" class="small muted"></div><div id="kdDesaList" style="margin-top:10px"></div>
+<hr>
+<h4>📚 Pusat Modul</h4>
+<div class="grid">
+<button type="button" class="secondary" onclick="kdFilterDokumen('APBDes')">APBDes</button>
+<button type="button" class="secondary" onclick="kdFilterDokumen('RKPDes')">RKPDes</button>
+<button type="button" class="secondary" onclick="kdFilterDokumen('Dana Desa')">Realisasi Dana Desa / Monev DD</button>
+<button type="button" class="secondary" onclick="kdFilterDokumen('BUMDes')">BUMDes</button>
+<button type="button" class="secondary" onclick="kdFilterDokumen('Koperasi')">Koperasi Desa Merah Putih</button>
+<button type="button" class="secondary" onclick="page('sppd')">SPPD</button>
+<button type="button" class="secondary" onclick="page('drp')">DRP / Kunjungan Lapangan</button>
+<button type="button" class="secondary" onclick="page('laporan')">Laporan Bulanan</button>
+</div>
+<div id="kdReportArchive" style="margin-top:10px"></div>
+</div>
 <div id="dokumenDesaPanel" class="card no-print" style="display:none">
 <h3>🗂️ Dokumen Desa</h3>
 <p class="small muted">Simpan dokumen kerja per desa di perangkat. File dapat dibuka atau dihapus kembali dari aplikasi.</p>
@@ -300,6 +324,35 @@ function saveAppSettings(){
   const st=document.getElementById('settingsStatus');if(st)st.textContent='✅ Pengaturan tersimpan di perangkat.';
 }
 function resetAppSettings(){localStorage.removeItem('kerjadesa_settings');loadAppSettings();const st=document.getElementById('settingsStatus');if(st)st.textContent='↩️ Pengaturan dikembalikan ke default.'}
+async function kdLoadDesa(){
+ const list=document.getElementById('kdDesaList'),st=document.getElementById('kdDesaStatus');if(!list)return;
+ try{
+  let rows=(window.KerjaDesaAPI&&localStorage.getItem('kd_auth_token')&&navigator.onLine)?((await KerjaDesaAPI.get('desa')).data||[]):(JSON.parse(localStorage.getItem('kerjadesa')||'{}').serverData?.desa||[]);
+  list.innerHTML=rows.length?rows.map(x=>'<div class="card item"><b>'+esc(x.nama||x.nama_desa||'-')+'</b><br><span class="small muted">'+esc(x.kecamatan||'-')+' • '+esc(x.kabupaten||'-')+' • '+esc(x.provinsi||'-')+'</span><div class="actions"><button type="button" class="secondary" onclick="kdEditDesa('+JSON.stringify(x).replace(/"/g,'&quot;')+')">✏️ Edit</button><button type="button" class="secondary" onclick="kdDeleteDesa('+JSON.stringify(x.id)+')">🗑️ Hapus</button></div></div>').join(''):'<div class="kd-empty">Belum ada data desa.</div>';
+  if(st)st.textContent='Data desa: '+rows.length;
+ }catch(e){if(st)st.textContent='❌ '+e.message}
+}
+function kdResetDesaForm(){['desaId','desaNama','desaKode'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});['desaKecamatan','desaKabupaten','desaProvinsi'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=id==='desaKecamatan'?'Sendana':id==='desaKabupaten'?'Majene':'Sulawesi Barat'});}
+function kdEditDesa(x){document.getElementById('desaId').value=x.id||'';document.getElementById('desaNama').value=x.nama||x.nama_desa||'';document.getElementById('desaKode').value=x.kode_desa||'';document.getElementById('desaKecamatan').value=x.kecamatan||'';document.getElementById('desaKabupaten').value=x.kabupaten||'';document.getElementById('desaProvinsi').value=x.provinsi||'';window.scrollTo({top:0,behavior:'smooth'});}
+async function kdSaveDesa(){
+ const st=document.getElementById('kdDesaStatus'),id=document.getElementById('desaId').value,nama=document.getElementById('desaNama').value.trim();if(!nama)return alert('Nama desa wajib diisi');
+ const payload={nama,kode_desa:document.getElementById('desaKode').value.trim(),kecamatan:document.getElementById('desaKecamatan').value.trim(),kabupaten:document.getElementById('desaKabupaten').value.trim(),provinsi:document.getElementById('desaProvinsi').value.trim(),updated_at:new Date().toISOString()};
+ try{
+  if(!window.KerjaDesaAPI||!localStorage.getItem('kd_auth_token')||!navigator.onLine)throw new Error('OFFLINE');
+  const r=id?await KerjaDesaAPI.update('desa',id,payload):await KerjaDesaAPI.create('desa',payload);
+  st.textContent='✅ Data desa tersimpan di server.';kdResetDesaForm();await kdLoadDesa();return r;
+ }catch(e){
+  const local=JSON.parse(localStorage.getItem('kerjadesa')||'{"kegiatan":[],"monitoring":[],"gps":null,"docs":{}}');local.serverData=local.serverData||{};local.serverData.desa=Array.isArray(local.serverData.desa)?local.serverData.desa:[];const item=Object.assign({id:id||Date.now(),synced:false},payload);const i=local.serverData.desa.findIndex(x=>String(x.id)===String(item.id));if(i>=0)local.serverData.desa[i]=item;else local.serverData.desa.push(item);localStorage.setItem('kerjadesa',JSON.stringify(local));window.KerjaDesaOfflineSync?.enqueue('desa',id?'UPDATE':'CREATE',payload,item.id);st.textContent='📱 Data desa tersimpan lokal dan menunggu sinkronisasi.';await kdLoadDesa();
+ }
+}
+async function kdDeleteDesa(id){
+ if(!confirm('Hapus data desa ini?'))return;
+ try{if(!navigator.onLine)throw new Error('OFFLINE');await KerjaDesaAPI.remove('desa',id);await kdLoadDesa()}catch(e){window.KerjaDesaOfflineSync?.enqueue('desa','DELETE',{},id);const local=JSON.parse(localStorage.getItem('kerjadesa')||'{}');if(local.serverData?.desa)local.serverData.desa=local.serverData.desa.filter(x=>String(x.id)!==String(id));localStorage.setItem('kerjadesa',JSON.stringify(local));await kdLoadDesa()}}
+async function kdLoadReportArchive(){
+ const el=document.getElementById('kdReportArchive');if(!el||!window.KerjaDesaAPI||!localStorage.getItem('kd_auth_token')||!navigator.onLine)return;
+ try{const r=await KerjaDesaAPI.get('laporan');const rows=r.data||[];el.innerHTML='<h4>📄 Arsip Laporan Server</h4>'+(rows.length?rows.slice().reverse().map(x=>'<div class="card item"><b>'+esc(x.judul||('Laporan '+(x.periode||'')))+'</b><br><span class="small muted">'+esc(x.nama||'-')+' • '+esc(x.periode||'-')+' • Kunjungan: '+esc(x.jumlah_kunjungan||0)+'</span></div>').join(''):'<div class="kd-empty">Belum ada laporan tersimpan.</div>')}catch(e){el.innerHTML='<div class="small muted">Arsip laporan belum dapat dimuat.</div>'}
+}
+function kdFilterDokumen(term){page('home');setTimeout(()=>{const el=document.getElementById('dokumenDesaPanel');if(el){el.style.display='';document.getElementById('docKategori').value=term;renderVillageDocuments();el.scrollIntoView({behavior:'smooth'})}},150);}
 function villageDocs(){data.docs=data.docs||{};data.docs.villageDocuments=Array.isArray(data.docs.villageDocuments)?data.docs.villageDocuments:[];return data.docs.villageDocuments}
 async function saveVillageDocument(){
   const file=document.getElementById('desaDocFile')?.files?.[0],desa=document.getElementById('docDesa')?.value||'Desa Lainnya',kat=document.getElementById('docKategori')?.value.trim()||'Dokumen Desa';
