@@ -710,7 +710,6 @@ async function loadActivityPhotoFiles(files){
  if(!items.length){renderMediaPreviews();return;}
  activityPhotos=existing;photoOcrBusy=true;
  const st=document.getElementById('photoOcrStatus');if(st)st.textContent='⚡ Menganalisis foto dan mencocokkannya dengan DRP...';
- const items=files.map((f,i)=>({f,i,date:extractPhotoDate(f.name)}));
  const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];
  const dateCounts={};acts.forEach(a=>{const k=dateKey(a.tanggal);if(k)dateCounts[k]=(dateCounts[k]||0)+1});
  const needsOcr=items.filter(x=>!x.date||(x.date&&dateCounts[dateKey(x.date)]>1));
@@ -1217,6 +1216,12 @@ function kdWorkflowSetup(){
 
   const profileCard=document.getElementById('profileFile')?.closest('.card');
   if(profileCard)docBox.appendChild(profileCard);
+
+  // Tambahkan akses upload yang selalu terlihat dari langkah DRP.
+  const quickUpload=document.createElement('div');
+  quickUpload.className='card no-print';
+  quickUpload.innerHTML='<h3>⚡ Upload Cepat</h3><p class="small muted">Upload DRP dan dokumentasi dapat dilakukan langsung dari alur kerja ini. Data tetap dicocokkan dengan kegiatan DRP.</p><div class="actions"><button type="button" onclick="document.getElementById(\'drpFile\')?.click()">📑 Pilih DRP</button><button type="button" onclick="workflowPage(\'dokumentasi\')">🖼️ Upload Foto</button></div><button type="button" class="secondary" onclick="document.getElementById(\'packageFiles\')?.click()">⚡ Upload Paket: 1 DRP + Semua Foto</button>';
+  drpBox.appendChild(quickUpload);
 
   const sppd=document.getElementById('sppdEditorCard');
   if(sppd)sppdBox.appendChild(sppd);
