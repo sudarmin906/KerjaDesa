@@ -186,6 +186,11 @@
       "id": "railway-production-v41",
       "name": "Railway single-service production deployment with managed PostgreSQL",
       "status": "implemented"
+    },
+    {
+      "id": "free-hosting-v41",
+      "name": "Free hosting path: GitHub Pages + Render + PostgreSQL",
+      "status": "implemented"
     }
   ]
 }
