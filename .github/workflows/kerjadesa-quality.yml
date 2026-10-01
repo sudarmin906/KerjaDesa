@@ -128,6 +128,23 @@ jobs:
           node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/audit.json')); if(!x.success || !x.data.some(a=>a.action==='CREATE')) process.exit(1)"
           echo "E2E API test OK"
 
+
+      - name: PostgreSQL repository syntax and isolated fallback smoke test
+        shell: bash
+        run: |
+          node --check backend/postgres-migrate.js
+          rm -rf backend/data
+          PORT=4319 ADMIN_PASSWORD=ci-test-password node backend/server.js > /tmp/kerjadesa-fallback.log 2>&1 &
+          pid=$!
+          trap "kill $pid" EXIT
+          for i in {1..20}; do
+            curl -fsS http://127.0.0.1:4319/api/health >/dev/null && break
+            sleep 1
+          done
+          curl -fsS -X POST http://127.0.0.1:4319/api/auth/login -H 'Content-Type: application/json' -d '{"username":"admin","password":"ci-test-password"}' >/tmp/login.json
+          node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/login.json')); if(!x.success||!x.token) process.exit(1)"
+          echo "Production repository code and fallback smoke test OK"
+
       - name: Validate service worker cache manifest
         shell: bash
         run: |
