@@ -149,6 +149,7 @@
       if(!out)queue(id&&!isLocalId?'UPDATE':'CREATE',r,p,item.id);
       else setCacheRows(r,state.rows=cacheRows(r).map(x=>String(x.id)===String(item.id)?item:x));
       state.editing=null;state.rows=cacheRows(r);render();
+      try{ if(typeof window.loadDashboard==='function') window.loadDashboard(); else if(typeof window.refreshDashboard==='function') window.refreshDashboard(); }catch(e){}
       toast('Data '+(id?'diperbarui':'ditambahkan')+'.');
     }catch(e){
       const item=Object.assign({id:id||('local-'+Date.now()),updated_at:new Date().toISOString()},p);
@@ -162,6 +163,7 @@
       if(API()&&localStorage.getItem('kd_auth_token')&&navigator.onLine)await API().remove(state.resource,id);else queue('DELETE',state.resource,{},id);
     }catch(e){queue('DELETE',state.resource,{},id)}
     localRemove(state.resource,id);state.rows=cacheRows(state.resource);render();
+    try{ if(typeof window.loadDashboard==='function') window.loadDashboard(); else if(typeof window.refreshDashboard==='function') window.refreshDashboard(); }catch(e){}
   }
   function toast(msg){const el=document.getElementById('kdDomainToast');if(el){el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200)}}
   function mount(){
