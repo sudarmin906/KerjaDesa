@@ -95,7 +95,7 @@ async function route(req, res) {
     const auth = await authenticate(req);
     if (!auth) return sendJson(res, 401, { success: false, message: 'Authentication diperlukan.' });
 
-    if (req.method === 'GET' && pathName === '/api/dashboard') return dashboard(req, res);
+    if (req.method === 'GET' && pathName === '/api/dashboard') return dashboard(req, res, auth);
 
     const match = pathName.match(/^\/api\/(desa|kegiatan|monitoring|dokumen|laporan|sppd|wilayah|apbdes|rkpdes|rab|realisasi|lpj|penduduk|kpm|blt|stunting|bumdes|koperasi|agenda|notifications|ai_knowledge|gps_points|drp|users)(?:\/([^/]+))?$/);
     if (match) return resourceHandler(req, res, match[1], match[2], req.method, auth);
