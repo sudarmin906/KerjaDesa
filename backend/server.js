@@ -4,15 +4,18 @@
 
 const http = require('http');
 const { URL } = require('url');
-const { ensureStore } = require('./database/jsonStore');
+const { ensureDatabase } = require('./database/store');
 const { health: postgresHealth } = require('./database/postgres');
 const { authenticate, requireAuth, sendJson } = require('./middleware/auth');
-const { login, logout, dashboard, resourceHandler } = require('./controllers/apiController');
+const { login, logout, dashboard, resourceHandler, seedAdmin } = require('./controllers/apiController');
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
 
-ensureStore();
+async function bootstrap() {
+  await ensureDatabase();
+  if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_PASSWORD) throw new Error('ADMIN_PASSWORD wajib diisi pada production.');
+  await seedAdmin();
 
 const ALLOWED_METHODS = 'GET,POST,PATCH,DELETE,OPTIONS';
 const ALLOWED_HEADERS = 'Content-Type, Authorization';
@@ -29,7 +32,7 @@ function cors(res) {
   res.setHeader('Access-Control-Max-Age', '86400');
 }
 
-function route(req, res) {
+async function route(req, res) {
   cors(res);
   if (req.method === 'OPTIONS') {
     res.statusCode = 204;
@@ -56,7 +59,7 @@ function route(req, res) {
     return auth && sendJson(res, 200, { success: true, user: auth.user });
   }
 
-  const auth = authenticate(req);
+  const auth = await authenticate(req);
   if (!auth) {
     return sendJson(res, 401, { success: false, message: 'Authentication diperlukan.' });
   }
@@ -82,8 +85,13 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, HOST, () => {
-  console.log('KerjaDesa Pro API running at http://' + HOST + ':' + PORT);
+  server.listen(PORT, HOST, () => {
+    console.log('KerjaDesa Pro API running at http://' + HOST + ':' + PORT);
+  });
+}
+bootstrap().catch(error => {
+  console.error('KerjaDesa bootstrap gagal:', error);
+  process.exit(1);
 });
 
 module.exports = server;
