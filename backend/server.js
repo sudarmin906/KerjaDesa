@@ -124,7 +124,14 @@ const server = http.createServer((req, res) => {
 async function bootstrap() {
   await ensureDatabase();
   if (process.env.ADMIN_PASSWORD) {
-    await seedAdmin();
+    try {
+      await seedAdmin();
+    } catch (error) {
+      // A transient database error must not take down the web/API process.
+      // Keep the service online and use the JSON store fallback for this run.
+      process.env.KERJADESA_DB_DISABLED = '1';
+      console.error('Seed admin database gagal; KerjaDesa beralih ke JSON store lokal:', error?.message || error);
+    }
   } else {
     // Keep the API available when a managed deployment has not supplied an
     // API admin secret yet. The frontend has its separate local/offline login;
