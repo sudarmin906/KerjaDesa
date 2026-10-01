@@ -148,6 +148,21 @@
       "id": "sppd-server-resource-v43",
       "name": "Dedicated SPPD server resource with offline upsert and authenticated hydration",
       "status": "implemented"
+    },
+    {
+      "id": "integrated-domain-crud-v44",
+      "name": "Real CRUD workspace for planning, APBDes, RAB, realization/Monev, LPJ, social data, BUMDes, Koperasi, agenda, GPS, archive and DRP",
+      "status": "implemented"
+    },
+    {
+      "id": "integrated-finance-analytics-v44",
+      "name": "Server dashboard aggregates finance, social, enterprise and field metrics",
+      "status": "implemented"
+    },
+    {
+      "id": "offline-domain-cache-v44",
+      "name": "Integrated domain modules use local cache and the existing offline synchronization queue",
+      "status": "implemented"
     }
   ],
   "planned_domains": [
@@ -155,7 +170,7 @@
     "server-backed-data",
     "village-profile",
     "development-monitoring",
-    "village-finance",
+    "village-finance (core CRUD implemented; import/export and advanced validation remain)",
     "administration-and-documents",
     "pld-assistance",
     "bumdes-and-umkm",
@@ -207,5 +222,6 @@
       "name": "Free hosting path: GitHub Pages + Render + PostgreSQL",
       "status": "implemented"
     }
-  ]
+  ],
+  "last_reconciled": "2026-10-01"
 }
