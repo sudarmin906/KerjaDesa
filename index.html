@@ -742,14 +742,27 @@ function renderVisitDates(){const old=loadVisitDates();let d=sppdData(),h='<div 
 function saveOneVisit(i){saveVisitDates();const st=document.getElementById('sppdStatus');if(st)st.textContent='✅ Data Kunjungan '+i+' tersimpan. Nama dan Jabatan dapat berbeda untuk setiap kunjungan.'}
 function visitDates(){return loadVisitDates()}
 function loadSppdData(){let d={...SPPD_DEFAULT,...JSON.parse(localStorage.getItem('kerjadesa_sppd_editable')||'{}')};const map={sppdNIK:'nik',sppdNama:'nama',sppdKabupaten:'kabupaten',sppdProvinsi:'provinsi',sppdPosisi:'posisi',sppdJabatan:'jabatan',sppdBulan:'bulan',sppdTahun:'tahun',sppdTiba:'tiba',sppdBerangkat:'berangkat',sppdKedudukan:'kedudukan'};Object.entries(map).forEach(([id,k])=>sppdGet(id).value=d[k]||'');renderSppd()}
-async function syncSppdToServer(){
-  if(!localStorage.getItem('kd_auth_token')||!navigator.onLine)return false;
+async async function syncSppdToServer(){
+  const token=localStorage.getItem('kd_auth_token');
+  const payload={type:'SPPD',title:'Data SPPD',content:sppdData(),updatedAt:new Date().toISOString()};
+  if(!token||!navigator.onLine){
+    window.KerjaDesaOfflineSync?.enqueue('sppd','CREATE',payload,'sppd-local');
+    return false;
+  }
   try{
-    const payload={type:'SPPD',title:'Data SPPD',content:sppdData(),createdAt:new Date().toISOString()};
-    await KerjaDesaAPI.create('dokumen',payload);
+    const r=await KerjaDesaAPI.get('sppd');
+    const rows=Array.isArray(r.data)?r.data:[];
+    const userId=JSON.parse(localStorage.getItem('kd_user')||'{}').id||'local';
+    const existing=rows.find(x=>String(x.user_id||'')===String(userId));
+    const body={...payload,user_id:userId};
+    const result=existing?await KerjaDesaAPI.update('sppd',existing.id,body):await KerjaDesaAPI.create('sppd',body);
     const st=document.getElementById('sppdStatus');if(st)st.textContent='✅ Data SPPD tersinkron ke server.';
-    return true;
-  }catch(e){console.warn('SPPD server sync:',e.message);return false}
+    return result.data||result;
+  }catch(e){
+    window.KerjaDesaOfflineSync?.enqueue('sppd','CREATE',payload,'sppd-local');
+    console.warn('SPPD server sync:',e.message);
+    return false;
+  }
 }
 function saveSppdIdentity(){const d=sppdData();localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(d));syncSppdToServer();const st=document.getElementById('sppdIdentityStatus');if(st)st.textContent='✅ Nama, Jabatan, lokasi, dan Tiba di tersimpan di HP. Huruf besar/kecil dipertahankan.';document.getElementById('sppdStatus').textContent='Identitas SPPD tersimpan.';renderSppd()}
 function saveSppdData(){localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(sppdData()));syncSppdToServer();document.getElementById('sppdStatus').textContent='Data SPPD tersimpan di perangkat.';renderSppd()}
