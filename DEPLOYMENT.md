@@ -126,3 +126,22 @@ Create a Koyeb managed PostgreSQL Database Service and use its connection string
 - Build variable: `KERJADESA_API_BASE=https://<API-SERVICE-DOMAIN>/api`
 
 The frontend build injects the API base into `js/deployment-config.js`. Koyeb supports GitHub/Dockerfile deployments plus configurable ports, routes, and environment variables.
+
+## Gratis untuk tahap uji online
+
+Untuk uji online tanpa VPS, gunakan Render Free sebagai web service dan Neon Free sebagai PostgreSQL.
+
+Render blueprint:
+`render.yaml`
+
+Render web service menjalankan frontend dan API dari satu container, sehingga browser tetap memakai `/api` pada domain yang sama.
+
+Di Render, isi:
+- `ADMIN_PASSWORD`
+- `DATABASE_URL` dari database Neon
+
+Neon menyediakan Free Postgres dengan scale-to-zero dan batas penyimpanan 0.5 GB per project. Render Free web service memiliki 512 MB RAM/0.1 CPU dan dapat sleep setelah 15 menit tanpa trafik, sehingga waktu bangun pertama bisa sekitar satu menit. Render sendiri menyatakan Free cocok untuk testing/hobby dan bukan production yang membutuhkan availability tinggi.
+
+Setelah deploy, Render memberikan URL `onrender.com` dengan HTTPS. Tidak perlu membeli domain untuk tahap uji.
+
+Untuk data penting jangka panjang, jangan menganggap tier gratis sebagai backup production.
