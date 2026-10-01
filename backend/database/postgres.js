@@ -5,8 +5,12 @@
 let Pool = null;
 let pool = null;
 
+function connectionString() {
+  return process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRESQL_URL || '';
+}
+
 function enabled() {
-  return Boolean(process.env.DATABASE_URL) && String(process.env.KERJADESA_DB_DISABLED || '') !== '1';
+  return Boolean(connectionString()) && String(process.env.KERJADESA_DB_DISABLED || '') !== '1';
 }
 
 function getPool() {
@@ -20,8 +24,10 @@ function getPool() {
   }
   if (!pool) {
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: connectionString(),
       max: Number(process.env.PG_POOL_MAX || 5),
+      connectionTimeoutMillis: Math.max(1000, Number(process.env.PG_CONNECTION_TIMEOUT_MS || 3000)),
+      idleTimeoutMillis: Math.max(1000, Number(process.env.PG_IDLE_TIMEOUT_MS || 10000)),
       // Blitz managed PostgreSQL may be served without TLS. Only enable
       // PostgreSQL SSL when it is explicitly requested by the environment.
       ssl: /^(1|true|yes)$/i.test(String(process.env.DB_SSL || ''))
