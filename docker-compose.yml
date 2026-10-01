@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-kerjadesa}
+      POSTGRES_USER: ${POSTGRES_USER:-kerjadesa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - kerjadesa_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kerjadesa} -d ${POSTGRES_DB:-kerjadesa}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      PG_POOL_MAX: ${PG_POOL_MAX:-10}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kerjadesa}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-kerjadesa}
+    ports:
+      - "${API_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+volumes:
+  kerjadesa_pgdata:
+
+networks:
+  internal:
+    driver: bridge
