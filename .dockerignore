@@ -1,0 +1,6 @@
+node_modules
+backend/data/store.json
+.env
+.git
+.github
+*.log
