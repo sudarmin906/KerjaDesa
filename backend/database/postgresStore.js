@@ -1,6 +1,6 @@
 const { query } = require('./postgres');
 
-const RESOURCE_NAMES = new Set(['users','desa','kegiatan','monitoring','dokumen','laporan','sppd','audit_log']);
+const RESOURCE_NAMES = new Set(['users','desa','kegiatan','monitoring','dokumen','laporan','sppd','wilayah','apbdes','rkpdes','rab','realisasi','lpj','penduduk','kpm','blt','stunting','bumdes','koperasi','agenda','notifications','ai_knowledge','gps_points','drp','audit_log']);
 
 function assertResource(resource) {
   if (!RESOURCE_NAMES.has(resource)) throw new Error('Resource tidak tersedia.');
