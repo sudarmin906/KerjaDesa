@@ -11,6 +11,7 @@ const DEFAULT_STORE = {
   monitoring: [],
   dokumen: [],
   laporan: [],
+  sppd: [],
   audit_log: []
 };
 
