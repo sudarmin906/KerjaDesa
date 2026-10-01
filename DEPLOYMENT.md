@@ -66,3 +66,28 @@ The GitHub Actions job then performs:
 6. call the API health endpoint
 
 No production password is committed to Git.
+
+## VPS + automatic HTTPS
+
+For a public domain, use the included Caddy service.
+
+Server bootstrap:
+`bash deploy/bootstrap-ubuntu.sh`
+
+Then:
+`cp .env.production.example .env`
+
+Set:
+- `KERJADESA_DOMAIN=your-domain.example`
+- `CORS_ORIGIN=https://your-domain.example`
+- strong database/admin passwords
+
+Point the domain's DNS A/AAAA record to the VPS and allow TCP ports 80 and 443.
+
+Start:
+`docker compose up -d --build`
+
+Caddy terminates HTTPS and proxies the request to the internal Nginx frontend. Nginx then proxies `/api` to the internal API.
+
+The database remains private and is not published to the host.
+
