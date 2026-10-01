@@ -10,3 +10,20 @@
 8. Use HTTPS/reverse proxy before exposing the API to the public internet.
 
 Do not commit the production `.env` file.
+
+## Public web access
+
+The Compose stack now contains:
+- `web`: Nginx serving the PWA/static frontend
+- `api`: KerjaDesa API
+- `postgres`: PostgreSQL
+
+Nginx proxies `/api/*` to the internal API service, so the browser can use the default same-origin `/api` configuration.
+
+For a real domain, point DNS to the server and put an HTTPS reverse proxy/load balancer in front of the web container, or terminate TLS at the hosting provider. Set `CORS_ORIGIN` to the final HTTPS origin.
+
+Example:
+`https://kerjadesa.example.com`
+
+For a hosting provider that already provides HTTPS, keep `WEB_PORT` bound to the provider's expected port or adapt the platform configuration accordingly.
+
