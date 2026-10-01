@@ -10,7 +10,7 @@
   const state={resource:'apbdes',rows:[],editing:null,filter:''};
   const groups=[
     {id:'planning',title:'Perencanaan',icon:'🗂️',items:[
-      ['wilayah','Wilayah & Desa'],['rkpdes','RKPDes / Perencanaan']
+      ['wilayah','Wilayah & Desa'],['rkpdes','RKPDes / Perencanaan'],['kegiatan','Kegiatan Desa']
     ]},
     {id:'finance',title:'Keuangan Desa',icon:'💰',items:[
       ['apbdes','APBDes'],['rab','RAB'],['realisasi','Realisasi & Monev'],['lpj','LPJ']
@@ -22,13 +22,22 @@
       ['bumdes','BUMDes'],['koperasi','Koperasi Desa Merah Putih']
     ]},
     {id:'field',title:'Lapangan & Arsip',icon:'📍',items:[
-      ['gps_points','Titik GPS'],['agenda','Agenda'],['dokumen','Arsip Dokumen'],['drp','DRP']
+      ['gps_points','Titik GPS'],['agenda','Agenda'],['monitoring','Monitoring'],['drp','DRP'],['laporan','Laporan'],['dokumen','Arsip Dokumen']
     ]},
     {id:'system',title:'Sistem & AI',icon:'🤖',items:[
       ['notifications','Notifikasi'],['ai_knowledge','Basis Pengetahuan AI']
     ]}
   ];
   const schemas={
+    kegiatan:[
+      ['desa','Desa','text'],['nama_kegiatan','Nama Kegiatan','text'],['bidang','Bidang','text'],['tahun','Tahun','number'],['rkpdes_id','RKPDes ID','text'],['apbdes_id','APBDes ID','text'],['rab_id','RAB ID','text'],['anggaran','Anggaran','number'],['status','Status','select:RENCANA|BERJALAN|SELESAI|TERTUNDA'],['progres','Progres %','number'],['keterangan','Keterangan','textarea']
+    ],
+    monitoring:[
+      ['desa','Desa','text'],['kegiatan_id','Kegiatan ID','text'],['tanggal','Tanggal','date'],['progres','Progres %','number'],['status','Status','select:BERJALAN|SELESAI|TERTUNDA|PERLU_TINDAK_LANJUT'],['temuan','Temuan','textarea'],['tindak_lanjut','Tindak Lanjut','textarea']
+    ],
+    laporan:[
+      ['desa','Desa','text'],['periode','Periode','text'],['jenis','Jenis Laporan','text'],['kegiatan_id','Kegiatan ID','text'],['drp_id','DRP ID','text'],['judul','Judul','text'],['status','Status','select:DRAFT|DIPERIKSA|DISETUJUI|ARSIP'],['catatan','Catatan','textarea']
+    ],
     wilayah:[
       ['nama_desa','Nama Desa','text'],['kode_desa','Kode Desa','text'],['kecamatan','Kecamatan','text'],['kabupaten','Kabupaten','text'],['provinsi','Provinsi','text'],['status','Status','select:AKTIF|NONAKTIF']
     ],
