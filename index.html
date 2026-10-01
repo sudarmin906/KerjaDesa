@@ -264,7 +264,7 @@ main{max-width:1180px!important;padding:18px 26px 110px!important}
 <div id="docResult2"></div>
 </div>
 </section></main>
-<div id="nav" class="nav hide"><button onclick="page('home')">🏠 Beranda</button><button onclick="page('drp')">📑 DRP</button><button onclick="page('laporan')">📄 Laporan</button><button onclick="page('dokumentasi')">🖼️ Dokumentasi</button><button onclick="page('sppd')">🧾 SPPD</button></div>
+<div id="nav" class="nav hide"><button onclick="page('home')">🏠 Beranda</button><button onclick="page('desa')">🏘️ Data Desa</button><button onclick="page('drp')">📑 DRP</button><button onclick="page('laporan')">📄 Laporan</button><button onclick="page('dokumentasi')">🖼️ Dokumentasi</button><button onclick="page('sppd')">🧾 SPPD</button></div>
 <div id="reportPrint" class="report-print"></div>
 <script src="jszip.min.js"></script>
 <script>
@@ -276,11 +276,12 @@ function show(){document.getElementById('login').style.display='none';document.g
 function page(x){
   ['home','kegiatan','monitoring','dokumen'].forEach(y=>{const el=document.getElementById(y);if(el)el.classList.toggle('hide',x!==y)});
   const d=document.getElementById('dokumen');
-  const panels=['drpPanel','laporanPanel','dokumentasiPanel','sppdPanel','dokumenDesaPanel','pengaturanPanel','aiSettingsPanel','docResult','drpPreview','reportActions','docResult2'];
+  const panels=['drpPanel','laporanPanel','dokumentasiPanel','sppdPanel','dokumenDesaPanel','pusatDesaPanel','pengaturanPanel','aiSettingsPanel','docResult','drpPreview','reportActions','docResult2','kdReportArchive'];
   panels.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none'});
-  if(['drp','laporan','dokumentasi','sppd','dokumenDesa','pengaturan'].includes(x)){
+  if(['drp','laporan','dokumentasi','sppd','dokumenDesa','desa','pengaturan'].includes(x)){
     if(d)d.classList.remove('hide');
     const groups={
+      desa:['pusatDesaPanel'],
       drp:['drpPanel','drpPreview','docResult'],
       laporan:['laporanPanel','reportActions','docResult2'],
       dokumentasi:['dokumentasiPanel'],
@@ -291,6 +292,7 @@ function page(x){
     (groups[x]||[]).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block'});
     if(x==='dokumentasi')renderMediaPreviews();
     if(x==='dokumenDesa')renderVillageDocuments();
+    if(x==='desa'){kdLoadDesa();kdLoadReportArchive();}
     if(x==='pengaturan'){loadAppSettings();const ai=document.getElementById('aiSettingsPanel');if(ai)ai.style.display='block';}
     if(x==='sppd'){try{loadSppdData();renderSppd();renderVisitDates()}catch(e){}}
   }
