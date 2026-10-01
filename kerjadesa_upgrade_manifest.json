@@ -133,6 +133,21 @@
       "id": "deployment-config-v35",
       "name": "Separate frontend/API deployment configuration and production environment template",
       "status": "implemented"
+    },
+    {
+      "id": "two-way-persistence-v42",
+      "name": "Two-way server persistence for village master and generated monthly reports",
+      "status": "implemented"
+    },
+    {
+      "id": "integrated-module-center-v43",
+      "name": "Integrated village data center with APBDes, RKPDes, Dana Desa, BUMDes, Koperasi, DRP, SPPD and report entry points",
+      "status": "implemented"
+    },
+    {
+      "id": "sppd-server-resource-v43",
+      "name": "Dedicated SPPD server resource with offline upsert and authenticated hydration",
+      "status": "implemented"
     }
   ],
   "planned_domains": [
