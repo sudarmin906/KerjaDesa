@@ -27,3 +27,42 @@ Example:
 
 For a hosting provider that already provides HTTPS, keep `WEB_PORT` bound to the provider's expected port or adapt the platform configuration accordingly.
 
+
+## GitHub Actions automatic deployment
+
+Workflow:
+`.github/workflows/production-deploy.yml`
+
+The workflow always validates backend syntax and Docker Compose first.
+
+Automatic deployment is deliberately disabled until the repository owner enables it with:
+
+Repository variable:
+`PRODUCTION_DEPLOY_ENABLED=true`
+
+Required production secrets:
+- `PRODUCTION_HOST`
+- `PRODUCTION_USER`
+- `PRODUCTION_SSH_KEY`
+- optional `PRODUCTION_SSH_PORT`
+
+Required repository variable:
+- `PRODUCTION_APP_DIR` — absolute path of the cloned KerjaDesa directory on the server.
+
+The server must already have Docker, Docker Compose, Git, and the KerjaDesa repository cloned.
+
+Example server preparation:
+
+`git clone https://github.com/sudarmin906/KerjaDesa.git /opt/kerjadesa`
+
+Then create `/opt/kerjadesa/.env` from `.env.production.example` and fill the real production values.
+
+The GitHub Actions job then performs:
+1. fetch latest `main`
+2. reset working tree to `origin/main`
+3. rebuild the containers
+4. restart the stack
+5. verify container status
+6. call the API health endpoint
+
+No production password is committed to Git.
