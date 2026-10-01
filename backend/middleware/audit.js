@@ -1,8 +1,8 @@
-const { readStore, create } = require('../database/jsonStore');
+const { create, list } = require('../database/store');
 
-function writeAudit({ user, action, resource, recordId = null, details = null }) {
+async function writeAudit({ user, action, resource, recordId = null, details = null }) {
   try {
-    create('audit_log', {
+    await create('audit_log', {
       user_id: user?.id || null,
       username: user?.username || '',
       role: user?.role || '',
@@ -17,9 +17,8 @@ function writeAudit({ user, action, resource, recordId = null, details = null })
   }
 }
 
-function listAudit(limit = 100) {
-  const store = readStore();
-  return (store.audit_log || []).slice().reverse().slice(0, limit);
+async function listAudit(limit = 100) {
+  return (await list('audit_log')).slice().reverse().slice(0, limit);
 }
 
 module.exports = { writeAudit, listAudit };
