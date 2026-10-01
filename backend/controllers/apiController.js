@@ -191,11 +191,11 @@ async function resourceHandler(req, res, resource, id, method, auth) {
   if (method === 'GET') {
     if (id) {
       const item = await get(resource, id);
-      return item
-        ? sendJson(res, 200, { success: true, data: item })
-        : sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
+      if (!item) return sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
+      return sendJson(res, 200, { success: true, data: resource === 'users' ? publicUser(item) : item });
     }
-    return sendJson(res, 200, { success: true, data: resource === 'audit_log' ? await listAudit(200) : await list(resource) });
+    const rows = resource === 'audit_log' ? await listAudit(200) : await list(resource);
+    return sendJson(res, 200, { success: true, data: resource === 'users' ? rows.map(publicUser) : rows });
   }
 
   if (method === 'POST') {
