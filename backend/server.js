@@ -123,10 +123,14 @@ const server = http.createServer((req, res) => {
 
 async function bootstrap() {
   await ensureDatabase();
-  if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_PASSWORD) {
-    throw new Error('ADMIN_PASSWORD wajib diisi pada production.');
+  if (process.env.ADMIN_PASSWORD) {
+    await seedAdmin();
+  } else {
+    // Keep the API available when a managed deployment has not supplied an
+    // API admin secret yet. The frontend has its separate local/offline login;
+    // API authentication can be enabled by adding ADMIN_PASSWORD later.
+    console.warn('ADMIN_PASSWORD belum disetel; seed admin API dilewati.');
   }
-  await seedAdmin();
   server.listen(PORT, HOST, () => {
     console.log('KerjaDesa Pro API/Web running at http://' + HOST + ':' + PORT);
   });
