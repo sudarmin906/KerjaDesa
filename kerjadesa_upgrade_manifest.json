@@ -171,6 +171,11 @@
       "id": "github-actions-cicd-v39",
       "name": "GitHub Actions production deployment",
       "status": "implemented"
+    },
+    {
+      "id": "https-vps-production-v40",
+      "name": "VPS bootstrap and automatic HTTPS production routing",
+      "status": "implemented"
     }
   ]
 }
