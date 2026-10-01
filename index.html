@@ -744,7 +744,8 @@ function visitDates(){return loadVisitDates()}
 function loadSppdData(){let d={...SPPD_DEFAULT,...JSON.parse(localStorage.getItem('kerjadesa_sppd_editable')||'{}')};const map={sppdNIK:'nik',sppdNama:'nama',sppdKabupaten:'kabupaten',sppdProvinsi:'provinsi',sppdPosisi:'posisi',sppdJabatan:'jabatan',sppdBulan:'bulan',sppdTahun:'tahun',sppdTiba:'tiba',sppdBerangkat:'berangkat',sppdKedudukan:'kedudukan'};Object.entries(map).forEach(([id,k])=>sppdGet(id).value=d[k]||'');renderSppd()}
 async async function syncSppdToServer(){
   const token=localStorage.getItem('kd_auth_token');
-  const payload={type:'SPPD',title:'Data SPPD',content:sppdData(),updatedAt:new Date().toISOString()};
+  const userId=JSON.parse(localStorage.getItem('kd_user')||'{}').id||'local';
+  const payload={type:'SPPD',title:'Data SPPD',content:sppdData(),user_id:userId,updatedAt:new Date().toISOString()};
   if(!token||!navigator.onLine){
     window.KerjaDesaOfflineSync?.enqueue('sppd','CREATE',payload,'sppd-local');
     return false;
@@ -752,7 +753,6 @@ async async function syncSppdToServer(){
   try{
     const r=await KerjaDesaAPI.get('sppd');
     const rows=Array.isArray(r.data)?r.data:[];
-    const userId=JSON.parse(localStorage.getItem('kd_user')||'{}').id||'local';
     const existing=rows.find(x=>String(x.user_id||'')===String(userId));
     const body={...payload,user_id:userId};
     const result=existing?await KerjaDesaAPI.update('sppd',existing.id,body):await KerjaDesaAPI.create('sppd',body);
