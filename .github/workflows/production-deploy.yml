@@ -30,7 +30,7 @@ jobs:
           node --check backend/database/postgresStore.js
 
       - name: Validate compose
-        run: docker compose -f docker-compose.yml config
+        run: POSTGRES_PASSWORD=ci-validation-password docker compose -f docker-compose.yml config
 
   deploy:
     needs: validate
