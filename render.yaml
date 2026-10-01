@@ -3,21 +3,17 @@ services:
     name: kerjadesa-pro
     runtime: docker
     plan: free
-    dockerfilePath: ./deploy/Dockerfile.render
-    dockerContext: .
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
       - key: HOST
         value: 0.0.0.0
-      - key: PORT
-        value: 3000
       - key: ADMIN_PASSWORD
         sync: false
       - key: DATABASE_URL
         sync: false
-      - key: CORS_ORIGIN
-        value: ""
       - key: PG_POOL_MAX
         value: "5"
