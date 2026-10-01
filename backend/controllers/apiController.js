@@ -118,7 +118,7 @@ async function login(req, res) {
     }
 
     loginAttempts.delete(key);
-    writeAudit({ user, action: 'LOGIN', resource: 'auth' });
+    await writeAudit({ user, action: 'LOGIN', resource: 'auth' });
     const token = issueSession(user);
     return sendJson(res, 200, {
       success: true,
@@ -131,10 +131,10 @@ async function login(req, res) {
   }
 }
 
-function logout(req, res) {
+async function logout(req, res) {
   const auth = require('../middleware/auth').authenticate(req);
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
-  if (auth) writeAudit({ user: auth.user, action: 'LOGOUT', resource: 'auth' });
+  if (auth) await writeAudit({ user: auth.user, action: 'LOGOUT', resource: 'auth' });
   revokeSession(token);
   return sendJson(res, 200, { success: true, message: 'Logout berhasil.' });
 }
@@ -198,12 +198,12 @@ async function resourceHandler(req, res, resource, id, method, auth) {
         desa: body.desa || '',
         status: body.status || 'ACTIVE'
       });
-      writeAudit({ user: auth.user, action: 'CREATE', resource: 'users', recordId: item.id });
+      await writeAudit({ user: auth.user, action: 'CREATE', resource: 'users', recordId: item.id });
       return sendJson(res, 201, { success: true, data: publicUser(item) });
     }
 
     const item = create(resource, normalizeResourcePayload(resource, body, auth.user));
-    writeAudit({ user: auth.user, action: 'CREATE', resource, recordId: item.id });
+    await writeAudit({ user: auth.user, action: 'CREATE', resource, recordId: item.id });
     return sendJson(res, 201, { success: true, data: resource === 'users' ? publicUser(item) : item });
   }
 
@@ -228,7 +228,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
     }
     delete body.base_version;
     const item = await update(resource, id, body);
-    if (item) writeAudit({ user: auth.user, action: 'UPDATE', resource, recordId: item.id });
+    if (item) await writeAudit({ user: auth.user, action: 'UPDATE', resource, recordId: item.id });
     return item
       ? sendJson(res, 200, { success: true, data: resource === 'users' ? publicUser(item) : item })
       : sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
@@ -236,7 +236,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
 
   if (method === 'DELETE' && id) {
     const ok = await remove(resource, id);
-    if (ok) writeAudit({ user: auth.user, action: 'DELETE', resource, recordId: id });
+    if (ok) await writeAudit({ user: auth.user, action: 'DELETE', resource, recordId: id });
     return sendJson(res, ok ? 200 : 404, {
       success: ok,
       message: ok ? 'Data dihapus.' : 'Data tidak ditemukan.'
