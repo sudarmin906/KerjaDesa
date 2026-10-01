@@ -183,8 +183,8 @@ async function logout(req, res) {
   return sendJson(res, 200, { success: true, message: 'Logout berhasil.' });
 }
 
-async function dashboard(req, res) {
-  const reqUser = res.__kdAuthUser || null;
+async function dashboard(req, res, auth) {
+  const reqUser = auth?.user || null;
   const resources=['desa','wilayah','rkpdes','apbdes','rab','realisasi','lpj','penduduk','kpm','blt','stunting','bumdes','koperasi','agenda','gps_points','drp','dokumen','laporan','kegiatan','monitoring','users'];
   const rows=await Promise.all(resources.map(r=>scopeRows(r,list(r),reqUser)));
   const by=Object.fromEntries(resources.map((r,i)=>[r,rows[i]]));
