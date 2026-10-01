@@ -33,13 +33,13 @@
       ['tahun','Tahun','number'],['desa','Desa','text'],['bidang','Bidang','text'],['program','Program/Kegiatan','text'],['prioritas','Prioritas','select:TINGGI|SEDANG|RENDAH'],['pagu','Pagu Indikatif','number'],['status','Status','select:DRAFT|DIBAHAS|DITETAPKAN|SELESAI'],['catatan','Catatan','textarea']
     ],
     apbdes:[
-      ['tahun','Tahun Anggaran','number'],['desa','Desa','text'],['kode_rekening','Kode Rekening','text'],['bidang','Bidang','text'],['program','Program/Kegiatan','text'],['sumber_dana','Sumber Dana','text'],['pagu','Pagu/Anggaran','number'],['realisasi','Realisasi','number'],['progres_fisik','Progres Fisik %','number'],['status','Status','select:RENCANA|BERJALAN|SELESAI|TERTUNDA'],['keterangan','Keterangan','textarea']
+      ['tahun','Tahun Anggaran','number'],['desa','Desa','text'],['kode_rekening','Kode Rekening','text'],['bidang','Bidang','text'],['program','Program/Kegiatan','text'],['sumber_dana','Sumber Dana','text'],['rkpdes_id','RKPDes ID','text'],['kegiatan_id','Kegiatan ID','text'],['pagu','Pagu/Anggaran','number'],['realisasi','Realisasi','number'],['progres_fisik','Progres Fisik %','number'],['status','Status','select:RENCANA|BERJALAN|SELESAI|TERTUNDA'],['keterangan','Keterangan','textarea']
     ],
     rab:[
-      ['tahun','Tahun','number'],['desa','Desa','text'],['apbdes_id','APBDes ID','text'],['kegiatan','Kegiatan','text'],['uraian','Uraian Pekerjaan/Barang','textarea'],['volume','Volume','number'],['satuan','Satuan','text'],['harga_satuan','Harga Satuan','number'],['jumlah','Jumlah','number'],['status','Status','select:DRAFT|DIPERIKSA|DISETUJUI']
+      ['tahun','Tahun','number'],['desa','Desa','text'],['apbdes_id','APBDes ID','text'],['kegiatan_id','Kegiatan ID','text'],['kegiatan','Kegiatan','text'],['uraian','Uraian Pekerjaan/Barang','textarea'],['volume','Volume','number'],['satuan','Satuan','text'],['harga_satuan','Harga Satuan','number'],['jumlah','Jumlah','number'],['status','Status','select:DRAFT|DIPERIKSA|DISETUJUI']
     ],
     realisasi:[
-      ['tanggal','Tanggal','date'],['desa','Desa','text'],['apbdes_id','APBDes ID','text'],['kegiatan','Kegiatan','text'],['sumber_dana','Sumber Dana','text'],['nilai','Nilai Realisasi','number'],['progres_fisik','Progres Fisik %','number'],['progres_keuangan','Progres Keuangan %','number'],['status','Status Monev','select:BERJALAN|SELESAI|TERTUNDA|PERLU_TINDAK_LANJUT'],['temuan','Temuan','textarea'],['tindak_lanjut','Tindak Lanjut','textarea']
+      ['tanggal','Tanggal','date'],['desa','Desa','text'],['apbdes_id','APBDes ID','text'],['kegiatan_id','Kegiatan ID','text'],['kegiatan','Kegiatan','text'],['sumber_dana','Sumber Dana','text'],['nilai','Nilai Realisasi','number'],['progres_fisik','Progres Fisik %','number'],['progres_keuangan','Progres Keuangan %','number'],['status','Status Monev','select:BERJALAN|SELESAI|TERTUNDA|PERLU_TINDAK_LANJUT'],['temuan','Temuan','textarea'],['tindak_lanjut','Tindak Lanjut','textarea']
     ],
     lpj:[
       ['tahun','Tahun','number'],['desa','Desa','text'],['periode','Periode','text'],['kegiatan','Kegiatan','text'],['nilai','Nilai LPJ','number'],['status','Status','select:DRAFT|DIPERIKSA|DISETUJUI|PERLU_PERBAIKAN'],['catatan','Catatan','textarea']
@@ -72,7 +72,7 @@
       ['desa','Desa','text'],['kategori','Kategori','select:RPJMDes|RKPDes|APBDes|RAB|REALISASI|LPJ|BA|SURAT|MONEV_DD|BUMDes|KOPERASI|LAINNYA'],['judul','Judul Dokumen','text'],['tahun','Tahun','number'],['nomor','Nomor Dokumen','text'],['status','Status','select:DRAFT|AKTIF|ARSIP'],['catatan','Catatan','textarea']
     ],
     drp:[
-      ['tanggal','Tanggal','date'],['desa','Desa','text'],['kegiatan','Kegiatan','text'],['tujuan','Tujuan Kunjungan','textarea'],['hasil','Hasil Kunjungan','textarea'],['masalah','Masalah/Temuan','textarea'],['tindak_lanjut','Tindak Lanjut','textarea'],['rekomendasi','Rekomendasi','textarea'],['status','Status','select:DRAFT|DIPERIKSA|DISETUJUI']
+      ['tanggal','Tanggal','date'],['desa','Desa','text'],['kegiatan_id','Kegiatan ID','text'],['kegiatan','Kegiatan','text'],['tujuan','Tujuan Kunjungan','textarea'],['hasil','Hasil Kunjungan','textarea'],['masalah','Masalah/Temuan','textarea'],['tindak_lanjut','Tindak Lanjut','textarea'],['rekomendasi','Rekomendasi','textarea'],['status','Status','select:DRAFT|DIPERIKSA|DISETUJUI']
     ]
   };
   function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
