@@ -59,8 +59,8 @@ jobs:
           html = Path("index.html").read_text(encoding="utf-8")
           refs = set()
           for pattern in (
-              r'href=["'\']([^"'\']+)["'\']',
-              r'src=["'\']([^"'\']+)["'\']',
+              r"""href=["'\"]([^"'\"]+)["'\"]""",
+              r"""src=["'\"]([^"'\"]+)["'\"]""",
           ):
               refs.update(re.findall(pattern, html, flags=re.I))
           missing = []
