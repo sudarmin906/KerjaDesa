@@ -947,14 +947,40 @@ function kdRestore(input){
 }
 async function kdLogout(){
   if(!confirm('Keluar dari KerjaDesa pada perangkat ini?'))return;
+
   const token=localStorage.getItem('kd_auth_token');
-  if(token){try{await fetch((window.KERJADESA_API_BASE||'/api')+'/auth/logout',{method:'POST',headers:{Authorization:'Bearer '+token}})}catch(e){}}
-  localStorage.removeItem('kd_login');
-  localStorage.removeItem('kd_auth_token');
-  localStorage.removeItem('kd_user');
-  document.getElementById('app').style.display='none';
-  document.getElementById('nav').classList.add('hide');
-  document.getElementById('login').style.display='';
+
+  // Hapus sesi lokal lebih dulu agar tombol Keluar selalu responsif,
+  // termasuk saat server/API sedang lambat atau tidak tersedia.
+  try{
+    localStorage.removeItem('kd_login');
+    localStorage.removeItem('kd_auth_token');
+    localStorage.removeItem('kd_user');
+  }catch(e){console.warn('Pembersihan sesi lokal gagal.',e)}
+
+  try{kdToggleAccountMenu(false)}catch(e){}
+
+  // Tampilkan halaman login segera; UI tidak menunggu request server.
+  const app=document.getElementById('app');
+  const nav=document.getElementById('nav');
+  const login=document.getElementById('login');
+  if(app)app.style.display='none';
+  if(nav)nav.classList.add('hide');
+  if(login)login.style.display='';
+
+  // Invalidasi sesi server di latar belakang dengan timeout.
+  if(token){
+    try{
+      const controller=new AbortController();
+      const timer=setTimeout(()=>controller.abort(),2500);
+      fetch((window.KERJADESA_API_BASE||'/api')+'/auth/logout',{
+        method:'POST',
+        headers:{Authorization:'Bearer '+token},
+        signal:controller.signal,
+        keepalive:true
+      }).catch(()=>{}).finally(()=>clearTimeout(timer));
+    }catch(e){}
+  }
 }
 async function kdLoadServerDashboard(){
   if(!window.KerjaDesaAPI||!localStorage.getItem('kd_auth_token')||!navigator.onLine){
