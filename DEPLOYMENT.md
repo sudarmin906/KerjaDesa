@@ -145,3 +145,39 @@ Neon menyediakan Free Postgres dengan scale-to-zero dan batas penyimpanan 0.5 GB
 Setelah deploy, Render memberikan URL `onrender.com` dengan HTTPS. Tidak perlu membeli domain untuk tahap uji.
 
 Untuk data penting jangka panjang, jangan menganggap tier gratis sebagai backup production.
+
+## Jalur gratis: GitHub Pages + Render + PostgreSQL
+
+Untuk mulai online tanpa VPS/domain:
+
+### A. PostgreSQL gratis
+Buat database PostgreSQL pada provider managed PostgreSQL yang menyediakan free tier, misalnya Neon.
+Ambil connection string `postgresql://...`.
+
+### B. API gratis di Render
+Repository sudah menyediakan `render.yaml`.
+
+Di Render:
+1. New Blueprint / Web Service dari repository ini.
+2. Pilih `render.yaml`.
+3. Isi `ADMIN_PASSWORD`.
+4. Isi `DATABASE_URL` dengan connection string PostgreSQL.
+5. Setelah API aktif, catat URL HTTPS API, misalnya `https://kerjadesa-api.onrender.com`.
+6. Set `CORS_ORIGIN` sementara ke URL GitHub Pages.
+
+Render free service dapat sleep saat tidak digunakan; request berikutnya dapat memerlukan waktu startup.
+
+### C. Frontend gratis di GitHub Pages
+Aktifkan GitHub Pages untuk repository dan pilih GitHub Actions sebagai source.
+
+Tambahkan Repository Variable:
+`KERJADESA_API_BASE=https://URL-API-ANDA/api`
+
+Workflow `.github/workflows/pages.yml` akan memasukkan URL tersebut saat build dan menerbitkan frontend.
+
+Setelah GitHub Pages aktif, salin URL Pages ke `CORS_ORIGIN` pada API Render lalu redeploy.
+
+### Catatan data
+Gunakan PostgreSQL managed sebagai penyimpanan utama. Jangan mengandalkan filesystem Render untuk data production karena service free dapat dihentikan/dibuat ulang.
+
+Jalur gratis ini cocok untuk uji online awal. VPS + domain + Caddy tetap menjadi jalur production penuh.
