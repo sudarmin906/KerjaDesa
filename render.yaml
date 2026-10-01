@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: kerjadesa-pro
+    runtime: docker
+    plan: free
+    dockerfilePath: ./deploy/Dockerfile.render
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 3000
+      - key: ADMIN_PASSWORD
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGIN
+        value: ""
+      - key: PG_POOL_MAX
+        value: "5"
