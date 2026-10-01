@@ -1,0 +1,14 @@
+FROM node:22-alpine
+WORKDIR /app/backend
+COPY backend/package*.json ./
+RUN npm install --omit=dev --no-audit --no-fund
+COPY backend/ ./
+COPY index.html /app/index.html
+COPY css /app/css
+COPY js /app/js
+COPY manifest.json /app/manifest.json
+COPY sw.js /app/sw.js
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+EXPOSE 3000
+CMD ["npm","start"]
