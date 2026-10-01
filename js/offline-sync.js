@@ -26,6 +26,16 @@
     q[i]=Object.assign({},q[i],patch,{updatedAt:now()});writeQueue(q);return q[i]
   }
   function remove(id){writeQueue(readQueue().filter(x=>x.id!==id));renderStatus()}
+  function remapQueuedReferences(resource,localId,serverId){
+    if(!serverId)return;
+    const q=readQueue();let changed=false;
+    q.forEach(x=>{
+      if(x.id && x.resource===resource && String(x.localId)===String(localId) && x.operation!=='CREATE' && String(x.serverId||'')!==String(serverId)){
+        x.serverId=serverId;x.updatedAt=now();changed=true;
+      }
+    });
+    if(changed)writeQueue(q);
+  }
   function pending(){return readQueue().filter(x=>['PENDING','FAILED'].includes(x.status))}
   function backoff(attempts){return Math.min(30000,1000*Math.pow(2,Math.max(0,attempts-1)))}
 
@@ -50,7 +60,10 @@
         else throw new Error('Operasi sinkronisasi tidak dikenal.');
         const server=result.data||null;
         mark(item.id,{status:'SYNCED',serverId:server?.id||item.serverId||item.localId,lastError:'',syncedAt:now()});
-        if(server&&window.KerjaDesaOfflineSync?.applyServerRecord) window.KerjaDesaOfflineSync.applyServerRecord(item.resource,item.localId,server);
+        if(server){
+          remapQueuedReferences(item.resource,item.localId,server.id);
+          if(window.KerjaDesaOfflineSync?.applyServerRecord) window.KerjaDesaOfflineSync.applyServerRecord(item.resource,item.localId,server);
+        }
         processed++;
       }catch(error){
         if(error.status===409){
