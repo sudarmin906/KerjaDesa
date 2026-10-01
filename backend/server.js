@@ -10,9 +10,12 @@ const HOST = process.env.HOST || '0.0.0.0';
 const ALLOWED_METHODS = 'GET,POST,PATCH,DELETE,OPTIONS';
 const ALLOWED_HEADERS = 'Content-Type, Authorization';
 
-function cors(res) {
-  const origin = process.env.CORS_ORIGIN || '*';
-  res.setHeader('Access-Control-Allow-Origin', origin);
+function cors(req, res) {
+  const configured = String(process.env.CORS_ORIGIN || '').split(',').map(x => x.trim()).filter(Boolean);
+  const requestOrigin = req.headers.origin || '';
+  const allow = configured.length ? (configured.includes(requestOrigin) ? requestOrigin : '') : '*';
+  if (allow) res.setHeader('Access-Control-Allow-Origin', allow);
+  if (requestOrigin && allow) res.setHeader('Vary', 'Origin');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -23,7 +26,7 @@ function cors(res) {
 }
 
 async function route(req, res) {
-  cors(res);
+  cors(req, res);
   if (req.method === 'OPTIONS') {
     res.statusCode = 204;
     return res.end();
