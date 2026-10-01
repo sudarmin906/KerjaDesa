@@ -1,13 +1,5 @@
 const crypto = require('crypto');
-const {
-  readStore,
-  writeStore,
-  list,
-  get,
-  create,
-  update,
-  remove
-} = require('../database/jsonStore');
+const { usingPostgres, list, get, findByField, create, update, remove, count } = require('../database/store');
 const { writeAudit, listAudit } = require('../middleware/audit');
 const {
   issueSession,
@@ -86,11 +78,9 @@ function verifyPassword(password, stored) {
   return crypto.timingSafeEqual(Buffer.from(actual, 'hex'), Buffer.from(expected, 'hex'));
 }
 
-function seedAdmin() {
-  const store = readStore();
-  if (!store.users.length) {
-    store.users.push({
-      id: 1,
+async function seedAdmin() {
+  if (!(await count('users'))) {
+    await create('users', {
       nama_lengkap: 'Administrator KerjaDesa',
       username: 'admin',
       password_hash: hashPassword(process.env.ADMIN_PASSWORD || 'admin123'),
@@ -100,7 +90,6 @@ function seedAdmin() {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     });
-    writeStore(store);
   }
 }
 
@@ -121,7 +110,7 @@ async function login(req, res) {
     const password = String(body.password || '');
     const key = username.toLowerCase() || 'anonymous';
     if (!loginAllowed(key)) return sendJson(res, 429, { success: false, message: 'Terlalu banyak percobaan login. Coba lagi beberapa menit.' });
-    const user = list('users').find(item => item.username === username && item.status !== 'INACTIVE');
+    const user = await findByField('users', 'username', username);
 
     if (!user || !verifyPassword(password, user.password_hash)) {
       recordLoginFailure(key);
@@ -150,22 +139,24 @@ function logout(req, res) {
   return sendJson(res, 200, { success: true, message: 'Logout berhasil.' });
 }
 
-function dashboard(req, res) {
-  const store = readStore();
-  const kegiatanSelesai = store.kegiatan.filter(x => String(x.status || '').toUpperCase() === 'SELESAI').length;
-  const monitoringProgres = store.monitoring.length ? Math.round(store.monitoring.reduce((a,x) => a + Number(x.progres || 0), 0) / store.monitoring.length) : 0;
+async function dashboard(req, res) {
+  const [desaCount,kegiatanCount,monitoringCount,dokumenCount,laporanCount,usersCount,auditRows,kegiatanRows,monitoringRows] = await Promise.all([
+    count('desa'), count('kegiatan'), count('monitoring'), count('dokumen'), count('laporan'), count('users'), list('audit_log'), list('kegiatan'), list('monitoring')
+  ]);
+  const kegiatanSelesai = kegiatanRows.filter(x => String(x.status || '').toUpperCase() === 'SELESAI').length;
+  const monitoringProgres = monitoringRows.length ? Math.round(monitoringRows.reduce((a,x) => a + Number(x.progres || 0), 0) / monitoringRows.length) : 0;
   return sendJson(res, 200, {
     success: true,
     data: {
-      desa: store.desa.length,
-      kegiatan: store.kegiatan.length,
-      monitoring: store.monitoring.length,
-      dokumen: store.dokumen.length,
-      laporan: store.laporan.length,
-      users: store.users.length,
+      desa: desaCount,
+      kegiatan: kegiatanCount,
+      monitoring: monitoringCount,
+      dokumen: dokumenCount,
+      laporan: laporanCount,
+      users: usersCount,
       kegiatan_selesai: kegiatanSelesai,
       rata_rata_progres: monitoringProgres,
-      audit_log: (store.audit_log || []).length
+      audit_log: auditRows.length
     }
   });
 }
@@ -181,12 +172,12 @@ async function resourceHandler(req, res, resource, id, method, auth) {
 
   if (method === 'GET') {
     if (id) {
-      const item = get(resource, id);
+      const item = await get(resource, id);
       return item
         ? sendJson(res, 200, { success: true, data: item })
         : sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
     }
-    return sendJson(res, 200, { success: true, data: resource === 'audit_log' ? listAudit(200) : list(resource) });
+    return sendJson(res, 200, { success: true, data: resource === 'audit_log' ? await listAudit(200) : await list(resource) });
   }
 
   if (method === 'POST') {
@@ -196,7 +187,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
       if (!username || !body.password) {
         return sendJson(res, 422, { success: false, message: 'Username dan password wajib diisi.' });
       }
-      if (list('users').some(item => item.username === username)) {
+      if (await findByField('users', 'username', username)) {
         return sendJson(res, 409, { success: false, message: 'Username sudah digunakan.' });
       }
       const item = create('users', {
@@ -223,7 +214,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
       delete body.password;
     }
     delete body.id;
-    const current = get(resource, id);
+    const current = await get(resource, id);
     if (!current) return sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
     if (body.base_version !== undefined && Number(body.base_version) !== Number(current.version || 1)) {
       return sendJson(res, 409, {
@@ -236,7 +227,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
       });
     }
     delete body.base_version;
-    const item = update(resource, id, body);
+    const item = await update(resource, id, body);
     if (item) writeAudit({ user: auth.user, action: 'UPDATE', resource, recordId: item.id });
     return item
       ? sendJson(res, 200, { success: true, data: resource === 'users' ? publicUser(item) : item })
@@ -244,7 +235,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
   }
 
   if (method === 'DELETE' && id) {
-    const ok = remove(resource, id);
+    const ok = await remove(resource, id);
     if (ok) writeAudit({ user: auth.user, action: 'DELETE', resource, recordId: id });
     return sendJson(res, ok ? 200 : 404, {
       success: ok,
@@ -254,8 +245,6 @@ async function resourceHandler(req, res, resource, id, method, auth) {
 
   return sendJson(res, 405, { success: false, message: 'Method tidak didukung.' });
 }
-
-seedAdmin();
 
 module.exports = {
   login,
