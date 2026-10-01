@@ -207,6 +207,53 @@ async function dashboard(req, res, auth) {
   }});
 }
 
+async function validateFinanceReferences(resource, payload, user) {
+  const refs = [
+    ['apbdes_id','apbdes'],
+    ['rab_id','rab'],
+    ['kegiatan_id','kegiatan'],
+    ['rkpdes_id','rkpdes']
+  ];
+  for (const [field, target] of refs) {
+    const id = payload?.[field];
+    if (!id) continue;
+    const row = await get(target, id);
+    if (!row) {
+      const err = new Error('Referensi '+field+' tidak ditemukan.');
+      err.statusCode = 422;
+      throw err;
+    }
+    if (!canAccessVillage(target, row, user) || (payload.desa && itemVillage(row) && itemVillage(row) !== String(payload.desa).trim().toLowerCase())) {
+      const err = new Error('Referensi '+field+' harus berasal dari desa yang sama.');
+      err.statusCode = 422;
+      throw err;
+    }
+  }
+}
+
+function normalizeFinancePayload(resource, payload) {
+  const out = { ...payload };
+  if (resource === 'rab') {
+    out.jumlah = Number(out.volume || 0) * Number(out.harga_satuan || 0);
+  }
+  return out;
+}
+
+async function syncApbdesRealization(apbdesId) {
+  if (!apbdesId) return;
+  const apb = await get('apbdes', apbdesId);
+  if (!apb) return;
+  const rows = await list('realisasi');
+  const total = rows
+    .filter(x => String(x.apbdes_id || '') === String(apbdesId))
+    .reduce((sum, x) => sum + Number(x.nilai || 0), 0);
+  const pagu = Number(apb.pagu || 0);
+  const progress = pagu > 0 ? Math.min(100, Math.round(total / pagu * 100)) : 0;
+  if (Number(apb.realisasi || 0) !== total || Number(apb.progres_keuangan || 0) !== progress) {
+    await update('apbdes', apbdesId, { realisasi: total, progres_keuangan: progress });
+  }
+}
+
 async function resourceHandler(req, res, resource, id, method, auth) {
   const rules = RESOURCE_RULES[resource];
   if (!rules) return sendJson(res, 404, { success: false, message: 'Resource tidak tersedia.' });
@@ -248,12 +295,18 @@ async function resourceHandler(req, res, resource, id, method, auth) {
       return sendJson(res, 201, { success: true, data: publicUser(item) });
     }
 
-    const payload = normalizeResourcePayload(resource, body, auth.user);
+    let payload = normalizeResourcePayload(resource, body, auth.user);
+    payload = normalizeFinancePayload(resource, payload);
+    if (['rkpdes','apbdes','rab','realisasi','lpj'].includes(resource)) {
+      try { await validateFinanceReferences(resource, payload, auth.user); }
+      catch (error) { return sendJson(res, error.statusCode || 422, { success: false, message: error.message }); }
+    }
     if (VILLAGE_SCOPED_RESOURCES.has(resource) && userVillages(auth.user).length) {
       if (payload.desa && !userVillages(auth.user).includes(String(payload.desa).trim().toLowerCase())) return sendJson(res, 403, { success: false, message: 'Data hanya boleh dibuat untuk desa yang menjadi kewenangan akun.' });
       if (!payload.desa) payload.desa = auth.user.desa;
     }
     const item = await create(resource, payload);
+    if (resource === 'realisasi' && item.apbdes_id) await syncApbdesRealization(item.apbdes_id);
     await writeAudit({ user: auth.user, action: 'CREATE', resource, recordId: item.id });
     return sendJson(res, 201, { success: true, data: resource === 'users' ? publicUser(item) : item });
   }
@@ -278,8 +331,17 @@ async function resourceHandler(req, res, resource, id, method, auth) {
       });
     }
     delete body.base_version;
-    if (VILLAGE_SCOPED_RESOURCES.has(resource) && userVillages(auth.user).length && body.desa && !userVillages(auth.user).includes(String(body.desa).trim().toLowerCase())) return sendJson(res, 403, { success: false, message: 'Data hanya boleh dipindahkan ke desa yang menjadi kewenangan akun.' });
-    const item = await update(resource, id, body);
+    const normalizedBody = normalizeFinancePayload(resource, body);
+    if (['rkpdes','apbdes','rab','realisasi','lpj'].includes(resource)) {
+      try { await validateFinanceReferences(resource, normalizedBody, auth.user); }
+      catch (error) { return sendJson(res, error.statusCode || 422, { success: false, message: error.message }); }
+    }
+    if (VILLAGE_SCOPED_RESOURCES.has(resource) && userVillages(auth.user).length && normalizedBody.desa && !userVillages(auth.user).includes(String(normalizedBody.desa).trim().toLowerCase())) return sendJson(res, 403, { success: false, message: 'Data hanya boleh dipindahkan ke desa yang menjadi kewenangan akun.' });
+    const item = await update(resource, id, normalizedBody);
+    if (item && resource === 'realisasi') {
+      if (current.apbdes_id) await syncApbdesRealization(current.apbdes_id);
+      if (item.apbdes_id && String(item.apbdes_id) !== String(current.apbdes_id || '')) await syncApbdesRealization(item.apbdes_id);
+    }
     if (item) await writeAudit({ user: auth.user, action: 'UPDATE', resource, recordId: item.id });
     return item
       ? sendJson(res, 200, { success: true, data: resource === 'users' ? publicUser(item) : item })
@@ -290,6 +352,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
     const current = await get(resource, id);
     if (!current || !canAccessVillage(resource, current, auth.user)) return sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
     const ok = await remove(resource, id);
+    if (ok && resource === 'realisasi' && current.apbdes_id) await syncApbdesRealization(current.apbdes_id);
     if (ok) await writeAudit({ user: auth.user, action: 'DELETE', resource, recordId: id });
     return sendJson(res, ok ? 200 : 404, {
       success: ok,
