@@ -2,3 +2,12 @@
 // Keep the default /api for same-origin deployment.
 // For a separately hosted API, replace the value with the API origin ending in /api.
 window.KERJADESA_API_BASE = window.KERJADESA_API_BASE || '/api';
+
+// Load the integrated domain workspace without replacing the existing application.
+(function(){
+  var s=document.createElement('script');
+  s.src='./js/integrated-domain-modules.js';
+  s.defer=true;
+  s.dataset.kerjadesaIntegrated='1';
+  document.head.appendChild(s);
+})();
