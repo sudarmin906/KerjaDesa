@@ -24,14 +24,14 @@
 
   function buildAllActivityDocumentation(allActs){
     const cells = allActs.map((act, idx)=>{
-      const photos = (window.activityPhotos||[]).filter(p=>
+      const photos = ((typeof activityPhotos!=='undefined')?activityPhotos:[]).filter(p=>
         p.matchedActivityIndex===idx ||
-        (p.matchedActivityIndex==null && p.date && window.sameDayMonth && window.sameDayMonth(p.date,act.tanggal))
+        (p.matchedActivityIndex==null && p.date && ((typeof sameDayMonth==='function')?sameDayMonth(p.date,act.tanggal):false))
       );
       const photoHtml = photos.length
         ? photos.map(p=>'<div class="master-doc-photo"><img src="'+p.url+'" alt="Dokumentasi"></div>').join('')
         : '<div class="master-doc-empty">Foto dokumentasi belum tersedia untuk kegiatan ini.</div>';
-      const village = window.locationVillage?window.locationVillage(act.lokasi):String(act.lokasi||'-');
+      const village = (typeof locationVillage==='function'?locationVillage(act.lokasi):String(act.lokasi||'-'));
       const date = act.tanggal ? dLong(act.tanggal) : '-';
       const activity = String(act.deskripsi||act.judul||'-').replace(/\s+/g,' ').trim();
       return '<td class="master-doc-cell"><div class="master-doc-info"><div>Lokasi: <b>'+esc2(village)+'</b></div><div>Tanggal: <b>'+esc2(date)+'</b></div><div>Kegiatan: <b>'+esc2(activity)+'</b></div></div><div class="master-doc-photos">'+photoHtml+'</div></td>';
@@ -42,12 +42,12 @@
   }
 
   window.renderReportFromNarratives = function(nar){
-    const c=window.reportContext;
+    const c=(typeof reportContext!=='undefined')?reportContext:null;
     if(!c)return;
     const {nama,posisi,nik,jabatan,kec,kab,prov,month,year,acts}=c;
     const allActs=safeArr(c.allActs).length?safeArr(c.allActs):safeArr(acts);
     const signDate=allActs.length?dLong(allActs[allActs.length-1].tanggal):('30 '+month+' '+year);
-    const logo=window.logoPhoto?'<img class="cover-logo" src="'+window.logoPhoto+'" alt="Logo Kemendesa">':'<div class="cover-logo placeholder">LOGO KEMENDESA PDT</div>';
+    const lp=(typeof logoPhoto!=='undefined')?logoPhoto:''; const logo=lp?'<img class="cover-logo" src="'+lp+'" alt="Logo Kemendesa">':'<div class="cover-logo placeholder">LOGO KEMENDESA PDT</div>';
 
     // COVER: original master is A4 LANDSCAPE.
     const cover='<section class="'+reportPageClass('landscape')+' master-cover"><div class="cover-head">'+
@@ -72,8 +72,8 @@
       '<tr><td>Jabatan</td><td>: '+esc2(jabatan)+'</td></tr></table>'+
       '<h3>B. Waktu Pelaksanaan Kunjungan Lapangan</h3>'+
       '<table class="wide-table"><thead><tr><th>Hari ke</th><th>Waktu (Tgl/Bln/Thn)</th><th colspan="2">Lokasi Kunjungan</th></tr><tr><th></th><th></th><th>Kecamatan</th><th>Desa</th></tr></thead><tbody>'+
-      (window.buildVisitDays?window.buildVisitDays(acts):'')+
-      '</tbody><tfoot><tr><th colspan="4">Total Hari Kunjungan Lapangan Bulan '+esc2(month)+' Tahun '+esc2(year)+' : '+(window.uniqueVisitDays?window.uniqueVisitDays(acts):acts.length)+' Hari</th></tr></tfoot></table></section>';
+      ((typeof buildVisitDays==='function'?buildVisitDays(acts):''))+
+      '</tbody><tfoot><tr><th colspan="4">Total Hari Kunjungan Lapangan Bulan '+esc2(month)+' Tahun '+esc2(year)+' : '+((typeof uniqueVisitDays==='function'?uniqueVisitDays(acts):acts.length))+' Hari</th></tr></tfoot></table></section>';
 
     // C: original master is A4 PORTRAIT and starts on a new page.
     const csec='<section class="'+reportPageClass('portrait')+'"><h3>C. Tujuan Kunjungan Lapangan</h3>'+
@@ -83,7 +83,7 @@
     // D: original master is A4 LANDSCAPE because the table is wide.
     const dsec='<section class="'+reportPageClass('landscape')+'"><h3>D. Hasil Kunjungan Lapangan</h3>'+
       '<table class="result-table"><thead><tr><th>No</th><th>Tanggal</th><th>Desa</th><th>Kegiatan</th></tr></thead><tbody>'+
-      (window.buildVisitRows?window.buildVisitRows(acts):'')+
+      ((typeof buildVisitRows==='function'?buildVisitRows(acts):''))+
       '</tbody></table>'+
       '<p><b>Hasil kunjungan lapangan menunjukkan beberapa capaian dan temuan sebagai berikut:</b></p>'+
       '<ol>'+safeArr(nar?.hasil).map(x=>'<li>'+esc2(x)+'</li>').join('')+'</ol></section>';
@@ -106,11 +106,11 @@
     const h=buildAllActivityRecap(allActs,month,year);
 
     const html='<div class="print-report">'+cover+ident+csec+dsec+ef+g+h+'</div>';
-    window.reportHtml=html;
+    reportHtml=html;
     const rp=document.getElementById('reportPrint'); if(rp)rp.innerHTML=html;
     const dr=document.getElementById('docResult2'); if(dr)dr.innerHTML='<div class="card no-print"><h3>Pratinjau Laporan Sesuai Format Master</h3>'+html+'</div>';
     const ra=document.getElementById('reportActions'); if(ra)ra.classList.remove('hide');
-    window.reportText=rp?rp.innerText:'';
+    reportText=rp?rp.innerText:'';
     if(typeof window.page==='function')window.page('laporan');
     window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
   };
