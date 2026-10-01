@@ -181,6 +181,11 @@
       "id": "free-cloud-deploy-v41",
       "name": "Free cloud deployment blueprint with Render and Neon",
       "status": "implemented"
+    },
+    {
+      "id": "railway-production-v41",
+      "name": "Railway single-service production deployment with managed PostgreSQL",
+      "status": "implemented"
     }
   ]
 }
