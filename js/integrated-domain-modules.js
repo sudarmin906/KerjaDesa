@@ -139,19 +139,21 @@
     const r=state.resource,p={};
     document.querySelectorAll('[data-kd-field]').forEach(el=>{p[el.dataset.kdField]=el.value});
     const id=state.editing?.id;
+    const isLocalId=id && String(id).startsWith('local-');
     try{
       let out;
-      if(id&&API()&&localStorage.getItem('kd_auth_token')&&navigator.onLine)out=await API().update(r,id,p);
-      else if(!id&&API()&&localStorage.getItem('kd_auth_token')&&navigator.onLine)out=await API().create(r,p);
+      if(id&&!isLocalId&&API()&&localStorage.getItem('kd_auth_token')&&navigator.onLine)out=await API().update(r,id,p);
+      else if((!id||isLocalId)&&API()&&localStorage.getItem('kd_auth_token')&&navigator.onLine)out=await API().create(r,p);
       const item=out?.data||Object.assign({id:id||('local-'+Date.now()),updated_at:new Date().toISOString()},p);
       localUpsert(r,item);
-      if(!out)queue(id?'UPDATE':'CREATE',r,p,item.id);
+      if(!out)queue(id&&!isLocalId?'UPDATE':'CREATE',r,p,item.id);
       else setCacheRows(r,state.rows=cacheRows(r).map(x=>String(x.id)===String(item.id)?item:x));
       state.editing=null;state.rows=cacheRows(r);render();
       toast('Data '+(id?'diperbarui':'ditambahkan')+'.');
     }catch(e){
       const item=Object.assign({id:id||('local-'+Date.now()),updated_at:new Date().toISOString()},p);
-      localUpsert(r,item);queue(id?'UPDATE':'CREATE',r,p,item.id);state.editing=null;state.rows=cacheRows(r);render();toast('Tersimpan offline; akan disinkronkan saat online.');
+      const localId=String(item.id).startsWith('local-');
+      localUpsert(r,item);queue(id&&!localId?'UPDATE':'CREATE',r,p,item.id);state.editing=null;state.rows=cacheRows(r);render();toast('Tersimpan offline; akan disinkronkan saat online.');
     }
   }
   async function del(id){
@@ -164,6 +166,11 @@
   function toast(msg){const el=document.getElementById('kdDomainToast');if(el){el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200)}}
   function mount(){
     if(document.getElementById('kdIntegratedWorkspace'))return;
+    if(!document.getElementById('kd-integrated-domain-css')){
+      const st=document.createElement('style'); st.id='kd-integrated-domain-css';
+      st.textContent='.kd-domain-nav{display:grid;gap:10px;margin:12px 0}.kd-domain-group{padding:10px;border:1px solid #e1e8eb;border-radius:14px;background:#f9fcfd}.kd-domain-group>b{display:block;margin-bottom:7px}.kd-domain-group button{width:auto;margin:3px;padding:9px 12px;font-size:12px}.kd-domain-group button.active{box-shadow:0 0 0 2px #0f766e inset}.kd-domain-form{background:#fbfdfd}.kd-domain-form label{display:block;font-size:12px;font-weight:700;color:#52616b}.kd-domain-form input,.kd-domain-form select,.kd-domain-form textarea{margin-top:4px}.kd-domain-toast{position:fixed;left:50%;bottom:95px;transform:translateX(-50%);background:#102a43;color:#fff;padding:10px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:.2s;z-index:100}.kd-domain-toast.show{opacity:1}.kd-domain-nav button{background:#0f766e;color:#fff}';
+      document.head.appendChild(st);
+    }
     const home=document.getElementById('home');if(!home)return;
     const box=document.createElement('div');box.id='kdIntegratedWorkspace';box.className='card';
     box.innerHTML='<div class="section-title"><div><h2 style="margin:0">🧩 Pusat Kerja Terpadu</h2><span>Perencanaan → APBDes → RAB → Realisasi/Monev → Kegiatan → Monitoring → DRP → Laporan → Arsip</span></div></div><div class="kd-domain-nav">'+groups.map(g=>'<div class="kd-domain-group"><b>'+g.icon+' '+esc(g.title)+'</b><div>'+g.items.map(x=>'<button data-kd-nav="'+x[0]+'" onclick="kdDomainOpen(\''+x[0]+'\')">'+esc(x[1])+'</button>').join('')+'</div></div>').join('')+'</div><div id="kdDomainBody"></div><div id="kdDomainToast" class="kd-domain-toast"></div>';
