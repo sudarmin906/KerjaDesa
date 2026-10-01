@@ -91,3 +91,38 @@ Caddy terminates HTTPS and proxies the request to the internal Nginx frontend. N
 
 The database remains private and is not published to the host.
 
+
+## Koyeb deployment architecture
+
+For Koyeb, deploy three components separately:
+
+### PostgreSQL
+Create a Koyeb managed PostgreSQL Database Service and use its connection string as `DATABASE_URL` for the API.
+
+### API Service
+- GitHub repository: `sudarmin906/KerjaDesa`
+- Branch: `main`
+- Builder: Dockerfile
+- Work directory: `backend`
+- Dockerfile: `Dockerfile`
+- Port: `3000/http`
+- Route: `/:3000`
+- `NODE_ENV=production`
+- `HOST=0.0.0.0`
+- `PORT=3000`
+- `ADMIN_PASSWORD=<strong secret>`
+- `DATABASE_URL=<Koyeb PostgreSQL connection string>`
+- `PG_POOL_MAX=10`
+- Health check: `GET /api/health`
+
+### Frontend Service
+- GitHub repository: `sudarmin906/KerjaDesa`
+- Branch: `main`
+- Builder: Dockerfile
+- Work directory: repository root
+- Dockerfile: `deploy/Dockerfile`
+- Port: `80/http`
+- Route: `/:80`
+- Build variable: `KERJADESA_API_BASE=https://<API-SERVICE-DOMAIN>/api`
+
+The frontend build injects the API base into `js/deployment-config.js`. Koyeb supports GitHub/Dockerfile deployments plus configurable ports, routes, and environment variables.
