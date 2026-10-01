@@ -37,7 +37,14 @@
       mark(item.id,{status:'SYNCING',attempts:item.attempts+1});
       try{
         let result;
-        if(item.operation==='CREATE') result=await api.create(item.resource,item.payload);
+        if(item.operation==='CREATE'){
+          if(item.resource==='sppd'){
+            const existingRows=(await api.get('sppd')).data||[];
+            const uid=String(item.payload?.user_id||'local');
+            const existing=existingRows.find(x=>String(x.user_id||'')===uid);
+            result=existing?await api.update('sppd',existing.id,item.payload):await api.create(item.resource,item.payload);
+          }else result=await api.create(item.resource,item.payload);
+        }
         else if(item.operation==='UPDATE') result=await api.update(item.resource,item.serverId||item.localId,item.payload);
         else if(item.operation==='DELETE'){await api.remove(item.resource,item.serverId||item.localId);result={data:null}}
         else throw new Error('Operasi sinkronisasi tidak dikenal.');
