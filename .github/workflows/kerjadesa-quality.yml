@@ -80,6 +80,14 @@ jobs:
           print("Referenced local assets OK")
           PY
 
+      - name: Validate integrated frontend JavaScript
+        shell: bash
+        run: |
+          node --check js/integrated-domain-modules.js
+          node --check js/deployment-config.js
+          test -f css/integrated-domain-modules.css
+          echo "Integrated frontend assets OK"
+
       - name: Validate backend JavaScript
         shell: bash
         run: |
