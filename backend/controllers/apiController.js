@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { usingPostgres, list, get, findByField, create, update, remove, count } = require('../database/store');
+const { list, get, findByField, create, update, remove, count } = require('../database/store');
 const { writeAudit, listAudit } = require('../middleware/audit');
 const {
   issueSession,
@@ -131,7 +131,7 @@ async function login(req, res) {
   }
 }
 
-async async function logout(req, res) {
+async function logout(req, res) {
   const auth = await require('../middleware/auth').authenticate(req);
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
   if (auth) await writeAudit({ user: auth.user, action: 'LOGOUT', resource: 'auth' });
@@ -190,7 +190,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
       if (await findByField('users', 'username', username)) {
         return sendJson(res, 409, { success: false, message: 'Username sudah digunakan.' });
       }
-      const item = create('users', {
+      const item = await create('users', {
         nama_lengkap: String(body.nama_lengkap || ''),
         username,
         password_hash: hashPassword(body.password),
@@ -202,7 +202,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
       return sendJson(res, 201, { success: true, data: publicUser(item) });
     }
 
-    const item = create(resource, normalizeResourcePayload(resource, body, auth.user));
+    const item = await create(resource, normalizeResourcePayload(resource, body, auth.user));
     await writeAudit({ user: auth.user, action: 'CREATE', resource, recordId: item.id });
     return sendJson(res, 201, { success: true, data: resource === 'users' ? publicUser(item) : item });
   }
