@@ -6,6 +6,7 @@ const { ensureDatabase } = require('./database/store');
 const { health: postgresHealth } = require('./database/postgres');
 const { authenticate, requireAuth, sendJson, csrfValid } = require('./middleware/auth');
 const { login, logout, dashboard, resourceHandler, seedAdmin } = require('./controllers/apiController');
+const { publicUser } = require('./middleware/auth');
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
@@ -134,7 +135,7 @@ async function route(req, res) {
     }
     if (req.method === 'GET' && pathName === '/api/auth/me') {
       const auth = await requireAuth(req, res);
-      return auth && sendJson(res, 200, { success: true, user: auth.user });
+      return auth && sendJson(res, 200, { success: true, user: publicUser(auth.user) });
     }
 
     const auth = await authenticate(req);
