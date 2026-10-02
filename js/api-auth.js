@@ -10,8 +10,7 @@ const KerjaDesaAuthAPI = {
     return '';
   },
   csrfToken() {
-    const match=document.cookie.match(/(?:^|; )__Host-kd_csrf=([^;]+)/) || document.cookie.match(/(?:^|; )kd_csrf=([^;]+)/);
-    return match ? decodeURIComponent(match[1]) : '';
+    return sessionStorage.getItem('kd_csrf_token') || '';
   },
 
   async login(username, password) {
@@ -26,6 +25,7 @@ const KerjaDesaAuthAPI = {
       throw new Error(data.message || 'Login gagal');
     }
     sessionStorage.removeItem('kd_auth_token');
+    sessionStorage.setItem('kd_csrf_token', data.csrf_token || '');
     sessionStorage.setItem('kd_user', JSON.stringify(data.user || {}));
     sessionStorage.setItem('kd_login', '1');
     return data;
@@ -50,6 +50,7 @@ const KerjaDesaAuthAPI = {
     } catch (_) {}
     sessionStorage.removeItem('kd_login');
     sessionStorage.removeItem('kd_auth_token');
+    sessionStorage.removeItem('kd_csrf_token');
     sessionStorage.removeItem('kd_user');
   }
 };
