@@ -167,11 +167,12 @@ async function login(req, res) {
     loginAttempts.delete(key);
     await writeAudit({ user, action: 'LOGIN', resource: 'auth' });
     const token = issueSession(user);
-    setAuthResponseCookies(res, token);
+    const csrfToken = setAuthResponseCookies(res, token);
     res.setHeader('Cache-Control','no-store');
     return sendJson(res, 200, {
       success: true,
       expires_in: 8 * 60 * 60,
+      csrf_token: csrfToken,
       user: publicUser(user)
     });
   } catch (error) {
