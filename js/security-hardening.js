@@ -6,7 +6,7 @@
   'use strict';
 
   const LEGACY_KEYS=['kd_login','kd_auth_token','kd_user'];
-  const AUTH_KEYS=['kd_login','kd_auth_token','kd_user'];
+  const AUTH_KEYS=['kd_login','kd_auth_token','kd_csrf_token','kd_user'];
   const SENSITIVE_CACHE_KEYS=['kd_sync_queue_v31','kd_sync_meta_v31','kd_domain_cache_v1'];
 
   function hasSession(){
