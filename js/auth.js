@@ -12,10 +12,15 @@ const KerjaDesaAuth = {
     return false;
   },
 
-  logout(){
-    sessionStorage.removeItem('kd_login');
-    sessionStorage.removeItem('kd_auth_token');
-    sessionStorage.removeItem('kd_user');
+  async logout(){
+    if(window.KerjaDesaAuthAPI?.logout){
+      await window.KerjaDesaAuthAPI.logout();
+    }else{
+      sessionStorage.removeItem('kd_login');
+      sessionStorage.removeItem('kd_auth_token');
+      sessionStorage.removeItem('kd_csrf_token');
+      sessionStorage.removeItem('kd_user');
+    }
     location.reload();
   },
 
