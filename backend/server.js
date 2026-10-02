@@ -177,10 +177,10 @@ async function bootstrap() {
       console.error('Seed admin database gagal; KerjaDesa beralih ke JSON store lokal:', error?.message || error);
     }
   } else {
-    // Keep the API available when a managed deployment has not supplied an
-    // API admin secret yet. The frontend has its separate local/offline login;
-    // API authentication can be enabled by adding ADMIN_PASSWORD later.
-    console.warn('ADMIN_PASSWORD belum disetel; seed admin API dilewati.');
+    if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
+      throw new Error('ADMIN_PASSWORD wajib disetel pada production.');
+    }
+    console.warn('ADMIN_PASSWORD belum disetel; seed admin API dilewati (development).');
   }
   server.listen(PORT, HOST, () => {
     console.log('KerjaDesa Pro API/Web running at http://' + HOST + ':' + PORT);
