@@ -470,7 +470,7 @@ function kdApplyContentSettings(input){
   const title=s.welcomeTitle||'Selamat Datang di KerjaDesa',desc=s.welcomeText||'Ruang kerja digital untuk mengelola kegiatan, monitoring lapangan, dokumen, laporan bulanan, dan SPPD Pendamping Desa.';
   const brand=document.querySelector('.kd-logo-text');if(brand)brand.textContent=name;
   document.title=name+' — Sistem Kerja Pendamping Desa';
-  const tag=document.querySelector('#home .welcome-copy .tag');if(tag)tag.textContent=tagline;
+  const tagEl=document.querySelector('#home .welcome-copy .tag');if(tagEl)tagEl.textContent=tagline;
   const wt=document.querySelector('#home .welcome-copy h2');if(wt)wt.textContent=title;
   const wp=document.querySelector('#home .welcome-copy p');if(wp)wp.textContent=desc;
   const pusat=document.querySelector('#home .kd-data-center + .card'); 
