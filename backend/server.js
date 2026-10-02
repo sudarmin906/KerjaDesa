@@ -5,7 +5,7 @@ const { URL } = require('url');
 const { ensureDatabase } = require('./database/store');
 const { health: postgresHealth } = require('./database/postgres');
 const { authenticate, requireAuth, sendJson, csrfValid } = require('./middleware/auth');
-const { login, logout, dashboard, resourceHandler, seedAdmin } = require('./controllers/apiController');
+const { login, bootstrapAdmin, logout, dashboard, resourceHandler, seedAdmin } = require('./controllers/apiController');
 const { publicUser } = require('./middleware/auth');
 
 const PORT = Number(process.env.PORT || 3000);
@@ -138,6 +138,7 @@ async function route(req, res) {
       });
     }
 
+    if (req.method === 'POST' && pathName === '/api/auth/bootstrap') return bootstrapAdmin(req, res);
     if (req.method === 'POST' && pathName === '/api/auth/login') return login(req, res);
     if (req.method === 'POST' && pathName === '/api/auth/logout') {
       if (!csrfValid(req)) return sendJson(res, 403, { success: false, message: 'CSRF token tidak valid.' });
@@ -183,11 +184,10 @@ async function bootstrap() {
   await ensureDatabase();
   if (process.env.ADMIN_PASSWORD) {
     await seedAdmin();
-  } else {
-    if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
-      throw new Error('ADMIN_PASSWORD wajib disetel pada production.');
-    }
-    console.warn('ADMIN_PASSWORD belum disetel; seed admin API dilewati (development).');
+  } else if (String(process.env.NODE_ENV || '').toLowerCase() === 'production' && String(process.env.ADMIN_BOOTSTRAP_TOKEN || '').length < 32) {
+    throw new Error('Set ADMIN_PASSWORD atau ADMIN_BOOTSTRAP_TOKEN pada production.');
+  } else if (!process.env.ADMIN_BOOTSTRAP_TOKEN) {
+    console.warn('ADMIN_PASSWORD dan ADMIN_BOOTSTRAP_TOKEN belum disetel; inisialisasi admin dilewati.');
   }
   server.listen(PORT, HOST, () => {
     console.log('KerjaDesa Pro API/Web running at http://' + HOST + ':' + PORT);
