@@ -11,7 +11,7 @@ const { publicUser } = require('./middleware/auth');
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '0.0.0.0';
 const ALLOWED_METHODS = 'GET,POST,PATCH,DELETE,OPTIONS';
-const ALLOWED_HEADERS = 'Content-Type, Authorization';
+const ALLOWED_HEADERS = 'Content-Type, X-CSRF-Token';
 const WEB_ROOT = path.resolve(__dirname, '..');
 
 const API_RATE_WINDOW_MS = 60 * 1000;
@@ -48,6 +48,7 @@ function securityHeaders(res, sensitive=false) {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   }
   if (sensitive) res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('Content-Security-Policy', "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: blob: https:; font-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-inline' https:; connect-src 'self' https:; worker-src 'self' blob:; manifest-src 'self'");
 }
 
 function cors(req, res) {
@@ -130,6 +131,7 @@ async function route(req, res) {
 
     if (req.method === 'POST' && pathName === '/api/auth/login') return login(req, res);
     if (req.method === 'POST' && pathName === '/api/auth/logout') {
+      if (!csrfValid(req)) return sendJson(res, 403, { success: false, message: 'CSRF token tidak valid.' });
       res.setHeader('Clear-Site-Data', '"cache", "cookies"');
       return logout(req, res);
     }
@@ -171,14 +173,7 @@ const server = http.createServer((req, res) => {
 async function bootstrap() {
   await ensureDatabase();
   if (process.env.ADMIN_PASSWORD) {
-    try {
-      await seedAdmin();
-    } catch (error) {
-      // A transient database error must not take down the web/API process.
-      // Keep the service online and use the JSON store fallback for this run.
-      process.env.KERJADESA_DB_DISABLED = '1';
-      console.error('Seed admin database gagal; KerjaDesa beralih ke JSON store lokal:', error?.message || error);
-    }
+    await seedAdmin();
   } else {
     if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
       throw new Error('ADMIN_PASSWORD wajib disetel pada production.');
