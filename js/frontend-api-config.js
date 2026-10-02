@@ -17,6 +17,7 @@ const KerjaDesaAPI = {
     if (response.status === 401) {
       sessionStorage.removeItem('kd_login');
       sessionStorage.removeItem('kd_auth_token');
+      sessionStorage.removeItem('kd_csrf_token');
       sessionStorage.removeItem('kd_user');
     }
     if (!response.ok) {
