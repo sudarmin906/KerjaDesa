@@ -383,7 +383,7 @@ async function doLogin(){
 }
 function show(){
   if(sessionStorage.getItem('kd_login')!=='1'){kdShowLoginScreen('Sesi tidak aktif. Silakan masuk kembali.');return false;}
-  document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';document.getElementById('nav').classList.remove('hide');
+  document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';document.getElementById('nav').classList.remove('hide');const account=document.querySelector('.kd-account');if(account)account.style.display='';
   try{
     loadAppSettings();
     render();kdLoadServerDashboard();
