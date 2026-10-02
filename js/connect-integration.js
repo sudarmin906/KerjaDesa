@@ -15,7 +15,9 @@
         api.get('dokumen'),
         api.get('laporan')
       ]);
-      const local = JSON.parse(localStorage.getItem('kerjadesa') || '{"kegiatan":[],"monitoring":[],"gps":null,"docs":{}}');
+      const local = window.KerjaDesaSecureStorage
+        ? await window.KerjaDesaSecureStorage.load({kegiatan:[],monitoring:[],gps:null,docs:{}})
+        : {kegiatan:[],monitoring:[],gps:null,docs:{}};
       const serverKegiatan = activities.data || [];
       const serverMonitoring = monitoring.data || [];
       const serverDesa = villages.data || [];
@@ -42,7 +44,7 @@
       local.serverData.dokumen = serverDocuments;
       local.serverData.laporan = serverReports;
       local.serverData.updatedAt = new Date().toISOString();
-      localStorage.setItem('kerjadesa', JSON.stringify(local));
+      if(window.KerjaDesaSecureStorage) await window.KerjaDesaSecureStorage.save(local);
       window.KerjaDesaOfflineSync?.processQueue?.();
       return {online:true, kegiatan:local.kegiatan.length, monitoring:local.monitoring.length, desa:serverDesa.length, dokumen:serverDocuments.length, laporan:serverReports.length};
     }catch(error){
