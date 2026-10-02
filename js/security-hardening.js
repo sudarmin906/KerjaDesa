@@ -7,6 +7,7 @@
 
   const LEGACY_KEYS=['kd_login','kd_auth_token','kd_user'];
   const AUTH_KEYS=['kd_login','kd_auth_token','kd_user'];
+  const SENSITIVE_CACHE_KEYS=['kd_sync_queue_v31','kd_sync_meta_v31','kd_domain_cache_v1'];
 
   function hasSession(){
     try{return sessionStorage.getItem('kd_login')==='1';}catch(e){return false;}
@@ -15,6 +16,21 @@
   function clearLegacyAuth(){
     try{LEGACY_KEYS.forEach(k=>localStorage.removeItem(k));}catch(e){}
   }
+
+  function clearSensitiveCache(){
+    try{
+      SENSITIVE_CACHE_KEYS.forEach(k=>localStorage.removeItem(k));
+      const raw=localStorage.getItem('kerjadesa');
+      if(raw){
+        const data=JSON.parse(raw);
+        delete data.serverData;
+        delete data.syncMeta;
+        localStorage.setItem('kerjadesa',JSON.stringify(data));
+      }
+    }catch(e){console.warn('Pembersihan cache sensitif:',e)}
+  }
+
+  window.kdClearSensitiveCache=clearSensitiveCache;
 
   function showLogin(message){
     const login=document.getElementById('login');
