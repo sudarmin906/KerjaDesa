@@ -1190,6 +1190,7 @@ function kdLogout(){
   try{
     sessionStorage.removeItem('kd_login');
     sessionStorage.removeItem('kd_auth_token');
+    sessionStorage.removeItem('kd_csrf_token');
     sessionStorage.removeItem('kd_user');
     sessionStorage.setItem('kd_logged_out','1');
     try{window.kdClearSensitiveCache?.()}catch(e){}
