@@ -1179,6 +1179,7 @@ function kdLogout(){
     sessionStorage.removeItem('kd_auth_token');
     sessionStorage.removeItem('kd_user');
     sessionStorage.setItem('kd_logged_out','1');
+    try{window.kdClearSensitiveCache?.()}catch(e){}
   }catch(e){console.warn('Pembersihan sesi lokal gagal.',e)}
   try{kdToggleAccountMenu(false)}catch(e){}
   try{kdShowLoginScreen('✓ Anda telah keluar. Silakan masuk kembali untuk melanjutkan.')}catch(e){}
