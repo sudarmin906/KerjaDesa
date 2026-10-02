@@ -236,7 +236,7 @@ html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#26344
 <div class="drop" style="border-color:#1976d2;background:#f4f9ff"><b>⚡ Upload Paket Sekaligus</b><p class="small muted">Pilih <b>1 file DRP + semua foto dokumentasi</b> dalam satu kali pilih. KerjaDesa akan mengenali file DRP, membaca data, lalu memproses seluruh foto otomatis.</p><input id="packageFiles" type="file" multiple accept=".pdf,.docx,.xlsx,.xls,.csv,.txt,image/*" onchange="processPackageFiles(this)"><div id="packageStatus" class="small muted">Belum ada paket yang diproses.</div></div>
 <div class="pill"><b>Status:</b> <span id="docStatus">Belum ada dokumen yang diproses.</span></div>
 <button onclick="processDocs()">⚙️ Proses Ulang Semua Dokumen</button></div>
-<div id="docResult"></div><div id="drpPreview"></div>
+<div id="docResult"></div><div id="drpPreview"></div><div id="kdDrpAudit" class="card no-print"><h3>🔎 Audit DRP</h3><p class="small muted">Audit akan muncul setelah DRP berhasil diproses.</p></div>
 <div id="dokumentasiPanel" class="card no-print"><h3>🖼️ Dokumentasi Kunjungan Lapangan</h3><p class="small muted">Foto profil sudah disiapkan. Anda dapat mengganti foto kapan saja. Upload juga logo Kemendesa dan foto dokumentasi kegiatan.</p><div class="grid"><div><label><b>Foto Profil</b></label><input id="profileFile" type="file" accept="image/*" onchange="loadProfilePhoto(this)"><div id="profilePreview"></div></div><div><label><b>Logo Kemendesa</b></label><input id="logoFile" type="file" accept="image/*" onchange="loadLogo(this)"><div id="logoPreview"></div></div></div><label><b>Foto Dokumentasi Kegiatan</b></label><input id="photoFiles" type="file" accept="image/*" multiple onchange="loadActivityPhotos(this)"><div class="actions" style="margin:6px 0"><button type="button" class="secondary" onclick="clearActivityPhotos()">🗑️ Kosongkan Foto Dokumentasi</button></div><div id="photoOcrStatus" class="small muted">Foto akan dibaca otomatis untuk mencari tanggal/keterangan dan dicocokkan dengan DRP.</div><div id="photoPreview" class="photo-grid"></div></div>
 <div class="card no-print" id="sppdPanel"><div id="sppdEditorCard"><h3>🧾 SPPD — Template Word Asli & Editable</h3><p class="small muted">Template Word SPPD asli digunakan apa adanya. Identitas dapat diubah melalui Pengaturan Identitas SPPD. Huruf besar/kecil pada Nama dan Jabatan dipertahankan persis seperti yang Anda ketik.</p>
 <div class="card" style="margin:10px 0;border:2px solid #0f766e;background:#f7fbfb"><h3 style="margin-top:0">⚙️ Pengaturan Identitas SPPD</h3><p class="small muted">Gunakan bagian ini khusus untuk mengganti identitas. Setelah menekan Simpan Identitas, data akan tersimpan di HP dan otomatis dipakai saat membuat SPPD berikutnya.</p><div class="grid"><div><label><b>Nama Lengkap</b></label><input id="sppdNama" placeholder="Contoh: SUDARMIN ARIPUDDIN" autocomplete="off"></div><div><label><b>Jabatan</b></label><input id="sppdJabatan" placeholder="Contoh: Pendamping lokal Desa" autocomplete="off"></div><div><label><b>Berangkat Dari</b></label><input id="sppdBerangkat" placeholder="Contoh: Paminggalan"></div><div><label><b>Tempat Kedudukan</b></label><input id="sppdKedudukan" placeholder="Contoh: Paminggalan"></div><div><label><b>Tiba di</b></label><input id="sppdTiba" placeholder="Contoh: Tallu Banua Utara"></div></div><button type="button" onclick="saveSppdIdentity()">💾 Simpan Identitas SPPD</button><div id="sppdIdentityStatus" class="small muted"></div></div>
@@ -566,6 +566,27 @@ function parseDRP(text){
   const cleanGroup=(arr)=>arr.map(x=>all.find(y=>y.tanggal===x.tanggal&&y.deskripsi===x.deskripsi)||x);
   return {header,aktivitas:cleanGroup(aktivitas),kunlap:cleanGroup(kunlap),all,count:all.length,source:'DRP'}
 }
+function kdAuditDrp(drp){
+  drp=drp||data.docs?.drp?.parsed||null;
+  const box=document.getElementById('kdDrpAudit'); if(!box||!drp)return;
+  const h=drp.header||{}, all=Array.isArray(drp.all)?drp.all:[], kun=Array.isArray(drp.kunlap)?drp.kunlap:[], acts=Array.isArray(drp.aktivitas)?drp.aktivitas:[];
+  const expected=Number(h.totalLaporan||0);
+  const photos=Array.isArray(activityPhotos)?activityPhotos:[];
+  const matched=photos.filter(p=>p&&p.matchedActivityIndex!=null).length;
+  const unmatched=photos.length-matched;
+  const dateSet=new Set(all.map(x=>dateKey(x.tanggal)).filter(Boolean));
+  const visitDays=new Set(kun.map(x=>dateKey(x.tanggal)).filter(Boolean));
+  const checks=[
+    ['Aktivitas DRP terbaca',all.length,expected?expected:'—',expected?(all.length===expected?'OK':'Periksa'): 'OK'],
+    ['Kunjungan lapangan',kun.length,'—','INFO'],
+    ['Hari kunjungan unik',visitDays.size,'—','INFO'],
+    ['Tanggal aktivitas unik',dateSet.size,'—','INFO'],
+    ['Foto sudah dicocokkan',matched,photos.length,'INFO'],
+    ['Foto belum tercocokkan',unmatched,'0',unmatched===0?'OK':'Periksa']
+  ];
+  box.innerHTML='<div class="grid">'+checks.map(x=>'<div class="pill"><b>'+esc(x[0])+'</b><br>'+x[1]+' / '+x[2]+' <span class="badge">'+x[3]+'</span></div>').join('')+'</div>'+
+    '<p class="small muted" style="margin-bottom:0">Audit ini hanya memeriksa kelengkapan teknis data yang terbaca. Isi faktual tetap harus berasal dari DRP/dokumen pengguna.</p>';
+}
 function renderDrpPreview(drp){
   if(!drp)return;
   const h=drp.header||{};
@@ -622,7 +643,7 @@ async function processDrpFile(f,st){
   const months={'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05','Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12'};
   const mm=Object.keys(months).find(k=>(parsed.header.periode||'').toLowerCase().includes(k.toLowerCase()));
   if(pm&&mm)document.getElementById('rPeriode').value=pm[1]+'-'+months[mm];
-  save();renderDrpPreview(parsed);updateDocStatus();
+  save();renderDrpPreview(parsed);kdAuditDrp(parsed);updateDocStatus();
   if(st)st.innerHTML='<span class="ok">✓ DRP selesai dibaca: '+parsed.count+' kegiatan ditemukan.</span>';
   return parsed;
 }
@@ -1262,7 +1283,7 @@ function formatDateLong(iso){
 function sppdXmlEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}
 loadSppdData();
 renderVisitDates();
-if(localStorage.getItem('kd_login')==='1')show();else render();navigator.serviceWorker?.register('./sw.js');updateDocStatus();renderMediaPreviews();if(data.docs?.drp?.parsed)renderDrpPreview(data.docs.drp.parsed);
+if(localStorage.getItem('kd_login')==='1')show();else render();navigator.serviceWorker?.register('./sw.js');updateDocStatus();renderMediaPreviews();if(data.docs?.drp?.parsed){renderDrpPreview(data.docs.drp.parsed);kdAuditDrp(data.docs.drp.parsed);}
 
 /*
 .print-report{font-family:"Times New Roman",serif;color:#111;background:#fff}.report-page{box-sizing:border-box;background:#fff;break-after:page;page-break-after:always;padding:20mm 18mm;min-height:277mm}.portrait-page{page:portrait}.landscape-page{page:landscape;padding:12mm 14mm;min-height:180mm}.cover-head{text-align:center;font-weight:700}.cover-instansi{font-size:18px;line-height:1.55;margin-top:8mm}.cover-logo{display:block;width:105mm;height:105mm;object-fit:contain;margin:28mm auto 24mm}.cover-logo.placeholder{font-size:12px;color:#777;border:1px dashed #aaa;display:flex;align-items:center;justify-content:center}.cover-title{font-size:16px;margin:0 auto 20mm}.cover-name{font-size:18px;margin-bottom:7mm}.cover-position{font-size:16px}.cover-region{font-size:15px;line-height:1.65;margin-top:26mm}.report-page h2{text-align:center;font-size:16px;margin:2mm 0}.report-subtitle{text-align:center;font-weight:700;line-height:1.35}.report-page hr{border:0;border-top:2px solid #666;margin:5mm 0}.report-page h3{font-size:14px;margin:5mm 0 3mm}.report-page p,.report-page li{font-size:11px;line-height:1.45;text-align:justify}.identity-table{width:75%;border-collapse:collapse;margin-bottom:5mm}.identity-table td{border:0;padding:2px 5px;font-size:11px}.identity-table td:first-child{width:150px}.wide-table,.result-table{width:100%;border-collapse:collapse;font-size:10px}.wide-table th,.wide-table td,.result-table th,.result-table td{border:1px solid #666;padding:4px;vertical-align:top}.wide-table th{text-align:center}.result-table td:nth-child(1){width:35px;text-align:center}.result-table td:nth-child(2){width:95px}.result-table td:nth-child(3){width:150px}.doc-landscape-grid{display:grid;grid-template-columns:1fr;gap:8mm}.doc-roll{display:grid;grid-template-columns:42% 58%;gap:6mm;align-items:center;min-height:48mm;break-inside:avoid}.doc-note{border:1px solid #333;border-radius:8px;padding:8px;font-size:10px;line-height:1.45;min-height:38mm}.doc-photo-frame{border:1px solid #333;border-radius:12px;padding:5px;text-align:center;min-height:42mm;display:flex;align-items:center;justify-content:center}.doc-photo-frame img{max-width:100%;max-height:58mm;object-fit:contain}.signature{text-align:center;margin-top:12mm;font-size:11px}@media print{body{background:#fff}.no-print,.nav,header{display:none!important}.report-page{box-shadow:none;margin:0}}
@@ -1334,7 +1355,7 @@ function workflowPage(step){
     if(el)el.classList.toggle('active',s===step);
   });
   document.querySelectorAll('#kdWorkflowToolbar [data-step]').forEach(b=>b.classList.toggle('active',b.dataset.step===step));
-  if(step==='drp'){updateDocStatus();if(data.docs?.drp?.parsed)renderDrpPreview(data.docs.drp.parsed);}
+  if(step==='drp'){updateDocStatus();if(data.docs?.drp?.parsed){renderDrpPreview(data.docs.drp.parsed);kdAuditDrp(data.docs.drp.parsed);}}
   if(step==='dokumentasi')renderMediaPreviews();
   if(step==='sppd'){loadSppdData();renderVisitDates();}
   if(step==='laporan'){kdInitIdentity();if(data.docs?.drp?.parsed)renderDrpPreview(data.docs.drp.parsed);}
