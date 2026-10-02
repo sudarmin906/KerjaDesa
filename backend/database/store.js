@@ -35,12 +35,13 @@ async function ensureDatabase() {
     }
   }
 
-  // Do not crash the whole web application when managed PostgreSQL is temporarily
-  // unavailable or misconfigured. Fall back to the local JSON store so the UI and
-  // document/report workflows remain usable; database-backed persistence can resume
-  // automatically on the next process restart after the database is healthy.
+  // Never silently fall back to a local JSON database in production.
+  // That can expose stale/local data and bypass the intended database security model.
+  if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
+    throw new Error('PostgreSQL tidak tersedia pada mode production: ' + (lastError?.message || 'koneksi gagal'));
+  }
   process.env.KERJADESA_DB_DISABLED = '1';
-  console.error('PostgreSQL tidak tersedia; KerjaDesa beralih ke JSON store lokal:', lastError?.message || lastError);
+  console.warn('PostgreSQL tidak tersedia; menggunakan JSON store hanya untuk development:', lastError?.message || lastError);
   return;
 }
 
