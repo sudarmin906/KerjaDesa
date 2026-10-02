@@ -11,7 +11,14 @@
     if(queueReady)return queueCache;
     if(!queueLoadPromise)queueLoadPromise=(async()=>{
       if(!vault()?.loadNamed)throw new Error('Secure Offline Vault tidak tersedia; antrean offline tidak disimpan dalam plaintext.');
-      queueCache=await vault().loadNamed(QUEUE_NAME,[])||[];queueReady=true;
+      queueCache=await vault().loadNamed(QUEUE_NAME,null);
+      if(!Array.isArray(queueCache)){
+        let legacy=[];
+        try{legacy=JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]')}catch(e){legacy=[]}
+        queueCache=Array.isArray(legacy)?legacy:[];
+        if(queueCache.length)await vault().saveNamed(QUEUE_NAME,queueCache);
+      }
+      queueCache=queueCache||[];queueReady=true;
       try{localStorage.removeItem(QUEUE_KEY);localStorage.removeItem(META_KEY);localStorage.removeItem('kd_domain_cache_v1')}catch(e){}
       return queueCache;
     })();
