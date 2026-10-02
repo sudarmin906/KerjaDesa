@@ -152,7 +152,11 @@ jobs:
           node -e "const x=JSON.parse(process.argv[1]); if(!x.success||x.data.length!==0) process.exit(1)" "$rows"
           code=$(curl -s -o /tmp/operator-create.txt -w '%{http_code}' -X POST -b /tmp/kd-operator-cookies.txt -H "X-CSRF-Token: $csrf2" -H 'Content-Type: application/json' -d '{"judul":"Cross Village Test"}' http://127.0.0.1:4318/api/kegiatan)
           test "$code" = "403"
-          echo "E2E API cookie+CSRF test OK"
+          # Logout must revoke the server-side session and clear cookies.
+          curl -fsS -X POST -b /tmp/kd-cookies.txt -H "X-CSRF-Token: $csrf" http://127.0.0.1:4318/api/auth/logout >/tmp/logout.json
+          code=$(curl -s -o /tmp/post-logout-me.txt -w '%{http_code}' -b /tmp/kd-cookies.txt http://127.0.0.1:4318/api/auth/me)
+          test "$code" = "401"
+          echo "E2E API cookie+CSRF+logout revocation test OK"
 
       - name: PostgreSQL repository syntax and isolated fallback smoke test
         shell: bash
