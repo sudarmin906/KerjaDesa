@@ -27,8 +27,6 @@ function parseCookies(req) {
   return out;
 }
 function getToken(req) {
-  const value = req.headers.authorization || '';
-  if (value.startsWith('Bearer ')) return value.slice(7).trim();
   return parseCookies(req)[SESSION_COOKIE] || '';
 }
 function csrfValid(req) {
