@@ -3,12 +3,13 @@ const { get } = require('../database/store');
 
 const sessions = new Map();
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
+const SESSION_IDLE_MS = 30 * 60 * 1000;
 const SESSION_COOKIE = process.env.NODE_ENV === 'production' ? '__Host-kd_session' : 'kd_session';
 const CSRF_COOKIE = process.env.NODE_ENV === 'production' ? '__Host-kd_csrf' : 'kd_csrf';
 
 function issueSession(user) {
   const token = crypto.randomBytes(32).toString('hex');
-  sessions.set(token, { userId: user.id, expiresAt: Date.now() + SESSION_TTL_MS });
+  sessions.set(token, { userId: user.id, createdAt: Date.now(), lastSeenAt: Date.now(), expiresAt: Date.now() + SESSION_TTL_MS });
   return token;
 }
 function revokeSession(token) { if (token) sessions.delete(token); }
@@ -60,7 +61,9 @@ async function authenticate(req) {
   const token = getToken(req);
   if (!token) return null;
   const session = sessions.get(token);
-  if (!session || session.expiresAt <= Date.now()) { revokeSession(token); return null; }
+  const now = Date.now();
+  if (!session || session.expiresAt <= now || (session.lastSeenAt && now - session.lastSeenAt > SESSION_IDLE_MS)) { revokeSession(token); return null; }
+  session.lastSeenAt = now;
   const user = await get('users', session.userId);
   if (!user || user.status === 'INACTIVE') { revokeSession(token); return null; }
   return { user, token };
