@@ -19,6 +19,7 @@ const KerjaDesaAPI = {
       sessionStorage.removeItem('kd_auth_token');
       sessionStorage.removeItem('kd_csrf_token');
       sessionStorage.removeItem('kd_user');
+      try{window.kdShowLoginScreen?.('Sesi berakhir karena tidak aktif. Silakan masuk kembali.')}catch(_){ }
     }
     if (!response.ok) {
       const error = new Error(data.message || 'Permintaan API gagal.');
