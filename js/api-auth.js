@@ -7,7 +7,7 @@ const KerjaDesaAuthAPI = {
   },
 
   token() {
-    return localStorage.getItem('kd_auth_token') || '';
+    return sessionStorage.getItem('kd_auth_token') || '';
   },
 
   async login(username, password) {
@@ -20,9 +20,9 @@ const KerjaDesaAuthAPI = {
     if (!response.ok || !data.success) {
       throw new Error(data.message || 'Login gagal');
     }
-    localStorage.setItem('kd_auth_token', data.token || '');
-    localStorage.setItem('kd_user', JSON.stringify(data.user || {}));
-    localStorage.setItem('kd_login', '1');
+    sessionStorage.setItem('kd_auth_token', data.token || '');
+    sessionStorage.setItem('kd_user', JSON.stringify(data.user || {}));
+    sessionStorage.setItem('kd_login', '1');
     return data;
   },
 
@@ -47,9 +47,9 @@ const KerjaDesaAuthAPI = {
         });
       } catch (_) {}
     }
-    localStorage.removeItem('kd_login');
-    localStorage.removeItem('kd_auth_token');
-    localStorage.removeItem('kd_user');
+    sessionStorage.removeItem('kd_login');
+    sessionStorage.removeItem('kd_auth_token');
+    sessionStorage.removeItem('kd_user');
   }
 };
 
