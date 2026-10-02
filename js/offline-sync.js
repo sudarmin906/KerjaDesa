@@ -89,11 +89,11 @@
 
   function applyServerRecord(resource,localId,server){
     try{
-      const key='kerjadesa',local=JSON.parse(localStorage.getItem(key)||'{"kegiatan":[],"monitoring":[],"gps":null,"docs":{},"syncMeta":{}}');
+      const local=window.data;
       if(!Array.isArray(local[resource]))return;
       const i=local[resource].findIndex(x=>String(x.id)===String(localId)||String(x.id)===String(server.id));
       if(i>=0)local[resource][i]=Object.assign({},local[resource][i],server,{synced:true,serverId:server.id});
-      localStorage.setItem(key,JSON.stringify(local));
+      if(window.KerjaDesaSecureStorage)window.KerjaDesaSecureStorage.save(local).catch(()=>{});else localStorage.setItem('kerjadesa',JSON.stringify(local));
       try{
         const domain=JSON.parse(localStorage.getItem('kd_domain_cache_v1')||'{}');
         if(Array.isArray(domain[resource])){
