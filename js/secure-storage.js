@@ -12,6 +12,7 @@
   const DATA_STORE='payloads';
   const KEY_ID='app-data-v1';
   const DATA_ID='app-data-v1';
+  const NAMED_PREFIX='named:';
   const encoder=new TextEncoder();
   const decoder=new TextDecoder();
   let writeQueue=Promise.resolve();
@@ -77,6 +78,25 @@
     return tx(DATA_STORE,'readonly',s=>s.get(DATA_ID));
   }
 
+  async function loadNamed(name,fallback){
+    const payload=await tx(DATA_STORE,'readonly',s=>s.get(NAMED_PREFIX+String(name)));
+    return payload?decryptObject(payload):fallback;
+  }
+
+  function saveNamed(name,value){
+    writeQueue=writeQueue.then(async()=>{
+      const payload=await encryptObject(value);
+      await tx(DATA_STORE,'readwrite',s=>s.put({id:NAMED_PREFIX+String(name),...payload}));
+      return true;
+    });
+    return writeQueue;
+  }
+
+  async function clearNamed(name){
+    await tx(DATA_STORE,'readwrite',s=>s.delete(NAMED_PREFIX+String(name)));
+    return true;
+  }
+
   async function load(fallback){
     const payload=await readPayload();
     if(payload)return decryptObject(payload);
@@ -117,5 +137,5 @@
     return true;
   }
 
-  window.KerjaDesaSecureStorage={version:'V34',load,save,status,clearData};
+  window.KerjaDesaSecureStorage={version:'V34.1',load,save,status,clearData,loadNamed,saveNamed,clearNamed};
 })();
