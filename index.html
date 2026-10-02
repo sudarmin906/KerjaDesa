@@ -419,7 +419,7 @@ function saveAISettings(){const endpoint=(document.getElementById('setAiEndpoint
 async function testAIConnection(){const endpoint=(document.getElementById('setAiEndpoint')?.value||'').trim(),st=document.getElementById('aiSettingsStatus');if(!endpoint){if(st)st.textContent='Masukkan endpoint AI terlebih dahulu.';return}if(st)st.textContent='⏳ Menguji...';try{const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({test:true,task:'kerjadesa_ping'})});if(!r.ok)throw new Error('HTTP '+r.status);if(st)st.textContent='✅ Endpoint merespons.'}catch(e){if(st)st.textContent='❌ Tes gagal: '+e.message}}
 async function kdLoadUsers(){
   const el=document.getElementById('kdUserList');
-  if(!el||!sessionStorage.getItem('kd_auth_token'))return;
+  if(!el||!sessionStorage.getItem('kd_login'))return;
   try{
     const r=await KerjaDesaAPI.get('users');
     el.innerHTML=(r.data||[]).map(u=>'<div class="card item"><b>'+esc(u.nama_lengkap||u.username)+'</b><br>'+esc(u.username)+' • '+esc(u.role||'-')+' • '+esc(u.status||'-')+'</div>').join('')||'<div class="kd-empty">Belum ada pengguna.</div>';
@@ -519,7 +519,7 @@ function resetAppSettings(){if(!confirm('Kembalikan seluruh pengaturan KerjaDesa
 async function kdLoadDesa(){
  const list=document.getElementById('kdDesaList'),st=document.getElementById('kdDesaStatus');if(!list)return;
  try{
-  let rows=(window.KerjaDesaAPI&&sessionStorage.getItem('kd_auth_token')&&navigator.onLine)?((await KerjaDesaAPI.get('desa')).data||[]):(JSON.parse(localStorage.getItem('kerjadesa')||'{}').serverData?.desa||[]);
+  let rows=(window.KerjaDesaAPI&&sessionStorage.getItem('kd_login')&&navigator.onLine)?((await KerjaDesaAPI.get('desa')).data||[]):(JSON.parse(localStorage.getItem('kerjadesa')||'{}').serverData?.desa||[]);
   list.innerHTML=rows.length?rows.map(x=>'<div class="card item"><b>'+esc(x.nama||x.nama_desa||'-')+'</b><br><span class="small muted">'+esc(x.kecamatan||'-')+' • '+esc(x.kabupaten||'-')+' • '+esc(x.provinsi||'-')+'</span><div class="actions"><button type="button" class="secondary" onclick="kdEditDesa('+JSON.stringify(x).replace(/"/g,'&quot;')+')">✏️ Edit</button><button type="button" class="secondary" onclick="kdDeleteDesa('+JSON.stringify(x.id)+')">🗑️ Hapus</button></div></div>').join(''):'<div class="kd-empty">Belum ada data desa.</div>';
   if(st)st.textContent='Data desa: '+rows.length;
  }catch(e){if(st)st.textContent='❌ '+e.message}
@@ -530,7 +530,7 @@ async function kdSaveDesa(){
  const st=document.getElementById('kdDesaStatus'),id=document.getElementById('desaId').value,nama=document.getElementById('desaNama').value.trim();if(!nama)return alert('Nama desa wajib diisi');
  const payload={nama,kode_desa:document.getElementById('desaKode').value.trim(),kecamatan:document.getElementById('desaKecamatan').value.trim(),kabupaten:document.getElementById('desaKabupaten').value.trim(),provinsi:document.getElementById('desaProvinsi').value.trim(),updated_at:new Date().toISOString()};
  try{
-  if(!window.KerjaDesaAPI||!sessionStorage.getItem('kd_auth_token')||!navigator.onLine)throw new Error('OFFLINE');
+  if(!window.KerjaDesaAPI||!sessionStorage.getItem('kd_login')||!navigator.onLine)throw new Error('OFFLINE');
   const r=id?await KerjaDesaAPI.update('desa',id,payload):await KerjaDesaAPI.create('desa',payload);
   st.textContent='✅ Data desa tersimpan di server.';kdResetDesaForm();await kdLoadDesa();return r;
  }catch(e){
@@ -541,7 +541,7 @@ async function kdDeleteDesa(id){
  if(!confirm('Hapus data desa ini?'))return;
  try{if(!navigator.onLine)throw new Error('OFFLINE');await KerjaDesaAPI.remove('desa',id);await kdLoadDesa()}catch(e){window.KerjaDesaOfflineSync?.enqueue('desa','DELETE',{},id);const local=JSON.parse(localStorage.getItem('kerjadesa')||'{}');if(local.serverData?.desa)local.serverData.desa=local.serverData.desa.filter(x=>String(x.id)!==String(id));localStorage.setItem('kerjadesa',JSON.stringify(local));await kdLoadDesa()}}
 async function kdLoadReportArchive(){
- const el=document.getElementById('kdReportArchive');if(!el||!window.KerjaDesaAPI||!sessionStorage.getItem('kd_auth_token')||!navigator.onLine)return;
+ const el=document.getElementById('kdReportArchive');if(!el||!window.KerjaDesaAPI||!sessionStorage.getItem('kd_login')||!navigator.onLine)return;
  try{const r=await KerjaDesaAPI.get('laporan');const rows=r.data||[];el.innerHTML='<h4>📄 Arsip Laporan Server</h4>'+(rows.length?rows.slice().reverse().map(x=>'<div class="card item"><b>'+esc(x.judul||('Laporan '+(x.periode||'')))+'</b><br><span class="small muted">'+esc(x.nama||'-')+' • '+esc(x.periode||'-')+' • Kunjungan: '+esc(x.jumlah_kunjungan||0)+'</span></div>').join(''):'<div class="kd-empty">Belum ada laporan tersimpan.</div>')}catch(e){el.innerHTML='<div class="small muted">Arsip laporan belum dapat dimuat.</div>'}
 }
 function kdFilterDokumen(term){page('home');setTimeout(()=>{const el=document.getElementById('dokumenDesaPanel');if(el){el.style.display='';document.getElementById('docKategori').value=term;renderVillageDocuments();el.scrollIntoView({behavior:'smooth'})}},150);}
@@ -553,7 +553,7 @@ async function saveVillageDocument(){
     const url=await readAsDataURL(file);
     const item={id:Date.now(),name:file.name,desa,kategori:kat,size:file.size,url,createdAt:new Date().toISOString(),synced:false};
     let remote=false;
-    if(window.KerjaDesaAPI&&sessionStorage.getItem('kd_auth_token')&&navigator.onLine){
+    if(window.KerjaDesaAPI&&sessionStorage.getItem('kd_login')&&navigator.onLine){
       try{const r=await KerjaDesaAPI.create('dokumen',{id:item.id,name:item.name,desa:item.desa,kategori:item.kategori,size:item.size,createdAt:item.createdAt});Object.assign(item,r.data||{}, {url:item.url,synced:true});remote=true}catch(e){console.warn('Dokumen offline:',e.message)}
     }
     villageDocs().push(item);
@@ -571,8 +571,8 @@ function renderVillageDocuments(){
 }
 function openVillageDocument(id){const d=villageDocs().find(x=>x.id===id);if(!d)return;const a=document.createElement('a');a.href=d.url;a.target='_blank';a.rel='noopener';a.click()}
 function deleteVillageDocument(id){if(!confirm('Hapus dokumen ini dari perangkat?'))return;data.docs.villageDocuments=villageDocs().filter(x=>x.id!==id);save();renderVillageDocuments()}
-async function addKegiatan(){let x={id:Date.now(),nama:document.getElementById('knama').value.trim(),desa:document.getElementById('kdesa').value.trim(),tanggal:document.getElementById('ktgl').value,catatan:document.getElementById('kcat').value};if(!x.nama)return alert('Nama kegiatan wajib diisi');try{if(window.KerjaDesaAPI&&sessionStorage.getItem('kd_auth_token')&&navigator.onLine){const r=await KerjaDesaAPI.create('kegiatan',x);x=r.data||x;x.synced=true}}catch(e){console.warn('Kegiatan offline:',e.message);x.synced=false}if(!x.synced&&window.KerjaDesaOfflineSync)KerjaDesaOfflineSync.enqueue('kegiatan','CREATE',x,x.id);data.kegiatan.push(x);['knama','kdesa','ktgl','kcat'].forEach(id=>document.getElementById(id).value='');save();page('kegiatan');window.KerjaDesaOfflineSync?.processQueue?.()}
-async function addMonitoring(){let x={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),kegiatan:document.getElementById('mkeg').value,petugas:document.getElementById('mpet').value,progres:Number(document.getElementById('mprog').value||0),catatan:document.getElementById('mcat').value,tanggal:new Date().toLocaleString('id-ID'),gps:data.gps,synced:false};if(!x.petugas)return alert('Nama petugas wajib diisi');try{if(window.KerjaDesaAPI&&sessionStorage.getItem('kd_auth_token')&&navigator.onLine){const r=await KerjaDesaAPI.create('monitoring',x);x=r.data||x;x.synced=true}}catch(e){console.warn('Monitoring offline:',e.message);x.synced=false}if(!x.synced&&window.KerjaDesaOfflineSync)KerjaDesaOfflineSync.enqueue('monitoring','CREATE',x,x.id);data.monitoring.push(x);['mkeg','mpet','mprog','mcat'].forEach(id=>document.getElementById(id).value='');save();page('monitoring');window.KerjaDesaOfflineSync?.processQueue?.()}
+async function addKegiatan(){let x={id:Date.now(),nama:document.getElementById('knama').value.trim(),desa:document.getElementById('kdesa').value.trim(),tanggal:document.getElementById('ktgl').value,catatan:document.getElementById('kcat').value};if(!x.nama)return alert('Nama kegiatan wajib diisi');try{if(window.KerjaDesaAPI&&sessionStorage.getItem('kd_login')&&navigator.onLine){const r=await KerjaDesaAPI.create('kegiatan',x);x=r.data||x;x.synced=true}}catch(e){console.warn('Kegiatan offline:',e.message);x.synced=false}if(!x.synced&&window.KerjaDesaOfflineSync)KerjaDesaOfflineSync.enqueue('kegiatan','CREATE',x,x.id);data.kegiatan.push(x);['knama','kdesa','ktgl','kcat'].forEach(id=>document.getElementById(id).value='');save();page('kegiatan');window.KerjaDesaOfflineSync?.processQueue?.()}
+async function addMonitoring(){let x={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),kegiatan:document.getElementById('mkeg').value,petugas:document.getElementById('mpet').value,progres:Number(document.getElementById('mprog').value||0),catatan:document.getElementById('mcat').value,tanggal:new Date().toLocaleString('id-ID'),gps:data.gps,synced:false};if(!x.petugas)return alert('Nama petugas wajib diisi');try{if(window.KerjaDesaAPI&&sessionStorage.getItem('kd_login')&&navigator.onLine){const r=await KerjaDesaAPI.create('monitoring',x);x=r.data||x;x.synced=true}}catch(e){console.warn('Monitoring offline:',e.message);x.synced=false}if(!x.synced&&window.KerjaDesaOfflineSync)KerjaDesaOfflineSync.enqueue('monitoring','CREATE',x,x.id);data.monitoring.push(x);['mkeg','mpet','mprog','mcat'].forEach(id=>document.getElementById(id).value='');save();page('monitoring');window.KerjaDesaOfflineSync?.processQueue?.()}
 function gps(){if(!navigator.geolocation)return document.getElementById('gpsout').textContent='GPS tidak tersedia';navigator.geolocation.getCurrentPosition(p=>{data.gps={lat:p.coords.latitude,lon:p.coords.longitude};document.getElementById('gpsout').textContent=`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`},e=>document.getElementById('gpsout').textContent='GPS gagal: '+e.message,{enableHighAccuracy:true})}
 function render(){document.getElementById('jmlK').textContent=data.kegiatan.length;document.getElementById('jmlM').textContent=data.monitoring.length;document.getElementById('klist').innerHTML=data.kegiatan.map(x=>`<div class="card item"><b>${esc(x.nama)}</b><br>${esc(x.desa||'-')} • ${esc(x.tanggal||'-')}<br><span class="muted">${esc(x.catatan||'')}</span></div>`).join('');document.getElementById('mlist').innerHTML=data.monitoring.slice().reverse().map(x=>`<div class="card item"><b>Monitoring ${x.progres}%</b><br>Petugas: ${esc(x.petugas)}<br>${esc(x.tanggal)}<br>${esc(x.catatan||'')}<br><span class="muted">${x.gps?`GPS: ${x.gps.lat.toFixed(5)}, ${x.gps.lon.toFixed(5)}`:'GPS belum ada'} • ${x.synced?'Tersinkron':'Offline'}</span></div>`).join('');document.getElementById('online').textContent=navigator.onLine?'🟢 Online':'🔴 Offline — data tetap tersimpan di HP'}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -1057,7 +1057,7 @@ function kdValidateDrpBeforeReport(drp){
 }
 function handleMakeReportClick(e){if(e?.preventDefault)e.preventDefault();const audit=kdValidateDrpBeforeReport(getReportDrp());if(!audit.ok){alert('Laporan belum dapat dibuat.\\n\\n'+audit.problems.map(x=>'• '+x).join('\\n'));return;}const btn=document.getElementById('makeReportBtn'),st=document.getElementById('aiReportStatus');if(btn){btn.disabled=true;btn.textContent='⏳ Sedang menyusun laporan...';}if(st)st.textContent='⏳ Membaca DRP dan menyusun C, D, E, F, serta dokumentasi...';try{makeReport();}catch(err){console.error('makeReport error',err);if(st)st.textContent='❌ Gagal memproses laporan: '+(err?.message||err);alert('Laporan gagal diproses. Detail: '+(err?.message||err));}finally{if(btn){btn.disabled=false;btn.textContent='📑 Buat Laporan Bulanan Otomatis';}}}
 async function kdPersistGeneratedReport(){
-  if(!window.KerjaDesaAPI||!sessionStorage.getItem('kd_auth_token')||!navigator.onLine||!reportContext)return {synced:false};
+  if(!window.KerjaDesaAPI||!sessionStorage.getItem('kd_login')||!navigator.onLine||!reportContext)return {synced:false};
   const payload={
     judul:'Laporan Kunjungan Lapangan '+String(reportContext.month||'').toUpperCase()+' '+(reportContext.year||''),
     periode:String(reportContext.year||'')+'-'+String(monthNumber(reportContext.month)).padStart(2,'0'),
@@ -1104,9 +1104,9 @@ function saveVisitDates(){const old=loadVisitDates(),arr=[];for(let i=1;i<=SPPD_
 function renderVisitDates(){const old=loadVisitDates();let d=sppdData(),h='<div style="display:grid;gap:10px">';for(let i=1;i<=SPPD_VISITS;i++){const v=old[i-1]||{};const tiba=v.tiba||d.tiba||'',nama=v.nama||d.nama||'',jabatan=v.jabatan||d.jabatan||'',br=v.berangkat||d.berangkat||'',kd=v.kedudukan||d.kedudukan||'';h+=`<div style="border:1px solid #ddd;border-radius:8px;padding:10px"><b>Kunjungan ${i}</b><div class="grid"><label>Tanggal mulai <input id="sppdStart${i}" type="date" value="${v.start||''}"></label><label>Tanggal selesai <input id="sppdEnd${i}" type="date" value="${v.end||''}"></label><label>Jumlah Hari <input id="sppdDays${i}" readonly value="${v.days||dateDiffInclusive(v.start||'',v.end||'')||''}" placeholder="otomatis"></label><label>Tiba di <input id="sppdVisitTiba${i}" value="${esc(tiba)}" placeholder="Lokasi tujuan"></label><label>Nama <input id="sppdVisitNama${i}" value="${esc(nama)}" placeholder="Nama orang pada kunjungan ini"></label><label>Jabatan <input id="sppdVisitJabatan${i}" value="${esc(jabatan)}" placeholder="Jabatan orang pada kunjungan ini"></label><label>Berangkat Dari <input id="sppdVisitBerangkat${i}" value="${esc(br)}"></label><label>Tempat Kedudukan <input id="sppdVisitKedudukan${i}" value="${esc(kd)}"></label></div><button type="button" class="secondary" onclick="saveOneVisit(${i})">💾 Simpan Kunjungan ${i}</button></div>`}h+='</div>';document.getElementById('sppdVisits').innerHTML=h;for(let i=1;i<=SPPD_VISITS;i++){const a=document.getElementById('sppdStart'+i),b=document.getElementById('sppdEnd'+i),day=document.getElementById('sppdDays'+i);const calc=()=>{day.value=dateDiffInclusive(a.value,b.value);saveVisitDates();};a.addEventListener('change',calc);b.addEventListener('change',calc);['sppdVisitTiba','sppdVisitNama','sppdVisitJabatan','sppdVisitBerangkat','sppdVisitKedudukan'].forEach(p=>document.getElementById(p+i).addEventListener('input',()=>{saveVisitDates();}));}}
 function saveOneVisit(i){saveVisitDates();const st=document.getElementById('sppdStatus');if(st)st.textContent='✅ Data Kunjungan '+i+' tersimpan. Nama dan Jabatan dapat berbeda untuk setiap kunjungan.'}
 function visitDates(){return loadVisitDates()}
-async function loadSppdData(){let d={...SPPD_DEFAULT,...JSON.parse(localStorage.getItem('kerjadesa_sppd_editable')||'{}')};try{if(window.KerjaDesaAPI&&sessionStorage.getItem('kd_auth_token')&&navigator.onLine){const rows=(await KerjaDesaAPI.get('sppd')).data||[];const uid=JSON.parse(sessionStorage.getItem('kd_user')||'{}').id||'local';const remote=rows.find(x=>String(x.user_id||'')===String(uid));if(remote?.content){d={...d,...remote.content};localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(d));}}}catch(e){console.warn('SPPD hydration:',e.message)}const map={sppdNIK:'nik',sppdNama:'nama',sppdKabupaten:'kabupaten',sppdProvinsi:'provinsi',sppdPosisi:'posisi',sppdJabatan:'jabatan',sppdBulan:'bulan',sppdTahun:'tahun',sppdTiba:'tiba',sppdBerangkat:'berangkat',sppdKedudukan:'kedudukan'};Object.entries(map).forEach(([id,k])=>sppdGet(id).value=d[k]||'');renderSppd()}
+async function loadSppdData(){let d={...SPPD_DEFAULT,...JSON.parse(localStorage.getItem('kerjadesa_sppd_editable')||'{}')};try{if(window.KerjaDesaAPI&&sessionStorage.getItem('kd_login')&&navigator.onLine){const rows=(await KerjaDesaAPI.get('sppd')).data||[];const uid=JSON.parse(sessionStorage.getItem('kd_user')||'{}').id||'local';const remote=rows.find(x=>String(x.user_id||'')===String(uid));if(remote?.content){d={...d,...remote.content};localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(d));}}}catch(e){console.warn('SPPD hydration:',e.message)}const map={sppdNIK:'nik',sppdNama:'nama',sppdKabupaten:'kabupaten',sppdProvinsi:'provinsi',sppdPosisi:'posisi',sppdJabatan:'jabatan',sppdBulan:'bulan',sppdTahun:'tahun',sppdTiba:'tiba',sppdBerangkat:'berangkat',sppdKedudukan:'kedudukan'};Object.entries(map).forEach(([id,k])=>sppdGet(id).value=d[k]||'');renderSppd()}
 async function syncSppdToServer(){
-  const token=sessionStorage.getItem('kd_auth_token');
+  const token=sessionStorage.getItem('kd_login');
   const userId=JSON.parse(sessionStorage.getItem('kd_user')||'{}').id||'local';
   const payload={type:'SPPD',title:'Data SPPD',content:sppdData(),user_id:userId,updatedAt:new Date().toISOString()};
   if(!token||!navigator.onLine){
@@ -1173,7 +1173,7 @@ function kdShowLoginScreen(message){
   }catch(e){console.warn('Tampilan login:',e)}
 }
 function kdLogout(){
-  const token=sessionStorage.getItem('kd_auth_token')||'';
+  const token=sessionStorage.getItem('kd_login')||'';
   try{
     sessionStorage.removeItem('kd_login');
     sessionStorage.removeItem('kd_auth_token');
@@ -1211,7 +1211,7 @@ function kdBindLogoutButtons(){
 }
 
 async function kdLoadServerDashboard(){
-  if(!window.KerjaDesaAPI||!sessionStorage.getItem('kd_auth_token')||!navigator.onLine){
+  if(!window.KerjaDesaAPI||!sessionStorage.getItem('kd_login')||!navigator.onLine){
     const st=document.getElementById('kdServerStatus'); if(st)st.textContent='Offline';
     return;
   }
