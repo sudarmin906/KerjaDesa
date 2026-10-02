@@ -185,6 +185,11 @@ main{max-width:1180px!important;padding:18px 26px 110px!important}
 <style id="kd-settings-pro-ui">
 /* V30.1 — Settings + session + appearance */
 .kd-settings-shell{display:grid;gap:14px}
+.kd-settings-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:20px;border-radius:18px;background:linear-gradient(135deg,#102a43,#1976d2 62%,#0f766e);color:#fff}
+.kd-settings-hero h2{margin:4px 0 5px;font-size:22px}.kd-settings-hero p{margin:0;max-width:680px;color:rgba(255,255,255,.86);font-size:13px;line-height:1.5}
+.kd-settings-kicker{font-size:10px;font-weight:800;letter-spacing:1.4px;opacity:.8}.kd-settings-status{display:flex;flex-direction:column;align-items:flex-end;gap:8px;min-width:150px}.kd-settings-status .badge{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.22)}.kd-settings-status small{font-size:11px;opacity:.8;text-align:right}
+.kd-data-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.kd-data-actions button{margin:0;min-height:45px}
+
 .kd-setting-section{background:#fff;border:1px solid #e8edf0;border-radius:18px;padding:16px}
 .kd-setting-head{display:flex;align-items:center;gap:11px;margin-bottom:12px}
 .kd-setting-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:#edf8f5;font-size:20px}
@@ -275,7 +280,7 @@ html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#26344
 <div id="desaDocStatus" class="small muted"></div>
 <div id="desaDocList"></div>
 </div>
-<div class="card no-print" id="aiSettingsPanel" style="display:none"><h3>🤖 Koneksi AI GPT</h3><p class="small muted">Masukkan URL proxy/server AI yang aman. API key OpenAI jangan ditaruh langsung di GitHub Pages.</p><input id="setAiEndpoint" placeholder="https://domain-anda/api/rewrite"><input id="setAiModel" value="gpt-5.6" placeholder="Model di server"><div class="actions"><button type="button" class="secondary" onclick="saveAISettings()">💾 Simpan Koneksi AI</button><button type="button" class="secondary" onclick="testAIConnection()">🔌 Tes Koneksi</button></div><div id="aiSettingsStatus" class="small muted"></div></div><div id="userManagementPanel" class="card no-print" style="display:none;margin-top:12px"><h3>👥 Manajemen Pengguna</h3><p class="small muted">Pengelolaan akun hanya berjalan untuk pengguna yang memiliki akses ADMIN pada server.</p><div class="actions"><button type="button" class="secondary" onclick="kdLoadUsers()">↻ Muat Pengguna</button><button type="button" onclick="kdCreateUser()">＋ Tambah Pengguna</button></div><div id="kdUserList" style="margin-top:10px"></div></div><div id="pengaturanPanel" class="card no-print" style="display:none">
+<div id="pengaturanPanel" class="card no-print" style="display:none">
 <div class="kd-settings-shell">
   <div class="kd-settings-hero">
     <div><span class="kd-settings-kicker">PUSAT KONTROL</span><h2>⚙️ Pengaturan KerjaDesa</h2><p>Kelola identitas laporan, tampilan aplikasi, data perangkat, koneksi AI, dan sesi akun dari satu tempat.</p></div>
@@ -363,7 +368,7 @@ function page(x){
       dokumentasi:['dokumentasiPanel'],
       sppd:['sppdPanel'],
       dokumenDesa:['dokumenDesaPanel'],
-      pengaturan:['pengaturanPanel','aiSettingsPanel','userManagementPanel']
+      pengaturan:['pengaturanPanel']
     };
     (groups[x]||[]).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block'});
     if(x==='dokumentasi')renderMediaPreviews();
