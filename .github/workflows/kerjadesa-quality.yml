@@ -130,6 +130,12 @@ jobs:
           test -n "$csrf"
           curl -fsS -b /tmp/kd-cookies.txt http://127.0.0.1:4318/api/auth/me >/tmp/me.json
           curl -fsS -b /tmp/kd-cookies.txt http://127.0.0.1:4318/api/dashboard >/tmp/dashboard.json
+          code=$(curl -s -o /tmp/static-leak.txt -w '%{http_code}' http://127.0.0.1:4318/backend/server.js)
+          test "$code" = "404"
+          code=$(curl -s -o /tmp/env-leak.txt -w '%{http_code}' http://127.0.0.1:4318/.env)
+          test "$code" = "404"
+          code=$(curl -s -o /tmp/no-csrf.txt -w '%{http_code}' -X POST -b /tmp/kd-cookies.txt -H 'Content-Type: application/json' -d '{"judul":"No CSRF"}' http://127.0.0.1:4318/api/kegiatan)
+          test "$code" = "403"
           curl -fsS -X POST -b /tmp/kd-cookies.txt -H "X-CSRF-Token: $csrf" -H 'Content-Type: application/json' -d '{"judul":"CI Test","status":"RENCANA"}' http://127.0.0.1:4318/api/kegiatan >/tmp/create.json
           id=$(node -e "const x=JSON.parse(require('fs').readFileSync('/tmp/create.json')); process.stdout.write(String(x.data.id))")
           curl -fsS -X PATCH -b /tmp/kd-cookies.txt -H "X-CSRF-Token: $csrf" -H 'Content-Type: application/json' -d '{"status":"SELESAI","base_version":1}' http://127.0.0.1:4318/api/kegiatan/$id >/tmp/update.json
