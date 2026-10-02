@@ -1544,7 +1544,7 @@ function kdWorkflowSetup(){
   toolbar.id='kdWorkflowToolbar';
   toolbar.className='card no-print';
   toolbar.innerHTML='<h2 style="margin-top:0">📂 Alur Kerja KerjaDesa</h2><div class="kd-flow-note"><b>DRP → Laporan Bulanan → Dokumentasi</b><br><span class="small muted">Data DRP menjadi sumber laporan. Dokumentasi ditambahkan setelah laporan siap. <b>SPPD dikelola terpisah</b> menggunakan template Word asli.</span></div><div class="kd-workflow"><button data-step="drp" onclick="workflowPage(\'drp\')">📑 DRP</button><button data-step="laporan" onclick="workflowPage(\'laporan\')">📄 Laporan Bulanan</button><button data-step="dokumentasi" onclick="workflowPage(\'dokumentasi\')">🖼️ Dokumentasi</button><button data-step="sppd" onclick="workflowPage(\'sppd\')">🧾 SPPD Terpisah</button></div>';
-  d.insertBefore(toolbar,d.firstElementChild);
+  d.insertBefore(toolbar,d.firstElementChild);\n  kdBindStaticActions();
 
   const drpBox=document.createElement('div'); drpBox.id='kdStepDrp'; drpBox.className='kd-step';
   const reportBox=document.createElement('div'); reportBox.id='kdStepLaporan'; reportBox.className='kd-step';
@@ -1578,6 +1578,15 @@ function kdWorkflowSetup(){
   if(docResult2)reportBox.appendChild(docResult2);
 
   d.appendChild(drpBox);d.appendChild(reportBox);d.appendChild(docBox);d.appendChild(sppdBox);
+}
+function kdBindStaticActions(){
+  document.querySelectorAll('#kdWorkflowToolbar [data-step]').forEach(b=>b.addEventListener('click',()=>workflowPage(b.dataset.step)));
+  document.querySelectorAll('[data-kd-action="pick-drp"]').forEach(b=>b.addEventListener('click',()=>document.getElementById('drpFile')?.click()));
+  document.querySelectorAll('[data-kd-action="open-docs"]').forEach(b=>b.addEventListener('click',()=>workflowPage('dokumentasi')));
+  document.querySelectorAll('[data-kd-action="pick-package"]').forEach(b=>b.addEventListener('click',()=>document.getElementById('packageFiles')?.click()));
+  document.querySelectorAll('[data-kd-page]').forEach(b=>b.addEventListener('click',()=>page(b.dataset.kdPage)));
+  document.querySelectorAll('[data-kd-twin]').forEach(b=>b.addEventListener('click',()=>b.dataset.kdTwin==='reset'?kdTwinReset():kdTwinScenario(b.dataset.kdTwin)));
+  document.querySelectorAll('[data-kd-upgrade]').forEach(b=>b.addEventListener('click',()=>b.dataset.kdUpgrade==='refresh'?kdUpgradeRefresh():window.open('kerjadesa_upgrade_manifest.json','_blank','noopener,noreferrer')));
 }
 function workflowPage(step){
   kdWorkflowSetup();
@@ -1639,9 +1648,9 @@ kdWorkflowSetup();kdAddHomeQuick();
       '<button onclick="kdTwinScenario(\'normal\')">🟢 Kondisi Normal</button>'+
       '<button onclick="kdTwinScenario(\'monitoring\')">🟡 Mode Monitoring</button>'+
       '<button onclick="kdTwinScenario(\'emergency\')">🔴 Simulasi Darurat</button>'+
-      '<button onclick="kdTwinReset()">↺ Reset</button></div>';
+      '<button type="button" data-kd-twin="reset">↺ Reset</button></div>';
     const anchor=home.querySelector('.kd-data-center'); if(anchor)anchor.before(card); else home.appendChild(card);
-    renderTwin();
+    renderTwin();\n    kdBindStaticActions();
   }
   function renderTwin(){
     const box=document.getElementById('kdTwinView'); if(!box)return;
@@ -1706,7 +1715,7 @@ kdWorkflowSetup();kdAddHomeQuick();
     if(document.getElementById('kdUpgradeCenter'))return;
     const home=document.getElementById('home');if(!home)return;
     const card=document.createElement('div');card.id='kdUpgradeCenter';card.className='card kd-data-center';
-    card.innerHTML='<h2 style="margin-top:0">🧭 Upgrade Control Center</h2><p class="muted">Pusat pemeriksaan upgrade KerjaDesa Pro. Menampilkan kondisi aplikasi dan milestone yang benar-benar ada di repository.</p><div id="kdUpgradeCenterView"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button onclick="kdUpgradeRefresh()">↻ Perbarui Status</button><button class="secondary" onclick="window.open(\"kerjadesa_upgrade_manifest.json\",\"_blank\")">📋 Lihat Registry</button></div>';
+    card.innerHTML='<h2 style="margin-top:0">🧭 Upgrade Control Center</h2><p class="muted">Pusat pemeriksaan upgrade KerjaDesa Pro. Menampilkan kondisi aplikasi dan milestone yang benar-benar ada di repository.</p><div id="kdUpgradeCenterView"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" data-kd-upgrade="refresh">↻ Perbarui Status</button><button class="secondary" onclick="window.open(\"kerjadesa_upgrade_manifest.json\",\"_blank\")">📋 Lihat Registry</button></div>';
     const twin=document.getElementById('kdTwinCard');
     if(twin&&twin.parentNode) twin.parentNode.insertBefore(card,twin.nextSibling);
     else {const anchor=home.querySelector('.kd-data-center');if(anchor)anchor.after(card);else home.appendChild(card);}
