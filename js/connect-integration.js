@@ -6,7 +6,7 @@
   const api = window.KerjaDesaAPI;
 
   async function hydrate(){
-    if(!api || !localStorage.getItem('kd_auth_token')) return {online:false};
+    if(!api || !sessionStorage.getItem('kd_auth_token')) return {online:false};
     try{
       const [activities, monitoring, villages, documents, reports] = await Promise.all([
         api.get('kegiatan'),
@@ -59,7 +59,7 @@
       return {
         version:this.version,
         apiReady:!!this.api,
-        authenticated:!!localStorage.getItem('kd_auth_token'),
+        authenticated:!!sessionStorage.getItem('kd_auth_token'),
         online:navigator.onLine
       };
     },
