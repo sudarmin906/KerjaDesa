@@ -28,10 +28,18 @@ function getPool() {
       max: Number(process.env.PG_POOL_MAX || 5),
       connectionTimeoutMillis: Math.max(1000, Number(process.env.PG_CONNECTION_TIMEOUT_MS || 3000)),
       idleTimeoutMillis: Math.max(1000, Number(process.env.PG_IDLE_TIMEOUT_MS || 10000)),
-      // Production database connections must use TLS. Development may opt in.
-      ssl: String(process.env.NODE_ENV || '').toLowerCase() === 'production' || /^(1|true|yes)$/i.test(String(process.env.DB_SSL || ''))
-        ? { rejectUnauthorized: String(process.env.DB_SSL_REJECT_UNAUTHORIZED || 'true') !== 'false' }
-        : undefined
+      // Production uses TLS by default. Blitz Cloud's managed PostgreSQL is
+      // reachable over its private network and explicitly does not require TLS;
+      // allow the deployment platform to opt out with DB_SSL=false.
+      ssl: (() => {
+        const configured = String(process.env.DB_SSL || '').trim().toLowerCase();
+        const useSsl = configured
+          ? /^(1|true|yes)$/i.test(configured)
+          : String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+        return useSsl
+          ? { rejectUnauthorized: String(process.env.DB_SSL_REJECT_UNAUTHORIZED || 'true') !== 'false' }
+          : undefined;
+      })()
     });
   }
   return pool;
