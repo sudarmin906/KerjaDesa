@@ -20,13 +20,9 @@
   function clearSensitiveCache(){
     try{
       SENSITIVE_CACHE_KEYS.forEach(k=>localStorage.removeItem(k));
-      const raw=localStorage.getItem('kerjadesa');
-      if(raw){
-        const data=JSON.parse(raw);
-        delete data.serverData;
-        delete data.syncMeta;
-        localStorage.setItem('kerjadesa',JSON.stringify(data));
-      }
+      // Main application data has migrated to Secure Offline Vault.
+      // Never rewrite it back to plaintext localStorage during cleanup.
+      localStorage.removeItem('kerjadesa');
     }catch(e){console.warn('Pembersihan cache sensitif:',e)}
   }
 
