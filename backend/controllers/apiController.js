@@ -12,6 +12,7 @@ const {
 
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 10;
+const LOGIN_MAX_KEYS = 10000;
 const loginAttempts = new Map();
 
 function loginAllowed(key) {
@@ -26,6 +27,10 @@ function loginAllowed(key) {
 
 function recordLoginFailure(key) {
   const now = Date.now();
+  if (loginAttempts.size >= LOGIN_MAX_KEYS && !loginAttempts.has(key)) {
+    const oldest = loginAttempts.keys().next().value;
+    if (oldest) loginAttempts.delete(oldest);
+  }
   const item = loginAttempts.get(key) || { startedAt: now, count: 0 };
   if (now - item.startedAt > LOGIN_WINDOW_MS) {
     loginAttempts.set(key, { startedAt: now, count: 1 });
@@ -50,14 +55,14 @@ function itemVillage(item) {
 function canAccessVillage(resource, item, user) {
   if (user?.role === 'ADMIN' || !VILLAGE_SCOPED_RESOURCES.has(resource)) return true;
   const allowed = userVillages(user);
-  if (!allowed.length) return true;
+  // Deny by default: a non-admin without an explicit village scope must not
+  // receive or modify village-scoped records.
+  if (!allowed.length) return false;
   const village = itemVillage(item);
   return !!village && allowed.includes(village);
 }
 function scopeRows(resource, rows, user) {
   if (user?.role === 'ADMIN' || !VILLAGE_SCOPED_RESOURCES.has(resource)) return rows;
-  const allowed = userVillages(user);
-  if (!allowed.length) return rows;
   return rows.filter(item => canAccessVillage(resource, item, user));
 }
 
@@ -121,7 +126,10 @@ function verifyPassword(password, stored) {
   if (!stored || !stored.includes(':')) return false;
   const [salt, expected] = stored.split(':');
   const actual = crypto.scryptSync(String(password), salt, 64).toString('hex');
-  return crypto.timingSafeEqual(Buffer.from(actual, 'hex'), Buffer.from(expected, 'hex'));
+  const expectedBuf = Buffer.from(expected, 'hex');
+  const actualBuf = Buffer.from(actual, 'hex');
+  if (expectedBuf.length !== actualBuf.length) return false;
+  return crypto.timingSafeEqual(actualBuf, expectedBuf);
 }
 
 async function seedAdmin() {
@@ -159,7 +167,7 @@ async function login(req, res) {
     if (!loginAllowed(key)) return sendJson(res, 429, { success: false, message: 'Terlalu banyak percobaan login. Coba lagi beberapa menit.' });
     const user = await findByField('users', 'username', username);
 
-    if (!user || !verifyPassword(password, user.password_hash)) {
+    if (!user || user.status === 'INACTIVE' || !verifyPassword(password, user.password_hash)) {
       recordLoginFailure(key);
       return sendJson(res, 401, { success: false, message: 'Username atau password tidak sesuai.' });
     }
@@ -182,7 +190,7 @@ async function login(req, res) {
 
 async function logout(req, res) {
   const auth = await require('../middleware/auth').authenticate(req);
-  const token = auth?.token || (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
+  const token = auth?.token || '';
   if (auth) await writeAudit({ user: auth.user, action: 'LOGOUT', resource: 'auth' });
   revokeSession(token);
   clearAuthResponseCookies(res);
@@ -293,7 +301,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
         nama_lengkap: String(body.nama_lengkap || ''),
         username,
         password_hash: hashPassword(body.password),
-        role: body.role || 'OPERATOR',
+        role: ['ADMIN','PLD','PEMDES','OPERATOR','KADES','SEKDES','BENDAHARA','KAUR','KASI','TPP'].includes(String(body.role || '').toUpperCase()) ? String(body.role || '').toUpperCase() : 'OPERATOR',
         desa: body.desa || '',
         status: body.status || 'ACTIVE'
       });
