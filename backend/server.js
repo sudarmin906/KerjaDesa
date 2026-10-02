@@ -4,7 +4,7 @@ const path = require('path');
 const { URL } = require('url');
 const { ensureDatabase } = require('./database/store');
 const { health: postgresHealth } = require('./database/postgres');
-const { authenticate, requireAuth, sendJson } = require('./middleware/auth');
+const { authenticate, requireAuth, sendJson, csrfValid } = require('./middleware/auth');
 const { login, logout, dashboard, resourceHandler, seedAdmin } = require('./controllers/apiController');
 
 const PORT = Number(process.env.PORT || 3000);
@@ -58,6 +58,7 @@ function cors(req, res) {
 
   if (allow) res.setHeader('Access-Control-Allow-Origin', allow);
   if (requestOrigin && allow) res.setHeader('Vary', 'Origin');
+  if (allow) res.setHeader('Access-Control-Allow-Credentials','true');
   securityHeaders(res, true);
   res.setHeader('Access-Control-Allow-Headers', ALLOWED_HEADERS);
   res.setHeader('Access-Control-Allow-Methods', ALLOWED_METHODS);
@@ -138,6 +139,7 @@ async function route(req, res) {
 
     const auth = await authenticate(req);
     if (!auth) return sendJson(res, 401, { success: false, message: 'Authentication diperlukan.' });
+    if (!csrfValid(req)) return sendJson(res, 403, { success: false, message: 'CSRF token tidak valid.' });
 
     if (req.method === 'GET' && pathName === '/api/dashboard') return dashboard(req, res, auth);
 
