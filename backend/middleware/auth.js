@@ -47,6 +47,7 @@ function setAuthResponseCookies(res, token) {
     SESSION_COOKIE+'='+encodeURIComponent(token)+'; '+sessionFlags,
     CSRF_COOKIE+'='+csrf+'; '+csrfFlags
   ]);
+  return csrf;
 }
 function clearAuthResponseCookies(res) {
   const secure=process.env.NODE_ENV==='production';
