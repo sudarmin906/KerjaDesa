@@ -1,4 +1,4 @@
-const CACHE='kerjadesa-v60-security-v33';
+const CACHE='kerjadesa-v61-security-v33-1';
 const ASSETS=['./','./index.html','./manifest.json','./foto_profil.jpg','./jszip.min.js','./template_sppd_asli.docx','./js/login-direct.js','./js/report-master-v2.js?v=55'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
