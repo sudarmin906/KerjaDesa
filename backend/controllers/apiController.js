@@ -5,7 +5,9 @@ const {
   issueSession,
   revokeSession,
   publicUser,
-  sendJson
+  sendJson,
+  setAuthResponseCookies,
+  clearAuthResponseCookies
 } = require('../middleware/auth');
 
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
@@ -165,6 +167,8 @@ async function login(req, res) {
     loginAttempts.delete(key);
     await writeAudit({ user, action: 'LOGIN', resource: 'auth' });
     const token = issueSession(user);
+    setAuthResponseCookies(res, token);
+    res.setHeader('Cache-Control','no-store');
     return sendJson(res, 200, {
       success: true,
       token,
@@ -181,6 +185,7 @@ async function logout(req, res) {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
   if (auth) await writeAudit({ user: auth.user, action: 'LOGOUT', resource: 'auth' });
   revokeSession(token);
+  clearAuthResponseCookies(res);
   return sendJson(res, 200, { success: true, message: 'Logout berhasil.' });
 }
 
