@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const DATA_FILE = path.join(DATA_DIR, 'store.json');
@@ -107,7 +108,7 @@ function remove(resource, id) {
 }
 
 function cryptoRandomId() {
-  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  return crypto.randomUUID();
 }
 
 module.exports = {
