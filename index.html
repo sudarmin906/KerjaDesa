@@ -1764,4 +1764,6 @@ kdWorkflowSetup();kdAddHomeQuick();
   window.addEventListener('online',render);window.addEventListener('offline',render);
   if(document.readyState!=='loading')setTimeout(mount,0);else document.addEventListener('DOMContentLoaded',mount);
 })();
+</script><script>/* V35.17: bind core UI actions after all inline functions are defined. */
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',()=>kdBindCoreActions(),{once:true});}else{kdBindCoreActions();}
 </script><script src="js/report-master-v2.js?v=55"></script></body></html>
