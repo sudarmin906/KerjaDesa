@@ -1,4 +1,4 @@
-const CACHE='kerjadesa-v62-security-cache-policy';
+const CACHE='kerjadesa-v63-app-cache';
 const ASSETS=['./','./index.html','./manifest.json','./foto_profil.jpg','./jszip.min.js','./template_sppd_asli.docx','./js/login-direct.js','./js/report-master-v2.js?v=55'];
 const CACHEABLE=new Set(ASSETS.map(x=>new URL(x,self.location.href).pathname));
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)))});
