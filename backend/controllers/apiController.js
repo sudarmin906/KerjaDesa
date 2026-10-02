@@ -43,7 +43,7 @@ function recordLoginFailure(key) {
 const VILLAGE_SCOPED_RESOURCES = new Set([
   'desa','wilayah','kegiatan','monitoring','dokumen','laporan','sppd','rkpdes',
   'apbdes','rab','realisasi','lpj','penduduk','kpm','blt','stunting','bumdes',
-  'koperasi','agenda','gps_points','drp'
+  'koperasi','agenda','notifications','ai_knowledge','gps_points','drp'
 ]);
 
 function userVillages(user) {
@@ -330,9 +330,13 @@ async function resourceHandler(req, res, resource, id, method, auth) {
       try { await validateFinanceReferences(resource, payload, auth.user); }
       catch (error) { return sendJson(res, error.statusCode || 422, { success: false, message: error.message }); }
     }
-    if (VILLAGE_SCOPED_RESOURCES.has(resource) && userVillages(auth.user).length) {
-      if (payload.desa && !userVillages(auth.user).includes(String(payload.desa).trim().toLowerCase())) return sendJson(res, 403, { success: false, message: 'Data hanya boleh dibuat untuk desa yang menjadi kewenangan akun.' });
-      if (!payload.desa) payload.desa = auth.user.desa;
+    if (VILLAGE_SCOPED_RESOURCES.has(resource) && auth.user.role !== 'ADMIN') {
+      const allowedVillages = userVillages(auth.user);
+      if (!allowedVillages.length) return sendJson(res, 403, { success: false, message: 'Akun belum memiliki kewenangan desa untuk resource ini.' });
+      if (payload.desa && !allowedVillages.includes(String(payload.desa).trim().toLowerCase())) {
+        return sendJson(res, 403, { success: false, message: 'Data hanya boleh dibuat untuk desa yang menjadi kewenangan akun.' });
+      }
+      if (!payload.desa) payload.desa = allowedVillages[0];
     }
     const item = await create(resource, payload);
     if (resource === 'realisasi' && item.apbdes_id) await syncApbdesRealization(item.apbdes_id);
