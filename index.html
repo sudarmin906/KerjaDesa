@@ -784,8 +784,9 @@ async function processDrpFile(f,st){
   if(st)st.innerHTML='<span class="ok">✓ DRP selesai dibaca: '+parsed.count+' kegiatan ditemukan.</span>';
   return parsed;
 }
-async function autoProcessOne(kind){
+async async function autoProcessOne(kind){
   const f=document.getElementById(kind==='drp'?'drpFile':'sppdFile')?.files?.[0];if(!f)return;
+  await kdValidateFile(f,kind==='drp'?'drp':'drp');
   const st=document.getElementById(kind==='drp'?'drpStatus':'sppdStatus');
   if(st)st.innerHTML='<span class="loading">⏳ Memproses '+esc(f.name)+'...</span>';
   try{
@@ -806,6 +807,8 @@ async function processPackageFiles(input){
   const photos=files.filter(f=>/^image\//i.test(f.type)||/\.(jpg|jpeg|png|webp|heic|heif)$/i.test(f.name));
   try{
     if(docs.length!==1)throw new Error('Paket harus berisi tepat 1 file DRP + foto dokumentasi. Ditemukan '+docs.length+' file dokumen.');
+    await kdValidateFile(docs[0],'packageDoc');
+    for(const photo of photos) await kdValidateFile(photo,'photo');
     if(st)st.innerHTML='<span class="loading">⏳ 1/2 Membaca DRP...</span>';
     await processDrpFile(docs[0],null);
     if(st)st.innerHTML='<span class="loading">⏳ 2/2 Memproses '+photos.length+' foto dokumentasi...</span>';
@@ -847,9 +850,42 @@ function parseSPPD(text){
 function findDate(t){let m=cleanText(t).match(/\b(\d{1,2})[\/-](\d{1,2})[\/-](20\d{2})\b/);if(m)return `${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;m=cleanText(t).match(/\b(\d{1,2})\s+(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember)\s+(20\d{2})/i);return m?m[0]:''}
 function findLocations(t){let hits=[];for(const m of cleanText(t).matchAll(/(?:Desa|Kelurahan)\s+[A-Za-zÀ-ÿ0-9' -]{2,60}/gi))hits.push(m[0].trim().replace(/[,.].*$/,''));return [...new Set(hits)].slice(0,10)}
 function periodLabel(){const v=document.getElementById('rPeriode').value;if(v){const [y,m]=v.split('-');return new Date(Number(y),Number(m)-1,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'})}return new Date().toLocaleDateString('id-ID',{month:'long',year:'numeric'})}
+const KD_FILE_LIMITS={
+  drp:15*1024*1024, packageDoc:15*1024*1024, photo:8*1024*1024,
+  profile:2*1024*1024, logo:2*1024*1024, backup:20*1024*1024
+};
+function kdFileExt(name){const m=String(name||'').toLowerCase().match(/\.([a-z0-9]+)$/);return m?m[1]:''}
+async function kdValidateFile(file,kind){
+  if(!file)throw new Error('File tidak ditemukan.');
+  const max=KD_FILE_LIMITS[kind]||10*1024*1024;
+  if(file.size>max)throw new Error('Ukuran file terlalu besar. Maksimum '+Math.round(max/1024/1024)+' MB.');
+  const ext=kdFileExt(file.name);
+  const allowed={
+    drp:['pdf','docx','xlsx','xls','csv','txt'],
+    packageDoc:['pdf','docx','xlsx','xls','csv','txt'],
+    photo:['jpg','jpeg','png','webp','heic','heif'],
+    profile:['jpg','jpeg','png','webp'],
+    logo:['jpg','jpeg','png','webp'],
+    backup:['json']
+  }[kind]||[];
+  if(!allowed.includes(ext))throw new Error('Jenis file tidak diperbolehkan: .'+ext);
+  if(kind==='backup')return true;
+  const head=new Uint8Array(await file.slice(0,16).arrayBuffer());
+  const ascii=String.fromCharCode(...head);
+  const starts=(...xs)=>xs.some(x=>ascii.startsWith(x));
+  const mime=String(file.type||'').toLowerCase();
+  if(['jpg','jpeg'].includes(ext)&&!(head[0]===0xff&&head[1]===0xd8&&head[2]===0xff))throw new Error('Isi file bukan JPEG yang valid.');
+  if(ext==='png'&&!starts('\x89PNG\r\n\x1a\n'))throw new Error('Isi file bukan PNG yang valid.');
+  if(ext==='webp'&&!(starts('RIFF')&&ascii.slice(8,12)==='WEBP'))throw new Error('Isi file bukan WebP yang valid.');
+  if(['docx','xlsx'].includes(ext)&&!(head[0]===0x50&&head[1]===0x4b))throw new Error('Dokumen Office tidak memiliki signature ZIP yang valid.');
+  if(ext==='pdf'&&!starts('%PDF-'))throw new Error('Isi file bukan PDF yang valid.');
+  if(['heic','heif'].includes(ext)&&ascii.slice(4,12)!=='ftypheic'&&ascii.slice(4,12)!=='ftypheif')throw new Error('Isi file bukan HEIC/HEIF yang valid.');
+  if(['jpg','jpeg','png','webp','heic','heif'].includes(ext)&&mime&&!mime.startsWith('image/'))throw new Error('MIME file gambar tidak sesuai.');
+  return true;
+}
 function readAsDataURL(file){return new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=reject;fr.readAsDataURL(file)})}
-async function loadProfilePhoto(input){const f=input.files[0];if(!f)return;profilePhoto=await readAsDataURL(f);data.docs=data.docs||{};data.docs.profilePhoto=profilePhoto;save();renderMediaPreviews()}
-async function loadLogo(input){const f=input.files[0];if(!f)return;logoPhoto=await readAsDataURL(f);data.docs=data.docs||{};data.docs.logoPhoto=logoPhoto;save();renderMediaPreviews()}
+async function loadProfilePhoto(input){const f=input.files[0];if(!f)return;await kdValidateFile(f,'profile');profilePhoto=await readAsDataURL(f);data.docs=data.docs||{};data.docs.profilePhoto=profilePhoto;save();renderMediaPreviews()}
+async function loadLogo(input){const f=input.files[0];if(!f)return;await kdValidateFile(f,'logo');logoPhoto=await readAsDataURL(f);data.docs=data.docs||{};data.docs.logoPhoto=logoPhoto;save();renderMediaPreviews()}
 let photoOcrBusy=false,photoOcrLoaded=false,photoOcrWorker=null;
 async function loadTesseract(){
  if(photoOcrLoaded&&window.Tesseract)return window.Tesseract;
@@ -926,6 +962,7 @@ async function loadActivityPhotos(input){
 }
 async function loadActivityPhotoFiles(files){
  files=[...(files||[])];if(!files.length)return;
+ for(const file of files) await kdValidateFile(file,'photo');
  const existing=activityPhotos||[];
  const existingNames=new Set(existing.map(p=>String(p.name||'').toLowerCase()));
  const uniqueFiles=files.filter(f=>!existingNames.has(String(f.name||'').toLowerCase()));
@@ -1160,7 +1197,7 @@ function kdBackup(){
 }
 function kdRestore(input){
   const f=input?.files?.[0]; if(!f)return;
-  const reader=new FileReader();
+  kdValidateFile(f,'backup').then(()=>{ const reader=new FileReader();
   reader.onload=()=>{
     try{
       const p=JSON.parse(reader.result);
@@ -1174,6 +1211,7 @@ function kdRestore(input){
     }catch(e){kdStatus('❌ Gagal memulihkan: '+(e.message||e));}
   };
   reader.readAsText(f);
+  }).catch(e=>{kdStatus('❌ Backup ditolak: '+(e.message||e));input.value='';});
 }
 function kdShowLoginScreen(message){
   try{
