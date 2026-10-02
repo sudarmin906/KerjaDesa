@@ -390,7 +390,7 @@ html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#26344
 <script>
 let data={"kegiatan":[],"monitoring":[],"gps":null,"docs":{}};window.data=data;let deferred=null;let reportHtml='';let reportText='';let profilePhoto='foto_profil.jpg';let logoPhoto='';let activityPhotos=[];
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
-async function save(){try{if(window.KerjaDesaSecureStorage)await window.KerjaDesaSecureStorage.save(data);else localStorage.setItem('kerjadesa',JSON.stringify(data));}catch(e){console.error('Secure save gagal:',e)}render()}
+async function save(){try{if(!window.KerjaDesaSecureStorage)throw new Error('Secure Offline Vault belum tersedia.');await window.KerjaDesaSecureStorage.save(data);render()}catch(e){console.error('Secure save gagal:',e);alert('Data belum tersimpan: Secure Offline Vault tidak tersedia.')}}
 async function doLogin(){
   const u=(document.getElementById('user')?.value||'').trim(),pw=document.getElementById('pass')?.value||'',msg=document.getElementById('loginMsg');
   if(!u||!pw){if(msg)msg.textContent='Username dan password wajib diisi.';return}
