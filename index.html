@@ -784,7 +784,7 @@ async function processDrpFile(f,st){
   if(st)st.innerHTML='<span class="ok">✓ DRP selesai dibaca: '+parsed.count+' kegiatan ditemukan.</span>';
   return parsed;
 }
-async async function autoProcessOne(kind){
+async function autoProcessOne(kind){
   const f=document.getElementById(kind==='drp'?'drpFile':'sppdFile')?.files?.[0];if(!f)return;
   await kdValidateFile(f,kind==='drp'?'drp':'drp');
   const st=document.getElementById(kind==='drp'?'drpStatus':'sppdStatus');
