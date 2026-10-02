@@ -127,7 +127,7 @@ async function seedAdmin() {
     await create('users', {
       nama_lengkap: 'Administrator KerjaDesa',
       username: 'admin',
-      password_hash: hashPassword(process.env.ADMIN_PASSWORD || 'admin123'),
+      password_hash: hashPassword(process.env.ADMIN_PASSWORD),
       role: 'ADMIN',
       desa: '',
       status: 'ACTIVE',
@@ -152,7 +152,8 @@ async function login(req, res) {
     const body = await parseJsonBody(req);
     const username = String(body.username || '').trim();
     const password = String(body.password || '');
-    const key = username.toLowerCase() || 'anonymous';
+    const ip = req.socket?.remoteAddress || 'unknown';
+    const key = ip + ':' + (username.toLowerCase() || 'anonymous');
     if (!loginAllowed(key)) return sendJson(res, 429, { success: false, message: 'Terlalu banyak percobaan login. Coba lagi beberapa menit.' });
     const user = await findByField('users', 'username', username);
 
