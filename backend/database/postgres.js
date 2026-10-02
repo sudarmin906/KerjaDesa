@@ -28,9 +28,8 @@ function getPool() {
       max: Number(process.env.PG_POOL_MAX || 5),
       connectionTimeoutMillis: Math.max(1000, Number(process.env.PG_CONNECTION_TIMEOUT_MS || 3000)),
       idleTimeoutMillis: Math.max(1000, Number(process.env.PG_IDLE_TIMEOUT_MS || 10000)),
-      // Blitz managed PostgreSQL may be served without TLS. Only enable
-      // PostgreSQL SSL when it is explicitly requested by the environment.
-      ssl: /^(1|true|yes)$/i.test(String(process.env.DB_SSL || ''))
+      // Production database connections must use TLS. Development may opt in.
+      ssl: String(process.env.NODE_ENV || '').toLowerCase() === 'production' || /^(1|true|yes)$/i.test(String(process.env.DB_SSL || ''))
         ? { rejectUnauthorized: String(process.env.DB_SSL_REJECT_UNAUTHORIZED || 'true') !== 'false' }
         : undefined
     });
