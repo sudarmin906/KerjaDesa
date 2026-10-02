@@ -3,6 +3,8 @@ const { get } = require('../database/store');
 
 const sessions = new Map();
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
+const SESSION_COOKIE = process.env.NODE_ENV === 'production' ? '__Host-kd_session' : 'kd_session';
+const CSRF_COOKIE = process.env.NODE_ENV === 'production' ? '__Host-kd_csrf' : 'kd_csrf';
 
 function issueSession(user) {
   const token = crypto.randomBytes(32).toString('hex');
@@ -14,9 +16,45 @@ function cleanupSessions() {
   const now = Date.now();
   for (const [token, session] of sessions.entries()) if (session.expiresAt <= now) sessions.delete(token);
 }
+function parseCookies(req) {
+  const out={};
+  String(req.headers.cookie||'').split(';').forEach(part=>{
+    const i=part.indexOf('=');
+    if(i<0)return;
+    const k=part.slice(0,i).trim(),v=part.slice(i+1).trim();
+    try{out[k]=decodeURIComponent(v)}catch(_){out[k]=v}
+  });
+  return out;
+}
 function getToken(req) {
   const value = req.headers.authorization || '';
-  return value.startsWith('Bearer ') ? value.slice(7).trim() : '';
+  if (value.startsWith('Bearer ')) return value.slice(7).trim();
+  return parseCookies(req)[SESSION_COOKIE] || '';
+}
+function csrfValid(req) {
+  if (['GET','HEAD','OPTIONS'].includes(String(req.method||'').toUpperCase())) return true;
+  const cookie=parseCookies(req)[CSRF_COOKIE] || '';
+  const header=String(req.headers['x-csrf-token']||'');
+  if(!cookie || !header || cookie.length!==header.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(cookie),Buffer.from(header));
+}
+function setAuthResponseCookies(res, token) {
+  const secure=process.env.NODE_ENV==='production';
+  const csrf=crypto.randomBytes(32).toString('hex');
+  const sessionFlags=['Path=/','HttpOnly',secure?'Secure':'','SameSite=Lax','Max-Age='+(SESSION_TTL_MS/1000)].filter(Boolean).join('; ');
+  const csrfFlags=['Path=/',secure?'Secure':'','SameSite=Lax','Max-Age='+(SESSION_TTL_MS/1000)].filter(Boolean).join('; ');
+  res.setHeader('Set-Cookie',[
+    SESSION_COOKIE+'='+encodeURIComponent(token)+'; '+sessionFlags,
+    CSRF_COOKIE+'='+csrf+'; '+csrfFlags
+  ]);
+}
+function clearAuthResponseCookies(res) {
+  const secure=process.env.NODE_ENV==='production';
+  const flags=['Path=/',secure?'Secure':'','SameSite=Lax','Max-Age=0'].filter(Boolean).join('; ');
+  res.setHeader('Set-Cookie',[
+    SESSION_COOKIE+'=; '+flags,
+    CSRF_COOKIE+'=; '+flags
+  ]);
 }
 async function authenticate(req) {
   cleanupSessions();
@@ -56,4 +94,4 @@ function sendJson(res, status, body) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(JSON.stringify(body));
 }
-module.exports = { issueSession, revokeSession, authenticate, requireAuth, requireRole, publicUser, sendJson };
+module.exports = { issueSession, revokeSession, authenticate, requireAuth, requireRole, publicUser, sendJson, csrfValid, setAuthResponseCookies, clearAuthResponseCookies };
