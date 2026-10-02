@@ -5,12 +5,13 @@ const KerjaDesaAPI = {
   baseURL: window.KERJADESA_API_BASE || '/api',
 
   async request(endpoint, options = {}) {
-    const token = sessionStorage.getItem('kd_auth_token') || '';
     const headers = { ...options.headers };
     if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
-    if (token) headers.Authorization = 'Bearer ' + token;
+    const csrf=(window.KerjaDesaAuthAPI?.csrfToken?.()||'');
+    const method=String(options.method||'GET').toUpperCase();
+    if(!['GET','HEAD','OPTIONS'].includes(method) && csrf) headers['X-CSRF-Token']=csrf;
 
-    const response = await fetch(this.baseURL + endpoint, { ...options, headers });
+    const response = await fetch(this.baseURL + endpoint, { ...options, credentials:'include', headers });
     const data = await response.json().catch(() => ({}));
 
     if (response.status === 401) {
