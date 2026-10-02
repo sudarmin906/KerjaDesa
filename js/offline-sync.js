@@ -40,7 +40,7 @@
   function backoff(attempts){return Math.min(30000,1000*Math.pow(2,Math.max(0,attempts-1)))}
 
   async function processQueue(){
-    if(!api||!localStorage.getItem('kd_auth_token')||!navigator.onLine)return {processed:0,conflicts:0,failed:0};
+    if(!api||!sessionStorage.getItem('kd_auth_token')||!navigator.onLine)return {processed:0,conflicts:0,failed:0};
     let processed=0,conflicts=0,failed=0;
     for(const item of pending()){
       if(item.attempts>=MAX_ATTEMPTS){failed++;continue}
