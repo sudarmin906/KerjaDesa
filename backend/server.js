@@ -13,18 +13,55 @@ const ALLOWED_METHODS = 'GET,POST,PATCH,DELETE,OPTIONS';
 const ALLOWED_HEADERS = 'Content-Type, Authorization';
 const WEB_ROOT = path.resolve(__dirname, '..');
 
-function cors(req, res) {
-  const configured = String(process.env.CORS_ORIGIN || '').split(',').map(x => x.trim()).filter(Boolean);
-  const requestOrigin = req.headers.origin || '';
-  const allow = configured.length ? (configured.includes(requestOrigin) ? requestOrigin : '') : '*';
-  if (allow) res.setHeader('Access-Control-Allow-Origin', allow);
-  if (requestOrigin && allow) res.setHeader('Vary', 'Origin');
+const API_RATE_WINDOW_MS = 60 * 1000;
+const API_RATE_MAX = 180;
+const apiRate = new Map();
+
+function clientKey(req) {
+  if (process.env.TRUST_PROXY === 'true') {
+    const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    if (forwarded) return forwarded;
+  }
+  return req.socket?.remoteAddress || 'unknown';
+}
+
+function allowApiRequest(req) {
+  const key = clientKey(req);
+  const now = Date.now();
+  const item = apiRate.get(key);
+  if (!item || now - item.startedAt >= API_RATE_WINDOW_MS) {
+    apiRate.set(key, { startedAt: now, count: 1 });
+    return true;
+  }
+  item.count += 1;
+  return item.count <= API_RATE_MAX;
+}
+
+function securityHeaders(res, sensitive=false) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), payment=(), usb=(), display-capture=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  if (sensitive) res.setHeader('Cache-Control', 'no-store, max-age=0');
+}
+
+function cors(req, res) {
+  const configured = String(process.env.CORS_ORIGIN || '').split(',').map(x => x.trim()).filter(Boolean);
+  const requestOrigin = req.headers.origin || '';
+  const allow = configured.length
+    ? (configured.includes(requestOrigin) ? requestOrigin : '')
+    : (process.env.NODE_ENV === 'production' ? '' : '*');
+
+  if (allow) res.setHeader('Access-Control-Allow-Origin', allow);
+  if (requestOrigin && allow) res.setHeader('Vary', 'Origin');
+  securityHeaders(res, true);
   res.setHeader('Access-Control-Allow-Headers', ALLOWED_HEADERS);
   res.setHeader('Access-Control-Allow-Methods', ALLOWED_METHODS);
-  res.setHeader('Access-Control-Max-Age', '86400');
+  res.setHeader('Access-Control-Max-Age', '600');
 }
 
 function safeStaticPath(urlPath) {
@@ -51,9 +88,9 @@ function serveStatic(req, res, pathname) {
     };
     res.statusCode = 200;
     res.setHeader('Content-Type', types[ext] || 'application/octet-stream');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
+    securityHeaders(res, ext === '.html');
     if (path.basename(filePath) === 'sw.js') res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    else res.setHeader('Cache-Control', ext === '.html' ? 'no-cache' : 'public, max-age=3600');
+    else res.setHeader('Cache-Control', ext === '.html' ? 'no-cache, no-store, must-revalidate' : 'public, max-age=3600');
     if (req.method === 'HEAD') return res.end();
     return fs.createReadStream(filePath).pipe(res);
   }
@@ -73,6 +110,10 @@ async function route(req, res) {
       res.statusCode = 204;
       return res.end();
     }
+    if (!allowApiRequest(req)) {
+      res.setHeader('Retry-After', '60');
+      return sendJson(res, 429, { success: false, message: 'Terlalu banyak permintaan. Coba lagi nanti.' });
+    }
 
     if (req.method === 'GET' && pathName === '/api/health') {
       const db = await postgresHealth();
@@ -86,7 +127,10 @@ async function route(req, res) {
     }
 
     if (req.method === 'POST' && pathName === '/api/auth/login') return login(req, res);
-    if (req.method === 'POST' && pathName === '/api/auth/logout') return logout(req, res);
+    if (req.method === 'POST' && pathName === '/api/auth/logout') {
+      res.setHeader('Clear-Site-Data', '"cache", "cookies"');
+      return logout(req, res);
+    }
     if (req.method === 'GET' && pathName === '/api/auth/me') {
       const auth = await requireAuth(req, res);
       return auth && sendJson(res, 200, { success: true, user: auth.user });
