@@ -87,7 +87,7 @@
         if((matched||byDate)&&!used.has(pi)){used.add(pi);return true} return false;
       });
       const photoHtml = photos.length
-        ? photos.map(p=>'<div class="master-doc-photo"><img src="'+p.url+'" alt="Dokumentasi"></div>').join('')
+        ? photos.map(p=>(safeMediaUrl(p.url)?'<div class="master-doc-photo"><img src="'+esc2(safeMediaUrl(p.url))+'" alt="Dokumentasi"></div>':'')).join('')
         : '<div class="master-doc-empty">Foto dokumentasi belum tersedia untuk kegiatan ini.</div>';
       const village = (typeof locationVillage==='function'?locationVillage(act.lokasi):String(act.lokasi||'-'));
       const date = act.tanggal ? dLong(act.tanggal) : '-';
@@ -114,8 +114,9 @@
     const visitActs=safeArr(acts);
     const signDate=allActs.length?dLong(allActs[allActs.length-1].tanggal):('30 '+month+' '+year);
     const lp=(typeof logoPhoto!=='undefined')?logoPhoto:'';
-    const logo=lp
-      ? '<img class="cover-logo" src="'+lp+'" alt="Logo Kemendesa">'
+    const logoUrl=typeof safeMediaUrl==='function'?safeMediaUrl(lp):'';
+    const logo=logoUrl
+      ? '<img class="cover-logo" src="'+esc2(logoUrl)+'" alt="Logo Kemendesa">'
       : '<div class="cover-logo placeholder">LOGO KEMENDESA PDT</div>';
 
     // 1) COVER — A4 PORTRAIT, matching the supplied original.
