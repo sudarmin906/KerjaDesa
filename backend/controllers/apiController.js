@@ -171,7 +171,6 @@ async function login(req, res) {
     res.setHeader('Cache-Control','no-store');
     return sendJson(res, 200, {
       success: true,
-      token,
       expires_in: 8 * 60 * 60,
       user: publicUser(user)
     });
