@@ -203,7 +203,7 @@ html[data-kd-theme="dark"] .muted,html[data-kd-theme="dark"] .kd-setting-head p,
 html[data-kd-theme="dark"] input,html[data-kd-theme="dark"] textarea,html[data-kd-theme="dark"] select{background:#111a25!important;color:#e5edf5!important;border-color:#394b5d!important}
 html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#263445!important}.kd-compact main{padding-top:10px!important}.kd-compact .card{border-radius:14px!important}.kd-compact .feature{min-height:105px!important;padding:12px!important}
 @media(max-width:600px){.kd-setting-actions{grid-template-columns:1fr}.kd-session-card{align-items:flex-start;flex-direction:column}.kd-session-card button{width:100%}}
-</style></style></head><body>
+</style></head><body>
 <script src="js/deployment-config.js"></script><script src="js/login-direct.js"></script><script src="js/frontend-api-config.js"></script><script src="js/api-auth.js"></script><script src="js/connect-integration.js"></script><script src="js/offline-sync.js"></script><script src="js/integrated-domain-modules.js"></script>
 <header class="kd-min-header"><div class="kd-min-brand"><div class="kd-logo-mark" aria-hidden="true"><i></i><i></i><i></i></div><div class="kd-logo-text">KerjaDesa</div></div><div class="kd-account"><button type="button" class="kd-account-btn" aria-label="Menu akun" title="Akun & Pengaturan" onclick="kdToggleAccountMenu()">👤</button><div id="kdAccountMenu" class="kd-account-menu"><button type="button" onclick="page('pengaturan');kdToggleAccountMenu(false)">⚙️ <span>Pengaturan</span></button><button type="button" onclick="kdLogout()">↪ <span>Keluar</span></button></div></div></header>
 <main>
@@ -364,15 +364,32 @@ async function kdCreateUser(){
   const role=(prompt('Role (ADMIN/PLD/PEMDES/OPERATOR):','OPERATOR')||'OPERATOR').toUpperCase();
   try{await KerjaDesaAPI.create('users',{username,password,role,nama_lengkap:username,status:'ACTIVE'});kdLoadUsers();alert('Pengguna berhasil dibuat.')}catch(e){alert('Gagal membuat pengguna: '+e.message)}
 }
+function kdApplyAppearance(theme,density){
+  const root=document.documentElement;
+  let actual=theme||'light';
+  if(actual==='system') actual=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+  root.dataset.kdTheme=actual;
+  document.body.classList.toggle('kd-compact',density==='compact');
+}
+function kdPreviewAppearance(){
+  const theme=document.getElementById('setTheme')?.value||'light';
+  const density=document.getElementById('setDensity')?.value||'normal';
+  kdApplyAppearance(theme,density);
+}
+function kdRefreshApp(){location.reload()}
 function loadAppSettings(){
   const s=JSON.parse(localStorage.getItem('kerjadesa_settings')||'{}'); const ai=JSON.parse(localStorage.getItem('kerjadesa_ai_settings')||'{}'); const ae=document.getElementById('setAiEndpoint'),am=document.getElementById('setAiModel'); if(ae)ae.value=ai.endpoint||''; if(am)am.value=ai.model||'gpt-5.6';
   const vals={setNama:s.nama||'SUDARMIN ARIPUDDIN',setJabatan:s.jabatan||'Pendamping Lokal Desa',setKecamatan:s.kecamatan||'Sendana',setKabupaten:s.kabupaten||'Majene',setProvinsi:s.provinsi||'Sulawesi Barat'};
   Object.entries(vals).forEach(([id,v])=>{const el=document.getElementById(id);if(el)el.value=v});
+  const theme=document.getElementById('setTheme');if(theme)theme.value=s.theme||'light';
+  const density=document.getElementById('setDensity');if(density)density.value=s.density||'normal';
+  const u=JSON.parse(localStorage.getItem('kd_user')||'null')||{};const un=document.getElementById('kdSettingsUserName'),ur=document.getElementById('kdSettingsUserRole');if(un)un.textContent=u.name||u.nama_lengkap||u.username||'Pengguna KerjaDesa';if(ur)ur.textContent=u.role||'USER';
+  kdApplyAppearance(s.theme||'light',s.density||'normal');
 }
 function saveAppSettings(){
-  const s={nama:document.getElementById('setNama').value.trim(),jabatan:document.getElementById('setJabatan').value.trim(),kecamatan:document.getElementById('setKecamatan').value.trim(),kabupaten:document.getElementById('setKabupaten').value.trim(),provinsi:document.getElementById('setProvinsi').value.trim()};
-  localStorage.setItem('kerjadesa_settings',JSON.stringify(s));
-  const st=document.getElementById('settingsStatus');if(st)st.textContent='✅ Pengaturan tersimpan di perangkat.';
+  const s={nama:document.getElementById('setNama').value.trim(),jabatan:document.getElementById('setJabatan').value.trim(),kecamatan:document.getElementById('setKecamatan').value.trim(),kabupaten:document.getElementById('setKabupaten').value.trim(),provinsi:document.getElementById('setProvinsi').value.trim(),theme:document.getElementById('setTheme')?.value||'light',density:document.getElementById('setDensity')?.value||'normal'};
+  localStorage.setItem('kerjadesa_settings',JSON.stringify(s));kdApplyAppearance(s.theme,s.density);
+  const st=document.getElementById('settingsStatus');if(st)st.textContent='✅ Pengaturan dan tampilan tersimpan di perangkat.';
 }
 function resetAppSettings(){localStorage.removeItem('kerjadesa_settings');loadAppSettings();const st=document.getElementById('settingsStatus');if(st)st.textContent='↩️ Pengaturan dikembalikan ke default.'}
 async function kdLoadDesa(){
