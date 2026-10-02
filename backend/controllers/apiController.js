@@ -161,7 +161,7 @@ function normalizeResourcePayload(resource, body, user) {
   delete payload.password;
   delete payload.password_hash;
   if (resource !== 'users') {
-    payload.created_by = payload.created_by || user.id;
+    payload.created_by = user.id;
   }
   return payload;
 }
