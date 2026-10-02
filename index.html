@@ -609,7 +609,7 @@ function renderVillageDocuments(){
   const el=document.getElementById('desaDocList');if(!el)return;
   const arr=villageDocs().slice().reverse();
   if(!arr.length){el.innerHTML='<div class="kd-empty">Belum ada dokumen desa.</div>';return}
-  el.innerHTML=arr.map(d=>'<div class="vdoc-item"><div><b>'+esc(d.name)+'</b><br><span class="small muted">'+esc(d.desa)+' • '+esc(d.kategori)+' • '+(Number(d.size||0)/1024).toFixed(1)+' KB</span></div><div class="vdoc-actions"><button type="button" onclick="openVillageDocument('+d.id+')">Buka</button><button type="button" class="secondary" onclick="deleteVillageDocument('+d.id+')">Hapus</button></div></div>').join('');
+  el.innerHTML=arr.map(d=>'<div class="vdoc-item"><div><b>'+esc(d.name)+'</b><br><span class="small muted">'+esc(d.desa)+' • '+esc(d.kategori)+' • '+(Number(d.size||0)/1024).toFixed(1)+' KB</span></div><div class="vdoc-actions"><button type="button" data-kd-vdoc-open="'+esc(d.id)+'">Buka</button><button type="button" class="secondary" data-kd-vdoc-delete="'+esc(d.id)+'">Hapus</button></div></div>').join('');
 }
 function openVillageDocument(id){const d=villageDocs().find(x=>x.id===id);if(!d)return;const a=document.createElement('a');a.href=d.url;a.target='_blank';a.rel='noopener';a.click()}
 function deleteVillageDocument(id){if(!confirm('Hapus dokumen ini dari perangkat?'))return;data.docs.villageDocuments=villageDocs().filter(x=>x.id!==id);save();renderVillageDocuments()}
@@ -1543,7 +1543,7 @@ function kdWorkflowSetup(){
   const toolbar=document.createElement('div');
   toolbar.id='kdWorkflowToolbar';
   toolbar.className='card no-print';
-  toolbar.innerHTML='<h2 style="margin-top:0">📂 Alur Kerja KerjaDesa</h2><div class="kd-flow-note"><b>DRP → Laporan Bulanan → Dokumentasi</b><br><span class="small muted">Data DRP menjadi sumber laporan. Dokumentasi ditambahkan setelah laporan siap. <b>SPPD dikelola terpisah</b> menggunakan template Word asli.</span></div><div class="kd-workflow"><button data-step="drp" onclick="workflowPage(\'drp\')">📑 DRP</button><button data-step="laporan" onclick="workflowPage(\'laporan\')">📄 Laporan Bulanan</button><button data-step="dokumentasi" onclick="workflowPage(\'dokumentasi\')">🖼️ Dokumentasi</button><button data-step="sppd" onclick="workflowPage(\'sppd\')">🧾 SPPD Terpisah</button></div>';
+  toolbar.innerHTML='<h2 style="margin-top:0">📂 Alur Kerja KerjaDesa</h2><div class="kd-flow-note"><b>DRP → Laporan Bulanan → Dokumentasi</b><br><span class="small muted">Data DRP menjadi sumber laporan. Dokumentasi ditambahkan setelah laporan siap. <b>SPPD dikelola terpisah</b> menggunakan template Word asli.</span></div><div class="kd-workflow"><button type="button" data-step="drp">📑 DRP</button><button type="button" data-step="laporan">📄 Laporan Bulanan</button><button type="button" data-step="dokumentasi">🖼️ Dokumentasi</button><button type="button" data-step="sppd">🧾 SPPD Terpisah</button></div>';
   d.insertBefore(toolbar,d.firstElementChild);\n  kdBindStaticActions();
 
   const drpBox=document.createElement('div'); drpBox.id='kdStepDrp'; drpBox.className='kd-step';
@@ -1564,7 +1564,7 @@ function kdWorkflowSetup(){
   // Tambahkan akses upload yang selalu terlihat dari langkah DRP.
   const quickUpload=document.createElement('div');
   quickUpload.className='card no-print';
-  quickUpload.innerHTML='<h3>⚡ Upload Cepat</h3><p class="small muted">Upload DRP dan dokumentasi dapat dilakukan langsung dari alur kerja ini. Data tetap dicocokkan dengan kegiatan DRP.</p><div class="actions"><button type="button" onclick="document.getElementById(\'drpFile\')?.click()">📑 Pilih DRP</button><button type="button" onclick="workflowPage(\'dokumentasi\')">🖼️ Upload Foto</button></div><button type="button" class="secondary" onclick="document.getElementById(\'packageFiles\')?.click()">⚡ Upload Paket: 1 DRP + Semua Foto</button>';
+  quickUpload.innerHTML='<h3>⚡ Upload Cepat</h3><p class="small muted">Upload DRP dan dokumentasi dapat dilakukan langsung dari alur kerja ini. Data tetap dicocokkan dengan kegiatan DRP.</p><div class="actions"><button type="button" data-kd-action="pick-drp">📑 Pilih DRP</button><button type="button" data-kd-action="open-docs">🖼️ Upload Foto</button></div><button type="button" class="secondary" data-kd-action="pick-package">⚡ Upload Paket: 1 DRP + Semua Foto</button>';
   drpBox.appendChild(quickUpload);
 
   const sppd=document.getElementById('sppdEditorCard');
@@ -1578,6 +1578,12 @@ function kdWorkflowSetup(){
   if(docResult2)reportBox.appendChild(docResult2);
 
   d.appendChild(drpBox);d.appendChild(reportBox);d.appendChild(docBox);d.appendChild(sppdBox);
+}
+function kdBindDynamicActions(){
+  document.querySelectorAll('[data-kd-vdoc-open]').forEach(b=>b.onclick=null);
+  document.querySelectorAll('[data-kd-vdoc-delete]').forEach(b=>b.onclick=null);
+  document.querySelectorAll('[data-kd-vdoc-open]').forEach(b=>b.addEventListener('click',()=>openVillageDocument(Number(b.dataset.kdVdocOpen))));
+  document.querySelectorAll('[data-kd-vdoc-delete]').forEach(b=>b.addEventListener('click',()=>deleteVillageDocument(Number(b.dataset.kdVdocDelete))));
 }
 function kdBindStaticActions(){
   document.querySelectorAll('#kdWorkflowToolbar [data-step]').forEach(b=>b.addEventListener('click',()=>workflowPage(b.dataset.step)));
@@ -1611,7 +1617,7 @@ function kdAddHomeQuick(){
   const home=document.getElementById('home');
   if(!home||document.getElementById('kdHomeQuick'))return;
   const box=document.createElement('div');box.id='kdHomeQuick';box.className='card';
-  box.innerHTML='<h3 style="margin-top:0">⚡ Akses Kerja</h3><div class="kd-quick"><button onclick="page(\'kegiatan\')">📋 Kegiatan</button><button onclick="page(\'monitoring\')">📍 Monitoring</button></div>';
+  box.innerHTML='<h3 style="margin-top:0">⚡ Akses Kerja</h3><div class="kd-quick"><button type="button" data-kd-page="kegiatan">📋 Kegiatan</button><button type="button" data-kd-page="monitoring">📍 Monitoring</button></div>';
   const dc=home.querySelector('.kd-data-center'); if(dc)dc.before(box); else home.appendChild(box);
 }
 const kdOldShow=show;
@@ -1645,9 +1651,9 @@ kdWorkflowSetup();kdAddHomeQuick();
       '<p class="muted">Representasi digital desa untuk melihat zona, kondisi, dan simulasi sederhana. Data tersimpan di perangkat dan tidak mengubah data DRP.</p>'+
       '<div id="kdTwinView"></div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'+
-      '<button onclick="kdTwinScenario(\'normal\')">🟢 Kondisi Normal</button>'+
-      '<button onclick="kdTwinScenario(\'monitoring\')">🟡 Mode Monitoring</button>'+
-      '<button onclick="kdTwinScenario(\'emergency\')">🔴 Simulasi Darurat</button>'+
+      '<button type="button" data-kd-twin="normal">🟢 Kondisi Normal</button>'+
+      '<button type="button" data-kd-twin="monitoring">🟡 Mode Monitoring</button>'+
+      '<button type="button" data-kd-twin="emergency">🔴 Simulasi Darurat</button>'+
       '<button type="button" data-kd-twin="reset">↺ Reset</button></div>';
     const anchor=home.querySelector('.kd-data-center'); if(anchor)anchor.before(card); else home.appendChild(card);
     renderTwin();\n    kdBindStaticActions();
@@ -1715,7 +1721,7 @@ kdWorkflowSetup();kdAddHomeQuick();
     if(document.getElementById('kdUpgradeCenter'))return;
     const home=document.getElementById('home');if(!home)return;
     const card=document.createElement('div');card.id='kdUpgradeCenter';card.className='card kd-data-center';
-    card.innerHTML='<h2 style="margin-top:0">🧭 Upgrade Control Center</h2><p class="muted">Pusat pemeriksaan upgrade KerjaDesa Pro. Menampilkan kondisi aplikasi dan milestone yang benar-benar ada di repository.</p><div id="kdUpgradeCenterView"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" data-kd-upgrade="refresh">↻ Perbarui Status</button><button class="secondary" onclick="window.open(\"kerjadesa_upgrade_manifest.json\",\"_blank\")">📋 Lihat Registry</button></div>';
+    card.innerHTML='<h2 style="margin-top:0">🧭 Upgrade Control Center</h2><p class="muted">Pusat pemeriksaan upgrade KerjaDesa Pro. Menampilkan kondisi aplikasi dan milestone yang benar-benar ada di repository.</p><div id="kdUpgradeCenterView"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" data-kd-upgrade="refresh">↻ Perbarui Status</button><button type="button" class="secondary" data-kd-upgrade="registry">📋 Lihat Registry</button></div>';
     const twin=document.getElementById('kdTwinCard');
     if(twin&&twin.parentNode) twin.parentNode.insertBefore(card,twin.nextSibling);
     else {const anchor=home.querySelector('.kd-data-center');if(anchor)anchor.after(card);else home.appendChild(card);}
