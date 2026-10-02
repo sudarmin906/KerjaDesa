@@ -560,7 +560,9 @@ async function kdLoadDesa(){
  const list=document.getElementById('kdDesaList'),st=document.getElementById('kdDesaStatus');if(!list)return;
  try{
   let rows=(window.KerjaDesaAPI&&sessionStorage.getItem('kd_login')&&navigator.onLine)?((await KerjaDesaAPI.get('desa')).data||[]):(data.serverData?.desa||[]);
-  list.innerHTML=rows.length?rows.map(x=>'<div class="card item"><b>'+esc(x.nama||x.nama_desa||'-')+'</b><br><span class="small muted">'+esc(x.kecamatan||'-')+' • '+esc(x.kabupaten||'-')+' • '+esc(x.provinsi||'-')+'</span><div class="actions"><button type="button" class="secondary" onclick="kdEditDesa('+JSON.stringify(x).replace(/"/g,'&quot;')+')">✏️ Edit</button><button type="button" class="secondary" onclick="kdDeleteDesa('+JSON.stringify(x.id)+')">🗑️ Hapus</button></div></div>').join(''):'<div class="kd-empty">Belum ada data desa.</div>';
+   list.innerHTML=rows.length?rows.map(x=>'<div class="card item"><b>'+esc(x.nama||x.nama_desa||'-')+'</b><br><span class="small muted">'+esc(x.kecamatan||'-')+' • '+esc(x.kabupaten||'-')+' • '+esc(x.provinsi||'-')+'</span><div class="actions"><button type="button" class="secondary kd-desa-edit" data-desa-id="'+esc(x.id)+'">✏️ Edit</button><button type="button" class="secondary kd-desa-delete" data-desa-id="'+esc(x.id)+'">🗑️ Hapus</button></div></div>').join(''):'<div class="kd-empty">Belum ada data desa.</div>';
+   list.querySelectorAll('.kd-desa-edit').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.desaId;const row=rows.find(x=>String(x.id)===String(id));if(row)kdEditDesa(row)}));
+   list.querySelectorAll('.kd-desa-delete').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.desaId;if(id!=null)kdDeleteDesa(id)}));
   if(st)st.textContent='Data desa: '+rows.length;
  }catch(e){if(st)st.textContent='❌ '+e.message}
 }
