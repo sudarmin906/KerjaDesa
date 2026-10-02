@@ -7,12 +7,17 @@ const KerjaDesaAuthAPI = {
   },
 
   token() {
-    return sessionStorage.getItem('kd_auth_token') || '';
+    return '';
+  },
+  csrfToken() {
+    const match=document.cookie.match(/(?:^|; )__Host-kd_csrf=([^;]+)/) || document.cookie.match(/(?:^|; )kd_csrf=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : '';
   },
 
   async login(username, password) {
     const response = await fetch(this.baseURL() + '/auth/login', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
     });
@@ -20,17 +25,15 @@ const KerjaDesaAuthAPI = {
     if (!response.ok || !data.success) {
       throw new Error(data.message || 'Login gagal');
     }
-    sessionStorage.setItem('kd_auth_token', data.token || '');
+    sessionStorage.removeItem('kd_auth_token');
     sessionStorage.setItem('kd_user', JSON.stringify(data.user || {}));
     sessionStorage.setItem('kd_login', '1');
     return data;
   },
 
   async me() {
-    const token = this.token();
-    if (!token) return null;
     const response = await fetch(this.baseURL() + '/auth/me', {
-      headers: { Authorization: 'Bearer ' + token }
+      credentials: 'include'
     });
     if (!response.ok) return null;
     const data = await response.json();
@@ -38,15 +41,13 @@ const KerjaDesaAuthAPI = {
   },
 
   async logout() {
-    const token = this.token();
-    if (token) {
-      try {
-        await fetch(this.baseURL() + '/auth/logout', {
-          method: 'POST',
-          headers: { Authorization: 'Bearer ' + token }
-        });
-      } catch (_) {}
-    }
+    try {
+      await fetch(this.baseURL() + '/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'X-CSRF-Token': this.csrfToken() }
+      });
+    } catch (_) {}
     sessionStorage.removeItem('kd_login');
     sessionStorage.removeItem('kd_auth_token');
     sessionStorage.removeItem('kd_user');
