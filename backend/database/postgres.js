@@ -31,7 +31,7 @@ function getPool() {
       // Blitz managed PostgreSQL may be served without TLS. Only enable
       // PostgreSQL SSL when it is explicitly requested by the environment.
       ssl: /^(1|true|yes)$/i.test(String(process.env.DB_SSL || ''))
-        ? { rejectUnauthorized: false }
+        ? { rejectUnauthorized: String(process.env.DB_SSL_REJECT_UNAUTHORIZED || 'true') !== 'false' }
         : undefined
     });
   }
