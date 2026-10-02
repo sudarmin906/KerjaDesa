@@ -205,10 +205,10 @@ html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#26344
 @media(max-width:600px){.kd-setting-actions{grid-template-columns:1fr}.kd-session-card{align-items:flex-start;flex-direction:column}.kd-session-card button{width:100%}}
 </style></head><body>
 <script src="js/deployment-config.js"></script><script src="js/login-direct.js"></script><script src="js/frontend-api-config.js"></script><script src="js/api-auth.js"></script><script src="js/connect-integration.js"></script><script src="js/offline-sync.js"></script><script src="js/integrated-domain-modules.js"></script>
-<header class="kd-min-header"><div class="kd-min-brand"><div class="kd-logo-mark" aria-hidden="true"><i></i><i></i><i></i></div><div class="kd-logo-text">KerjaDesa</div></div><div class="kd-account"><button type="button" class="kd-account-btn" aria-label="Menu akun" title="Akun & Pengaturan" onclick="kdToggleAccountMenu()">👤</button><div id="kdAccountMenu" class="kd-account-menu"><button type="button" onclick="page('pengaturan');kdToggleAccountMenu(false)">⚙️ <span>Pengaturan</span></button><button type="button" onclick="kdLogout()">↪ <span>Keluar</span></button></div></div></header>
+<header class="kd-min-header"><div class="kd-min-brand"><div class="kd-logo-mark" aria-hidden="true"><i></i><i></i><i></i></div><div class="kd-logo-text">KerjaDesa</div></div><div class="kd-account"><button type="button" class="kd-account-btn" aria-label="Menu akun" title="Akun & Pengaturan" onclick="kdToggleAccountMenu()">👤</button><div id="kdAccountMenu" class="kd-account-menu"><button type="button" onclick="page('pengaturan');kdToggleAccountMenu(false)">⚙️ <span>Pengaturan</span></button><button type="button" id="kdLogoutBtn" onclick="kdLogout()">↪ <span>Keluar</span></button></div></div></header>
 <main>
 <section id="login" class="card login-card"><div class="login-hero"><span class="login-tag">Sistem Kerja Pendamping Desa</span><img class="login-photo" src="foto_profil.jpg" alt="Sudarmin Aripuddin"><h2>Selamat Datang di<br><span style="color:#ffd34d">KerjaDesa</span></h2><p>Administrasi, dokumentasi, monitoring, DRP, laporan bulanan, dan SPPD dalam satu aplikasi yang dapat digunakan dari HP.</p><div style="margin-top:10px;font-size:12px;opacity:.85">Kecamatan Sendana • Kabupaten Majene • Sulawesi Barat</div></div><div class="login-form"><h2>Masuk ke Aplikasi</h2><p class="muted">Gunakan akun Anda untuk membuka dashboard KerjaDesa.</p><input id="user" value="admin" placeholder="Username" autocomplete="username"><input id="pass" value="admin123" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button id="loginBtn" type="button" onclick="doLogin()">🔐 Masuk ke KerjaDesa</button><p id="loginMsg" class="muted"></p><div style="margin-top:22px;padding:13px;border-radius:14px;background:#f2f7fb;font-size:12px;color:#66788a"><b>Offline Ready</b><br>Data kerja tetap dapat disimpan di perangkat saat koneksi internet tidak tersedia.</div></div></section><section id="app">
-<div id="home"><div class="welcome card"><div class="welcome-copy"><span class="tag">Mendampingi Desa • Membangun Negeri</span><h2>Selamat Datang di <span>KerjaDesa</span></h2><p class="muted" style="font-size:15px;max-width:650px">Ruang kerja digital untuk mengelola kegiatan, monitoring lapangan, dokumen, laporan bulanan, dan SPPD Pendamping Desa.</p><div style="margin-top:18px;font-weight:800">SUDARMIN ARIPUDDIN</div><div class="muted" style="font-size:13px">Pendamping Lokal Desa • Kecamatan Sendana • Kabupaten Majene</div></div><div class="welcome-profile"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"></div></div><div class="stats"><div class="stat-card"><div class="stat-icon si-blue">📋</div><div><div class="stat" id="jmlK">0</div><div class="muted">Kegiatan</div></div></div><div class="stat-card"><div class="stat-icon si-green">📍</div><div><div class="stat" id="jmlM">0</div><div class="muted">Monitoring</div></div></div><div class="stat-card"><div class="stat-icon si-orange">📄</div><div><div class="stat">SPPD</div><div class="muted">Template asli</div></div></div><div class="stat-card"><div class="stat-icon si-purple">📷</div><div><div class="stat">Foto</div><div class="muted">Dokumentasi</div></div></div></div><div class="card kd-data-center" style="margin-top:14px">
+<div id="home"><div class="welcome card"><div class="welcome-copy"><span class="tag">Mendampingi Desa • Membangun Negeri</span><h2>Selamat Datang di <span>KerjaDesa</span></h2><p class="muted" style="font-size:15px;max-width:650px">Ruang kerja digital untuk mengelola kegiatan, monitoring lapangan, dokumen, laporan bulanan, dan SPPD Pendamping Desa.</p><div id="kdHomeProfileName" style="margin-top:18px;font-weight:800">SUDARMIN ARIPUDDIN</div><div id="kdHomeProfileRole" class="muted" style="font-size:13px">Pendamping Lokal Desa • Kecamatan Sendana • Kabupaten Majene</div></div><div class="welcome-profile"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"></div></div><div class="stats"><div class="stat-card"><div class="stat-icon si-blue">📋</div><div><div class="stat" id="jmlK">0</div><div class="muted">Kegiatan</div></div></div><div class="stat-card"><div class="stat-icon si-green">📍</div><div><div class="stat" id="jmlM">0</div><div class="muted">Monitoring</div></div></div><div class="stat-card"><div class="stat-icon si-orange">📄</div><div><div class="stat">SPPD</div><div class="muted">Template asli</div></div></div><div class="stat-card"><div class="stat-icon si-purple">📷</div><div><div class="stat">Foto</div><div class="muted">Dokumentasi</div></div></div></div><div class="card kd-data-center" style="margin-top:14px">
 <div class="section-title"><h3>📊 Ringkasan Server</h3><span id="kdServerStatus">Memeriksa...</span></div>
 <div class="grid">
 <div class="pill"><b id="kdSrvKegiatan">-</b><br><span class="muted">Kegiatan Server</span></div>
@@ -277,25 +277,52 @@ html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#26344
 </div>
 <div class="card no-print" id="aiSettingsPanel" style="display:none"><h3>🤖 Koneksi AI GPT</h3><p class="small muted">Masukkan URL proxy/server AI yang aman. API key OpenAI jangan ditaruh langsung di GitHub Pages.</p><input id="setAiEndpoint" placeholder="https://domain-anda/api/rewrite"><input id="setAiModel" value="gpt-5.6" placeholder="Model di server"><div class="actions"><button type="button" class="secondary" onclick="saveAISettings()">💾 Simpan Koneksi AI</button><button type="button" class="secondary" onclick="testAIConnection()">🔌 Tes Koneksi</button></div><div id="aiSettingsStatus" class="small muted"></div></div><div id="userManagementPanel" class="card no-print" style="display:none;margin-top:12px"><h3>👥 Manajemen Pengguna</h3><p class="small muted">Pengelolaan akun hanya berjalan untuk pengguna yang memiliki akses ADMIN pada server.</p><div class="actions"><button type="button" class="secondary" onclick="kdLoadUsers()">↻ Muat Pengguna</button><button type="button" onclick="kdCreateUser()">＋ Tambah Pengguna</button></div><div id="kdUserList" style="margin-top:10px"></div></div><div id="pengaturanPanel" class="card no-print" style="display:none">
 <div class="kd-settings-shell">
-  <div class="kd-session-card">
-    <div class="kd-session-user"><img class="kd-session-avatar" src="foto_profil.jpg" alt=""><div><b id="kdSettingsUserName">Administrator KerjaDesa</b><div class="small muted" id="kdSettingsUserRole">ADMIN</div></div></div>
-    <button type="button" class="kd-danger" onclick="kdLogout()">↪ Keluar dari Aplikasi</button>
+  <div class="kd-settings-hero">
+    <div><span class="kd-settings-kicker">PUSAT KONTROL</span><h2>⚙️ Pengaturan KerjaDesa</h2><p>Kelola identitas laporan, tampilan aplikasi, data perangkat, koneksi AI, dan sesi akun dari satu tempat.</p></div>
+    <div class="kd-settings-status"><span class="badge">● Perangkat Aktif</span><small id="kdSettingsStorage">Memeriksa penyimpanan...</small></div>
   </div>
+  <div class="kd-session-card">
+    <div class="kd-session-user"><img class="kd-session-avatar" src="foto_profil.jpg" alt=""><div><b id="kdSettingsUserName">Administrator KerjaDesa</b><div class="small muted" id="kdSettingsUserRole">ADMIN</div><small class="muted">Sesi aktif pada perangkat ini</small></div></div>
+    <button type="button" id="kdSettingsLogoutBtn" class="kd-danger" onclick="kdLogout()">↪ Keluar dari Aplikasi</button>
+  </div>
+
   <div class="kd-setting-section">
-    <div class="kd-setting-head"><div class="kd-setting-icon">👤</div><div><h3>Profil Kerja</h3><p>Identitas yang digunakan pada dashboard dan dokumen laporan.</p></div></div>
+    <div class="kd-setting-head"><div class="kd-setting-icon">👤</div><div><h3>Profil & Identitas Laporan</h3><p>Identitas ini digunakan sebagai sumber data pada SPPD dan laporan.</p></div></div>
     <div class="grid"><input id="setNama" placeholder="Nama Pendamping"><input id="setJabatan" placeholder="Jabatan"><input id="setKecamatan" value="Sendana" placeholder="Kecamatan"><input id="setKabupaten" value="Majene" placeholder="Kabupaten"><input id="setProvinsi" value="Sulawesi Barat" placeholder="Provinsi"></div>
-    <div class="kd-setting-actions"><button type="button" onclick="saveAppSettings()">💾 Simpan Pengaturan</button><button type="button" class="secondary" onclick="resetAppSettings()">↩️ Kembalikan Default</button></div>
+    <div class="kd-setting-actions"><button type="button" onclick="saveAppSettings()">💾 Simpan Profil</button><button type="button" class="secondary" onclick="resetAppSettings()">↩️ Kembalikan Default</button></div>
     <div id="settingsStatus" class="small muted"></div>
   </div>
+
   <div class="kd-setting-section">
-    <div class="kd-setting-head"><div class="kd-setting-icon">🎨</div><div><h3>Tampilan Aplikasi</h3><p>Preferensi tampilan disimpan di perangkat ini.</p></div></div>
-    <div class="grid"><select id="setTheme" onchange="kdPreviewAppearance()"><option value="light">☀️ Terang</option><option value="dark">🌙 Gelap</option><option value="system">⚙️ Mengikuti Sistem</option></select><select id="setDensity"><option value="normal">📐 Normal</option><option value="compact">📱 Ringkas</option></select></div>
-    <div class="kd-setting-actions"><button type="button" class="secondary" onclick="saveAppSettings()">🎨 Terapkan Tampilan</button><button type="button" class="secondary" onclick="kdRefreshApp()">🔄 Segarkan Aplikasi</button></div>
+    <div class="kd-setting-head"><div class="kd-setting-icon">🎨</div><div><h3>Tampilan Aplikasi</h3><p>Perubahan tema dan kepadatan langsung terlihat dan tetap tersimpan.</p></div></div>
+    <div class="grid"><select id="setTheme" onchange="kdPreviewAppearance()"><option value="light">☀️ Terang</option><option value="dark">🌙 Gelap</option><option value="system">⚙️ Mengikuti Sistem</option></select><select id="setDensity" onchange="kdPreviewAppearance()"><option value="normal">📐 Normal</option><option value="compact">📱 Ringkas</option></select></div>
+    <div class="kd-setting-actions"><button type="button" class="secondary" onclick="saveAppSettings()">🎨 Simpan Tampilan</button><button type="button" class="secondary" onclick="kdRefreshApp()">🔄 Segarkan Aplikasi</button></div>
   </div>
+
   <div class="kd-setting-section">
-    <div class="kd-setting-head"><div class="kd-setting-icon">💾</div><div><h3>Data & Keamanan</h3><p>Data kerja tetap dipisahkan dari sesi login.</p></div></div>
-    <div class="kd-toggle-row"><div><label>Mode offline</label><small>Data lokal tetap dapat digunakan saat internet tidak tersedia.</small></div><input id="setOfflineMode" class="kd-switch" type="checkbox" checked disabled></div>
-    <div class="kd-toggle-row"><div><label>API key AI</label><small>API key tidak disimpan di halaman GitHub; gunakan server/proxy.</small></div><span class="badge">Server/Proxy</span></div>
+    <div class="kd-setting-head"><div class="kd-setting-icon">💾</div><div><h3>Data Perangkat</h3><p>Backup dan restore tidak menghapus data kerja kecuali Anda memilih pemulihan.</p></div></div>
+    <div class="kd-data-actions">
+      <button type="button" class="secondary" onclick="kdBackup()">⬇️ Backup Data</button>
+      <button type="button" class="secondary" onclick="document.getElementById('kdRestoreInput').click()">⬆️ Restore Data</button>
+      <button type="button" class="secondary" onclick="kdRefresh()">↻ Segarkan Data</button>
+      <button type="button" class="secondary" onclick="loadAppSettings()">↺ Muat Pengaturan</button>
+    </div>
+    <input id="kdRestoreInput" type="file" accept=".json,application/json" style="display:none" onchange="kdRestore(this)">
+    <div class="kd-toggle-row"><div><label>Mode offline</label><small>Data kerja tetap dapat digunakan saat internet tidak tersedia.</small></div><span class="badge">● Aktif</span></div>
+    <div class="kd-toggle-row"><div><label>Penyimpanan lokal</label><small id="kdSettingsStorageDetail">Data kerja dan pengaturan disimpan terpisah dari sesi login.</small></div><span id="kdSettingsStorageBadge" class="badge">Local</span></div>
+  </div>
+
+  <div class="kd-setting-section">
+    <div class="kd-setting-head"><div class="kd-setting-icon">🤖</div><div><h3>Koneksi AI</h3><p>API key tetap berada di server/proxy; jangan masukkan secret ke GitHub Pages.</p></div></div>
+    <div class="grid"><input id="setAiEndpoint" placeholder="https://domain-anda/api/rewrite"><input id="setAiModel" value="gpt-5.6" placeholder="Model di server"></div>
+    <div class="kd-setting-actions"><button type="button" class="secondary" onclick="saveAISettings()">💾 Simpan Koneksi AI</button><button type="button" class="secondary" onclick="testAIConnection()">🔌 Tes Koneksi</button></div>
+    <div id="aiSettingsStatus" class="small muted"></div>
+  </div>
+
+  <div id="userManagementPanel" class="kd-setting-section" style="display:none;margin-top:0">
+    <div class="kd-setting-head"><div class="kd-setting-icon">👥</div><div><h3>Manajemen Pengguna</h3><p>Hanya ADMIN server yang dapat mengelola akun pengguna.</p></div></div>
+    <div class="actions"><button type="button" class="secondary" onclick="kdLoadUsers()">↻ Muat Pengguna</button><button type="button" onclick="kdCreateUser()">＋ Tambah Pengguna</button></div>
+    <div id="kdUserList" style="margin-top:10px"></div>
   </div>
 </div>
 </div>
@@ -385,11 +412,18 @@ function loadAppSettings(){
   const density=document.getElementById('setDensity');if(density)density.value=s.density||'normal';
   const u=JSON.parse(localStorage.getItem('kd_user')||'null')||{};const un=document.getElementById('kdSettingsUserName'),ur=document.getElementById('kdSettingsUserRole');if(un)un.textContent=u.name||u.nama_lengkap||u.username||'Pengguna KerjaDesa';if(ur)ur.textContent=u.role||'USER';
   kdApplyAppearance(s.theme||'light',s.density||'normal');
+  const keys=(()=>{try{return localStorage.length}catch(e){return 0}})();
+  const kb=(()=>{try{let b=0;for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i)||'';const v=localStorage.getItem(k)||'';b+=(k.length+v.length)*2}return Math.round(b/1024)}catch(e){return 0}})();
+  const st=document.getElementById('kdSettingsStorage');if(st)st.textContent='Penyimpanan: '+keys+' item • '+kb+' KB';
+  const sd=document.getElementById('kdSettingsStorageDetail');if(sd)sd.textContent='Data lokal saat ini menggunakan sekitar '+kb+' KB pada '+keys+' item penyimpanan.';
+  kdBindLogoutButtons();
 }
 function saveAppSettings(){
   const s={nama:document.getElementById('setNama').value.trim(),jabatan:document.getElementById('setJabatan').value.trim(),kecamatan:document.getElementById('setKecamatan').value.trim(),kabupaten:document.getElementById('setKabupaten').value.trim(),provinsi:document.getElementById('setProvinsi').value.trim(),theme:document.getElementById('setTheme')?.value||'light',density:document.getElementById('setDensity')?.value||'normal'};
   localStorage.setItem('kerjadesa_settings',JSON.stringify(s));kdApplyAppearance(s.theme,s.density);
-  const st=document.getElementById('settingsStatus');if(st)st.textContent='✅ Pengaturan dan tampilan tersimpan di perangkat.';
+  const homeName=document.getElementById('kdHomeProfileName');if(homeName)homeName.textContent=s.nama||'SUDARMIN ARIPUDDIN';
+  const homeRole=document.getElementById('kdHomeProfileRole');if(homeRole)homeRole.textContent=(s.jabatan||'Pendamping Lokal Desa')+' • Kecamatan '+(s.kecamatan||'Sendana')+' • Kabupaten '+(s.kabupaten||'Majene');
+  const st=document.getElementById('settingsStatus');if(st)st.textContent='✅ Profil dan tampilan tersimpan di perangkat.';
 }
 function resetAppSettings(){localStorage.removeItem('kerjadesa_settings');loadAppSettings();const st=document.getElementById('settingsStatus');if(st)st.textContent='↩️ Pengaturan dikembalikan ke default.'}
 async function kdLoadDesa(){
@@ -1038,13 +1072,13 @@ function kdRestore(input){
   };
   reader.readAsText(f);
 }
-async function kdLogout(){
-  if(!confirm('Keluar dari KerjaDesa pada perangkat ini?'))return;
+function kdLogout(){
+  if(!confirm('Keluar dari KerjaDesa pada perangkat ini? Data kerja tersimpan tetap aman.'))return;
 
-  const token=localStorage.getItem('kd_auth_token');
+  const token=localStorage.getItem('kd_auth_token')||'';
 
-  // Hapus sesi lokal lebih dulu agar tombol Keluar selalu responsif,
-  // termasuk saat server/API sedang lambat atau tidak tersedia.
+  // Sesi lokal harus dihapus tanpa menunggu server. Data kerja
+  // (kerjadesa, pengaturan, SPPD, DRP, foto) tidak ikut dihapus.
   try{
     localStorage.removeItem('kd_login');
     localStorage.removeItem('kd_auth_token');
@@ -1053,28 +1087,34 @@ async function kdLogout(){
 
   try{kdToggleAccountMenu(false)}catch(e){}
 
-  // Tampilkan halaman login segera; UI tidak menunggu request server.
-  const app=document.getElementById('app');
-  const nav=document.getElementById('nav');
-  const login=document.getElementById('login');
-  if(app)app.style.display='none';
-  if(nav)nav.classList.add('hide');
-  if(login)login.style.display='';
-
-  // Invalidasi sesi server di latar belakang dengan timeout.
+  // Logout server hanya sebagai best-effort; aplikasi tidak menunggu API.
   if(token){
     try{
-      const controller=new AbortController();
-      const timer=setTimeout(()=>controller.abort(),2500);
       fetch((window.KERJADESA_API_BASE||'/api')+'/auth/logout',{
         method:'POST',
         headers:{Authorization:'Bearer '+token},
-        signal:controller.signal,
         keepalive:true
-      }).catch(()=>{}).finally(()=>clearTimeout(timer));
+      }).catch(()=>{});
     }catch(e){}
   }
+
+  // Hard reset UI: setelah sesi dihapus, reload memastikan seluruh
+  // state JavaScript lama tidak dapat mengembalikan dashboard.
+  setTimeout(()=>location.reload(),60);
 }
+function kdBindLogoutButtons(){
+  ['kdLogoutBtn','kdSettingsLogoutBtn'].forEach(id=>{
+    const btn=document.getElementById(id);
+    if(!btn||btn.dataset.kdLogoutBound==='1')return;
+    btn.dataset.kdLogoutBound='1';
+    btn.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      kdLogout();
+    },true);
+  });
+}
+
 async function kdLoadServerDashboard(){
   if(!window.KerjaDesaAPI||!localStorage.getItem('kd_auth_token')||!navigator.onLine){
     const st=document.getElementById('kdServerStatus'); if(st)st.textContent='Offline';
