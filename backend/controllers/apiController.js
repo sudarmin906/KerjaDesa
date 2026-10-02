@@ -318,7 +318,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
         password_hash: hashPassword(body.password),
         role: ['ADMIN','PLD','PEMDES','OPERATOR','KADES','SEKDES','BENDAHARA','KAUR','KASI','TPP'].includes(String(body.role || '').toUpperCase()) ? String(body.role || '').toUpperCase() : 'OPERATOR',
         desa: body.desa || '',
-        status: body.status || 'ACTIVE'
+        status: ['ACTIVE','INACTIVE'].includes(String(body.status || '').toUpperCase()) ? String(body.status || '').toUpperCase() : 'ACTIVE'
       });
       await writeAudit({ user: auth.user, action: 'CREATE', resource: 'users', recordId: item.id });
       return sendJson(res, 201, { success: true, data: publicUser(item) });
@@ -352,6 +352,12 @@ async function resourceHandler(req, res, resource, id, method, auth) {
       delete body.password;
     }
     delete body.id;
+    if (resource === 'users') {
+      if (body.role !== undefined && !['ADMIN','PLD','PEMDES','OPERATOR','KADES','SEKDES','BENDAHARA','KAUR','KASI','TPP'].includes(String(body.role).toUpperCase())) return sendJson(res, 422, { success: false, message: 'Role tidak valid.' });
+      if (body.status !== undefined && !['ACTIVE','INACTIVE'].includes(String(body.status).toUpperCase())) return sendJson(res, 422, { success: false, message: 'Status pengguna tidak valid.' });
+      if (body.role !== undefined) body.role = String(body.role).toUpperCase();
+      if (body.status !== undefined) body.status = String(body.status).toUpperCase();
+    }
     const current = await get(resource, id);
     if (!current || !canAccessVillage(resource, current, auth.user)) return sendJson(res, 404, { success: false, message: 'Data tidak ditemukan.' });
     if (body.base_version !== undefined && Number(body.base_version) !== Number(current.version || 1)) {
