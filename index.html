@@ -182,9 +182,30 @@ main{max-width:1180px!important;padding:18px 26px 110px!important}
 .nav button{color:#222!important}
 .kd-float-action{position:fixed;right:24px;bottom:88px;width:66px;height:66px;border-radius:50%;background:#67efbd;border:0;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:40;display:grid;place-items:center;color:#111;font-size:31px;cursor:pointer}
 @media(max-width:600px){.kd-min-header{height:78px!important;padding:0 18px!important}.kd-logo-mark{width:43px;height:43px}.kd-logo-text{font-size:27px}.kd-account-btn{width:42px!important;height:42px!important}.kd-account-menu{top:50px;width:230px}main{padding:12px 16px 105px!important}#home .welcome{min-height:170px!important}#home .welcome-copy{padding:25px 2px!important}#home .welcome h2{font-size:30px!important}.kd-float-action{right:18px;bottom:82px;width:60px;height:60px}}
-</style></head><body>
+<style id="kd-settings-pro-ui">
+/* V30.1 — Settings + session + appearance */
+.kd-settings-shell{display:grid;gap:14px}
+.kd-setting-section{background:#fff;border:1px solid #e8edf0;border-radius:18px;padding:16px}
+.kd-setting-head{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.kd-setting-icon{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:#edf8f5;font-size:20px}
+.kd-setting-head h3{margin:0;font-size:16px}.kd-setting-head p{margin:3px 0 0;color:#71808d;font-size:12px}
+.kd-setting-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.kd-setting-actions button{margin:0;min-height:45px}
+.kd-danger{background:#fff1f1!important;color:#b42318!important;border:1px solid #f3c7c4!important}
+.kd-session-card{display:flex;align-items:center;justify-content:space-between;gap:14px;background:linear-gradient(135deg,#f7fbff,#effaf7);border:1px solid #dfecef;border-radius:16px;padding:14px}
+.kd-session-card .kd-session-user{display:flex;align-items:center;gap:10px}.kd-session-avatar{width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 3px 10px #0001}
+.kd-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid #edf1f3}
+.kd-toggle-row:first-of-type{border-top:0}.kd-toggle-row label{font-weight:700;font-size:13px}.kd-toggle-row small{display:block;color:#71808d;font-weight:400;margin-top:3px}
+.kd-switch{width:48px!important;height:28px!important;margin:0!important;accent-color:#0f766e}
+html[data-kd-theme="dark"],html[data-kd-theme="dark"] body{background:#111827!important;color:#e5edf5!important}
+html[data-kd-theme="dark"] .card,html[data-kd-theme="dark"] .feature,html[data-kd-theme="dark"] .stat-card,html[data-kd-theme="dark"] .kd-setting-section,html[data-kd-theme="dark"] .kd-session-card{background:#182331!important;color:#e5edf5!important;border-color:#2b3a49!important}
+html[data-kd-theme="dark"] .muted,html[data-kd-theme="dark"] .kd-setting-head p,html[data-kd-theme="dark"] .kd-toggle-row small{color:#9cafbf!important}
+html[data-kd-theme="dark"] input,html[data-kd-theme="dark"] textarea,html[data-kd-theme="dark"] select{background:#111a25!important;color:#e5edf5!important;border-color:#394b5d!important}
+html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#263445!important}.kd-compact main{padding-top:10px!important}.kd-compact .card{border-radius:14px!important}.kd-compact .feature{min-height:105px!important;padding:12px!important}
+@media(max-width:600px){.kd-setting-actions{grid-template-columns:1fr}.kd-session-card{align-items:flex-start;flex-direction:column}.kd-session-card button{width:100%}}
+</style></style></head><body>
 <script src="js/deployment-config.js"></script><script src="js/login-direct.js"></script><script src="js/frontend-api-config.js"></script><script src="js/api-auth.js"></script><script src="js/connect-integration.js"></script><script src="js/offline-sync.js"></script><script src="js/integrated-domain-modules.js"></script>
-<header class="kd-min-header"><div class="kd-min-brand"><div class="kd-logo-mark" aria-hidden="true"><i></i><i></i><i></i></div><div class="kd-logo-text">KerjaDesa</div></div><div class="kd-account"><button type="button" class="kd-account-btn" aria-label="Menu akun" onclick="kdToggleAccountMenu()">◉</button><div id="kdAccountMenu" class="kd-account-menu"><button type="button" onclick="page('pengaturan');kdToggleAccountMenu(false)">⚙️ <span>Pengaturan</span></button><button type="button" onclick="kdLogout()">↪ <span>Keluar</span></button></div></div></header>
+<header class="kd-min-header"><div class="kd-min-brand"><div class="kd-logo-mark" aria-hidden="true"><i></i><i></i><i></i></div><div class="kd-logo-text">KerjaDesa</div></div><div class="kd-account"><button type="button" class="kd-account-btn" aria-label="Menu akun" title="Akun & Pengaturan" onclick="kdToggleAccountMenu()">👤</button><div id="kdAccountMenu" class="kd-account-menu"><button type="button" onclick="page('pengaturan');kdToggleAccountMenu(false)">⚙️ <span>Pengaturan</span></button><button type="button" onclick="kdLogout()">↪ <span>Keluar</span></button></div></div></header>
 <main>
 <section id="login" class="card login-card"><div class="login-hero"><span class="login-tag">Sistem Kerja Pendamping Desa</span><img class="login-photo" src="foto_profil.jpg" alt="Sudarmin Aripuddin"><h2>Selamat Datang di<br><span style="color:#ffd34d">KerjaDesa</span></h2><p>Administrasi, dokumentasi, monitoring, DRP, laporan bulanan, dan SPPD dalam satu aplikasi yang dapat digunakan dari HP.</p><div style="margin-top:10px;font-size:12px;opacity:.85">Kecamatan Sendana • Kabupaten Majene • Sulawesi Barat</div></div><div class="login-form"><h2>Masuk ke Aplikasi</h2><p class="muted">Gunakan akun Anda untuk membuka dashboard KerjaDesa.</p><input id="user" value="admin" placeholder="Username" autocomplete="username"><input id="pass" value="admin123" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button id="loginBtn" type="button" onclick="doLogin()">🔐 Masuk ke KerjaDesa</button><p id="loginMsg" class="muted"></p><div style="margin-top:22px;padding:13px;border-radius:14px;background:#f2f7fb;font-size:12px;color:#66788a"><b>Offline Ready</b><br>Data kerja tetap dapat disimpan di perangkat saat koneksi internet tidak tersedia.</div></div></section><section id="app">
 <div id="home"><div class="welcome card"><div class="welcome-copy"><span class="tag">Mendampingi Desa • Membangun Negeri</span><h2>Selamat Datang di <span>KerjaDesa</span></h2><p class="muted" style="font-size:15px;max-width:650px">Ruang kerja digital untuk mengelola kegiatan, monitoring lapangan, dokumen, laporan bulanan, dan SPPD Pendamping Desa.</p><div style="margin-top:18px;font-weight:800">SUDARMIN ARIPUDDIN</div><div class="muted" style="font-size:13px">Pendamping Lokal Desa • Kecamatan Sendana • Kabupaten Majene</div></div><div class="welcome-profile"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"></div></div><div class="stats"><div class="stat-card"><div class="stat-icon si-blue">📋</div><div><div class="stat" id="jmlK">0</div><div class="muted">Kegiatan</div></div></div><div class="stat-card"><div class="stat-icon si-green">📍</div><div><div class="stat" id="jmlM">0</div><div class="muted">Monitoring</div></div></div><div class="stat-card"><div class="stat-icon si-orange">📄</div><div><div class="stat">SPPD</div><div class="muted">Template asli</div></div></div><div class="stat-card"><div class="stat-icon si-purple">📷</div><div><div class="stat">Foto</div><div class="muted">Dokumentasi</div></div></div></div><div class="card kd-data-center" style="margin-top:14px">
@@ -254,12 +275,29 @@ main{max-width:1180px!important;padding:18px 26px 110px!important}
 <div id="desaDocStatus" class="small muted"></div>
 <div id="desaDocList"></div>
 </div>
-<div class="card no-print" id="aiSettingsPanel" style="display:none"><h3>🤖 Koneksi AI GPT</h3><p class="small muted">Masukkan URL proxy/server AI yang aman. API key OpenAI jangan ditaruh langsung di GitHub Pages.</p><input id="setAiEndpoint" placeholder="https://domain-anda/api/rewrite"><input id="setAiModel" value="gpt-5.6" placeholder="Model di server"><div class="actions"><button type="button" class="secondary" onclick="saveAISettings()">💾 Simpan Koneksi AI</button><button type="button" class="secondary" onclick="testAIConnection()">🔌 Tes Koneksi</button></div><div id="aiSettingsStatus" class="small muted"></div></div><div class="card no-print" style="margin-top:12px"><h3>👥 Manajemen Pengguna</h3><div class="actions"><button type="button" class="secondary" onclick="kdLoadUsers()">↻ Muat Pengguna</button><button type="button" onclick="kdCreateUser()">＋ Tambah Pengguna</button></div><div id="kdUserList" style="margin-top:10px"></div></div><div id="pengaturanPanel" class="card no-print" style="display:none">
-<h3>⚙️ Pengaturan KerjaDesa</h3>
-<p class="small muted">Pengaturan profil dan data perangkat. Perubahan tersimpan lokal di HP.</p>
-<div class="grid"><input id="setNama" placeholder="Nama Pendamping"><input id="setJabatan" placeholder="Jabatan"><input id="setKecamatan" value="Sendana" placeholder="Kecamatan"><input id="setKabupaten" value="Majene" placeholder="Kabupaten"><input id="setProvinsi" value="Sulawesi Barat" placeholder="Provinsi"></div>
-<div class="actions"><button type="button" class="secondary" onclick="saveAppSettings()">💾 Simpan Pengaturan</button><button type="button" class="secondary" onclick="resetAppSettings()">↩️ Kembalikan Default</button></div>
-<div id="settingsStatus" class="small muted"></div>
+<div class="card no-print" id="aiSettingsPanel" style="display:none"><h3>🤖 Koneksi AI GPT</h3><p class="small muted">Masukkan URL proxy/server AI yang aman. API key OpenAI jangan ditaruh langsung di GitHub Pages.</p><input id="setAiEndpoint" placeholder="https://domain-anda/api/rewrite"><input id="setAiModel" value="gpt-5.6" placeholder="Model di server"><div class="actions"><button type="button" class="secondary" onclick="saveAISettings()">💾 Simpan Koneksi AI</button><button type="button" class="secondary" onclick="testAIConnection()">🔌 Tes Koneksi</button></div><div id="aiSettingsStatus" class="small muted"></div></div><div id="userManagementPanel" class="card no-print" style="display:none;margin-top:12px"><h3>👥 Manajemen Pengguna</h3><p class="small muted">Pengelolaan akun hanya berjalan untuk pengguna yang memiliki akses ADMIN pada server.</p><div class="actions"><button type="button" class="secondary" onclick="kdLoadUsers()">↻ Muat Pengguna</button><button type="button" onclick="kdCreateUser()">＋ Tambah Pengguna</button></div><div id="kdUserList" style="margin-top:10px"></div></div><div id="pengaturanPanel" class="card no-print" style="display:none">
+<div class="kd-settings-shell">
+  <div class="kd-session-card">
+    <div class="kd-session-user"><img class="kd-session-avatar" src="foto_profil.jpg" alt=""><div><b id="kdSettingsUserName">Administrator KerjaDesa</b><div class="small muted" id="kdSettingsUserRole">ADMIN</div></div></div>
+    <button type="button" class="kd-danger" onclick="kdLogout()">↪ Keluar dari Aplikasi</button>
+  </div>
+  <div class="kd-setting-section">
+    <div class="kd-setting-head"><div class="kd-setting-icon">👤</div><div><h3>Profil Kerja</h3><p>Identitas yang digunakan pada dashboard dan dokumen laporan.</p></div></div>
+    <div class="grid"><input id="setNama" placeholder="Nama Pendamping"><input id="setJabatan" placeholder="Jabatan"><input id="setKecamatan" value="Sendana" placeholder="Kecamatan"><input id="setKabupaten" value="Majene" placeholder="Kabupaten"><input id="setProvinsi" value="Sulawesi Barat" placeholder="Provinsi"></div>
+    <div class="kd-setting-actions"><button type="button" onclick="saveAppSettings()">💾 Simpan Pengaturan</button><button type="button" class="secondary" onclick="resetAppSettings()">↩️ Kembalikan Default</button></div>
+    <div id="settingsStatus" class="small muted"></div>
+  </div>
+  <div class="kd-setting-section">
+    <div class="kd-setting-head"><div class="kd-setting-icon">🎨</div><div><h3>Tampilan Aplikasi</h3><p>Preferensi tampilan disimpan di perangkat ini.</p></div></div>
+    <div class="grid"><select id="setTheme" onchange="kdPreviewAppearance()"><option value="light">☀️ Terang</option><option value="dark">🌙 Gelap</option><option value="system">⚙️ Mengikuti Sistem</option></select><select id="setDensity"><option value="normal">📐 Normal</option><option value="compact">📱 Ringkas</option></select></div>
+    <div class="kd-setting-actions"><button type="button" class="secondary" onclick="saveAppSettings()">🎨 Terapkan Tampilan</button><button type="button" class="secondary" onclick="kdRefreshApp()">🔄 Segarkan Aplikasi</button></div>
+  </div>
+  <div class="kd-setting-section">
+    <div class="kd-setting-head"><div class="kd-setting-icon">💾</div><div><h3>Data & Keamanan</h3><p>Data kerja tetap dipisahkan dari sesi login.</p></div></div>
+    <div class="kd-toggle-row"><div><label>Mode offline</label><small>Data lokal tetap dapat digunakan saat internet tidak tersedia.</small></div><input id="setOfflineMode" class="kd-switch" type="checkbox" checked disabled></div>
+    <div class="kd-toggle-row"><div><label>API key AI</label><small>API key tidak disimpan di halaman GitHub; gunakan server/proxy.</small></div><span class="badge">Server/Proxy</span></div>
+  </div>
+</div>
 </div>
 <div id="reportActions" class="card no-print hide"><h3>Output Laporan</h3><div class="actions"><button onclick="downloadWord()">⬇️ Word Siap Print</button><button onclick="printPdf()">🖨️ Cetak / PDF</button></div><div class="ai-box"><b>🤖 Penyempurnaan Bahasa</b><p class="small muted">C, D, E, dan F disusun dari DRP. Jika koneksi GPT tersedia, kalimat dapat dirapikan tanpa menambah fakta.</p><div class="actions"><button class="secondary" onclick="improveReportWithGPT()">✨ Perbaiki dengan GPT</button><button class="secondary" onclick="copyGPTPrompt()">📋 Salin Prompt GPT</button></div><div id="aiReportStatus" class="small muted"></div></div><p class="small muted">Word menggunakan A4 dan page break. Cetak/PDF dapat langsung disimpan sebagai PDF.</p></div>
 <div id="docResult2"></div>
@@ -298,13 +336,13 @@ function page(x){
       dokumentasi:['dokumentasiPanel'],
       sppd:['sppdPanel'],
       dokumenDesa:['dokumenDesaPanel'],
-      pengaturan:['pengaturanPanel']
+      pengaturan:['pengaturanPanel','aiSettingsPanel','userManagementPanel']
     };
     (groups[x]||[]).forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block'});
     if(x==='dokumentasi')renderMediaPreviews();
     if(x==='dokumenDesa')renderVillageDocuments();
     if(x==='desa'){kdLoadDesa();kdLoadReportArchive();}
-    if(x==='pengaturan'){loadAppSettings();const ai=document.getElementById('aiSettingsPanel');if(ai)ai.style.display='block';}
+    if(x==='pengaturan'){loadAppSettings();}
     if(x==='sppd'){try{loadSppdData();renderSppd();renderVisitDates()}catch(e){}}
   }
   render();
