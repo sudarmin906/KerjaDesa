@@ -5,7 +5,7 @@ const KerjaDesaAPI = {
   baseURL: window.KERJADESA_API_BASE || '/api',
 
   async request(endpoint, options = {}) {
-    const token = localStorage.getItem('kd_auth_token') || '';
+    const token = sessionStorage.getItem('kd_auth_token') || '';
     const headers = { ...options.headers };
     if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
     if (token) headers.Authorization = 'Bearer ' + token;
@@ -14,9 +14,9 @@ const KerjaDesaAPI = {
     const data = await response.json().catch(() => ({}));
 
     if (response.status === 401) {
-      localStorage.removeItem('kd_login');
-      localStorage.removeItem('kd_auth_token');
-      localStorage.removeItem('kd_user');
+      sessionStorage.removeItem('kd_login');
+      sessionStorage.removeItem('kd_auth_token');
+      sessionStorage.removeItem('kd_user');
     }
     if (!response.ok) {
       const error = new Error(data.message || 'Permintaan API gagal.');
