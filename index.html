@@ -1544,7 +1544,8 @@ function kdWorkflowSetup(){
   toolbar.id='kdWorkflowToolbar';
   toolbar.className='card no-print';
   toolbar.innerHTML='<h2 style="margin-top:0">📂 Alur Kerja KerjaDesa</h2><div class="kd-flow-note"><b>DRP → Laporan Bulanan → Dokumentasi</b><br><span class="small muted">Data DRP menjadi sumber laporan. Dokumentasi ditambahkan setelah laporan siap. <b>SPPD dikelola terpisah</b> menggunakan template Word asli.</span></div><div class="kd-workflow"><button type="button" data-step="drp">📑 DRP</button><button type="button" data-step="laporan">📄 Laporan Bulanan</button><button type="button" data-step="dokumentasi">🖼️ Dokumentasi</button><button type="button" data-step="sppd">🧾 SPPD Terpisah</button></div>';
-  d.insertBefore(toolbar,d.firstElementChild);\n  kdBindStaticActions();
+  d.insertBefore(toolbar,d.firstElementChild);
+  kdBindStaticActions();
 
   const drpBox=document.createElement('div'); drpBox.id='kdStepDrp'; drpBox.className='kd-step';
   const reportBox=document.createElement('div'); reportBox.id='kdStepLaporan'; reportBox.className='kd-step';
@@ -1684,7 +1685,8 @@ kdWorkflowSetup();kdAddHomeQuick();
       '<button type="button" data-kd-twin="emergency">🔴 Simulasi Darurat</button>'+
       '<button type="button" data-kd-twin="reset">↺ Reset</button></div>';
     const anchor=home.querySelector('.kd-data-center'); if(anchor)anchor.before(card); else home.appendChild(card);
-    renderTwin();\n    kdBindStaticActions();
+    renderTwin();
+    kdBindStaticActions();
   }
   function renderTwin(){
     const box=document.getElementById('kdTwinView'); if(!box)return;
