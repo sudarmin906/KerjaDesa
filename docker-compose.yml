@@ -28,7 +28,10 @@ services:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 3000
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrator KerjaDesa}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_BOOTSTRAP_TOKEN: ${ADMIN_BOOTSTRAP_TOKEN:-}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
       PG_POOL_MAX: ${PG_POOL_MAX:-10}
       DATABASE_URL: postgresql://${POSTGRES_USER:-kerjadesa}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-kerjadesa}
