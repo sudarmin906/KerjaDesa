@@ -38,6 +38,7 @@
     const nav=document.getElementById('nav');
     if(app)app.style.display='none';
     if(nav)nav.classList.add('hide');
+    const account=document.querySelector('.kd-account');if(account)account.style.display='none';
     if(login)login.style.display='';
     const msg=document.getElementById('loginMsg');
     if(msg)msg.textContent=message||'Sesi tidak aktif. Silakan masuk kembali.';
