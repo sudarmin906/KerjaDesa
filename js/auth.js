@@ -13,15 +13,15 @@ const KerjaDesaAuth = {
   },
 
   logout(){
-    localStorage.removeItem('kd_login');
-    localStorage.removeItem('kd_auth_token');
-    localStorage.removeItem('kd_user');
+    sessionStorage.removeItem('kd_login');
+    sessionStorage.removeItem('kd_auth_token');
+    sessionStorage.removeItem('kd_user');
     location.reload();
   },
 
   current(){
     try{
-      return JSON.parse(localStorage.getItem('kd_user') || 'null');
+      return JSON.parse(sessionStorage.getItem('kd_user') || 'null');
     }catch(_){
       return null;
     }
