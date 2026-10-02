@@ -214,10 +214,10 @@ html[data-kd-theme="dark"] input,html[data-kd-theme="dark"] textarea,html[data-k
 html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#263445!important}.kd-compact main{padding-top:10px!important}.kd-compact .card{border-radius:14px!important}.kd-compact .feature{min-height:105px!important;padding:12px!important}
 @media(max-width:600px){.kd-setting-actions{grid-template-columns:1fr}.kd-session-card{align-items:flex-start;flex-direction:column}.kd-session-card button{width:100%}}
 </style></head><body>
-<script src="js/deployment-config.js"></script><script src="js/login-direct.js"></script><script src="js/frontend-api-config.js"></script><script src="js/api-auth.js"></script><script src="js/connect-integration.js"></script><script src="js/offline-sync.js"></script><script src="js/integrated-domain-modules.js"></script>
+<script src="js/deployment-config.js"></script><script src="js/security-hardening.js?v=1"></script><script src="js/frontend-api-config.js"></script><script src="js/api-auth.js"></script><script src="js/connect-integration.js"></script><script src="js/offline-sync.js"></script><script src="js/integrated-domain-modules.js"></script>
 <header class="kd-min-header"><div class="kd-min-brand"><div class="kd-logo-mark" aria-hidden="true"><i></i><i></i><i></i></div><div class="kd-logo-text">KerjaDesa</div></div><div class="kd-account"><button type="button" class="kd-account-btn" aria-label="Menu akun" title="Akun & Pengaturan" onclick="kdToggleAccountMenu()">👤</button><div id="kdAccountMenu" class="kd-account-menu"><button type="button" onclick="page('pengaturan');kdToggleAccountMenu(false)">⚙️ <span>Pengaturan</span></button><button type="button" id="kdLogoutBtn" onclick="return kdLogout()">↪ <span>Keluar</span></button></div></div></header>
 <main>
-<section id="login" class="card login-card"><div class="login-hero"><span class="login-tag">Sistem Kerja Pendamping Desa</span><img class="login-photo" src="foto_profil.jpg" alt="Sudarmin Aripuddin"><h2>Selamat Datang di<br><span style="color:#ffd34d">KerjaDesa</span></h2><p>Administrasi, dokumentasi, monitoring, DRP, laporan bulanan, dan SPPD dalam satu aplikasi yang dapat digunakan dari HP.</p><div style="margin-top:10px;font-size:12px;opacity:.85">Kecamatan Sendana • Kabupaten Majene • Sulawesi Barat</div></div><div class="login-form"><h2>Masuk ke Aplikasi</h2><p class="muted">Gunakan akun Anda untuk membuka dashboard KerjaDesa.</p><input id="user" value="admin" placeholder="Username" autocomplete="username"><input id="pass" value="admin123" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button id="loginBtn" type="button" onclick="doLogin()">🔐 Masuk ke KerjaDesa</button><p id="loginMsg" class="muted"></p><div style="margin-top:22px;padding:13px;border-radius:14px;background:#f2f7fb;font-size:12px;color:#66788a"><b>Offline Ready</b><br>Data kerja tetap dapat disimpan di perangkat saat koneksi internet tidak tersedia.</div></div></section><section id="app">
+<section id="login" class="card login-card"><div class="login-hero"><span class="login-tag">Sistem Kerja Pendamping Desa</span><img class="login-photo" src="foto_profil.jpg" alt="Sudarmin Aripuddin"><h2>Selamat Datang di<br><span style="color:#ffd34d">KerjaDesa</span></h2><p>Administrasi, dokumentasi, monitoring, DRP, laporan bulanan, dan SPPD dalam satu aplikasi yang dapat digunakan dari HP.</p><div style="margin-top:10px;font-size:12px;opacity:.85">Kecamatan Sendana • Kabupaten Majene • Sulawesi Barat</div></div><div class="login-form"><h2>Masuk ke Aplikasi</h2><p class="muted">Gunakan akun Anda untuk membuka dashboard KerjaDesa.</p><input id="user" value="" placeholder="Username" autocomplete="username"><input id="pass" value="" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button id="loginBtn" type="button" onclick="doLogin()">🔐 Masuk ke KerjaDesa</button><p id="loginMsg" class="muted"></p><div style="margin-top:22px;padding:13px;border-radius:14px;background:#f2f7fb;font-size:12px;color:#66788a"><b>Offline Ready</b><br>Data kerja tetap dapat disimpan di perangkat saat koneksi internet tidak tersedia.</div></div></section><section id="app">
 <div id="home"><div class="welcome card"><div class="welcome-copy"><span class="tag">Mendampingi Desa • Membangun Negeri</span><h2>Selamat Datang di <span>KerjaDesa</span></h2><p class="muted" style="font-size:15px;max-width:650px">Ruang kerja digital untuk mengelola kegiatan, monitoring lapangan, dokumen, laporan bulanan, dan SPPD Pendamping Desa.</p><div id="kdHomeProfileName" style="margin-top:18px;font-weight:800">SUDARMIN ARIPUDDIN</div><div id="kdHomeProfileRole" class="muted" style="font-size:13px">Pendamping Lokal Desa • Kecamatan Sendana • Kabupaten Majene</div></div><div class="welcome-profile"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"></div></div><div class="stats"><div class="stat-card"><div class="stat-icon si-blue">📋</div><div><div class="stat" id="jmlK">0</div><div class="muted">Kegiatan</div></div></div><div class="stat-card"><div class="stat-icon si-green">📍</div><div><div class="stat" id="jmlM">0</div><div class="muted">Monitoring</div></div></div><div class="stat-card"><div class="stat-icon si-orange">📄</div><div><div class="stat">SPPD</div><div class="muted">Template asli</div></div></div><div class="stat-card"><div class="stat-icon si-purple">📷</div><div><div class="stat">Foto</div><div class="muted">Dokumentasi</div></div></div></div><div class="card kd-data-center" style="margin-top:14px">
 <div class="section-title"><h3>📊 Ringkasan Server</h3><span id="kdServerStatus">Memeriksa...</span></div>
 <div class="grid">
@@ -367,8 +367,9 @@ html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#26344
 let data=JSON.parse(localStorage.getItem('kerjadesa')||'{"kegiatan":[],"monitoring":[],"gps":null,"docs":{}}');let deferred=null;let reportHtml='';let reportText='';let profilePhoto='foto_profil.jpg';let logoPhoto='';let activityPhotos=[];
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
 function save(){localStorage.setItem('kerjadesa',JSON.stringify(data));render()}
-async function doLogin(){const u=(document.getElementById('user')?.value||'').trim(),pw=document.getElementById('pass')?.value||'',msg=document.getElementById('loginMsg');if(!u||!pw){if(msg)msg.textContent='Username dan password wajib diisi.';return}/* Demo/offline admin access must not depend on a missing or stale API deployment. */if(window.KERJADESA_ALLOW_OFFLINE_LOGIN===true&&u==='admin'&&pw==='admin123'){try{localStorage.setItem('kd_login','1');localStorage.removeItem('kd_auth_token');localStorage.setItem('kd_user',JSON.stringify({username:'admin',role:'ADMIN',name:'Administrator KerjaDesa',offline:true}))}catch(e){console.error(e)}if(msg)msg.textContent='✓ Login lokal berhasil.';show();return}if(msg)msg.textContent='Menghubungkan ke server...';try{const base=window.KERJADESA_API_BASE||'/api';const response=await fetch(base+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:pw})});const data=await response.json().catch(()=>({}));if(response.ok&&data.success){localStorage.setItem('kd_login','1');localStorage.setItem('kd_auth_token',data.token||'');localStorage.setItem('kd_user',JSON.stringify(data.user||{}));show();return}if(response.status===401||response.status===403){if(msg)msg.textContent=data.message||'Username atau password salah.';return}if(msg)msg.textContent=data.message||'Login gagal.'}catch(e){console.warn('Backend login tidak tersedia.',e);if(msg)msg.textContent='Server login belum tersedia. Gunakan akun offline yang tersedia.'}}
+async function doLogin(){const u=(document.getElementById('user')?.value||'').trim(),pw=document.getElementById('pass')?.value||'',msg=document.getElementById('loginMsg');if(!u||!pw){if(msg)msg.textContent='Username dan password wajib diisi.';return}/* Demo/offline admin access must not depend on a missing or stale API deployment. */if(window.KERJADESA_ALLOW_OFFLINE_LOGIN===true&&u==='admin'&&pw==='admin123'){try{sessionStorage.setItem('kd_login','1');sessionStorage.removeItem('kd_auth_token');sessionStorage.setItem('kd_user',JSON.stringify({username:'admin',role:'ADMIN',name:'Administrator KerjaDesa',offline:true}))}catch(e){console.error(e)}if(msg)msg.textContent='✓ Login lokal berhasil.';show();return}if(msg)msg.textContent='Menghubungkan ke server...';try{const base=window.KERJADESA_API_BASE||'/api';const response=await fetch(base+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:pw})});const data=await response.json().catch(()=>({}));if(response.ok&&data.success){sessionStorage.setItem('kd_login','1');sessionStorage.setItem('kd_auth_token',data.token||'');sessionStorage.setItem('kd_user',JSON.stringify(data.user||{}));show();return}if(response.status===401||response.status===403){if(msg)msg.textContent=data.message||'Username atau password salah.';return}if(msg)msg.textContent=data.message||'Login gagal.'}catch(e){console.warn('Backend login tidak tersedia.',e);if(msg)msg.textContent='Server login belum tersedia. Gunakan akun offline yang tersedia.'}}
 function show(){
+  if(sessionStorage.getItem('kd_login')!=='1'){kdShowLoginScreen('Sesi tidak aktif. Silakan masuk kembali.');return false;}
   document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';document.getElementById('nav').classList.remove('hide');
   try{
     loadAppSettings();
@@ -418,7 +419,7 @@ function saveAISettings(){const endpoint=(document.getElementById('setAiEndpoint
 async function testAIConnection(){const endpoint=(document.getElementById('setAiEndpoint')?.value||'').trim(),st=document.getElementById('aiSettingsStatus');if(!endpoint){if(st)st.textContent='Masukkan endpoint AI terlebih dahulu.';return}if(st)st.textContent='⏳ Menguji...';try{const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({test:true,task:'kerjadesa_ping'})});if(!r.ok)throw new Error('HTTP '+r.status);if(st)st.textContent='✅ Endpoint merespons.'}catch(e){if(st)st.textContent='❌ Tes gagal: '+e.message}}
 async function kdLoadUsers(){
   const el=document.getElementById('kdUserList');
-  if(!el||!localStorage.getItem('kd_auth_token'))return;
+  if(!el||!sessionStorage.getItem('kd_auth_token'))return;
   try{
     const r=await KerjaDesaAPI.get('users');
     el.innerHTML=(r.data||[]).map(u=>'<div class="card item"><b>'+esc(u.nama_lengkap||u.username)+'</b><br>'+esc(u.username)+' • '+esc(u.role||'-')+' • '+esc(u.status||'-')+'</div>').join('')||'<div class="kd-empty">Belum ada pengguna.</div>';
@@ -463,7 +464,7 @@ function loadAppSettings(){
   const auto=document.getElementById('setAutoSave');if(auto)auto.checked=s.autoSave!==false;
   const ae=document.getElementById('setAiEndpoint'),am=document.getElementById('setAiModel');
   if(ae)ae.value=ai.endpoint||'';if(am)am.value=ai.model||'gpt-5.6';
-  const u=JSON.parse(localStorage.getItem('kd_user')||'null')||{};
+  const u=JSON.parse(sessionStorage.getItem('kd_user')||'null')||{};
   const un=document.getElementById('kdSettingsUserName'),ur=document.getElementById('kdSettingsUserRole');
   if(un)un.textContent=u.name||u.nama_lengkap||u.username||'Pengguna KerjaDesa';if(ur)ur.textContent=u.role||'USER';
   kdApplyAppearance(s.theme||'light',s.density||'normal');kdApplyContentSettings(s);
@@ -518,7 +519,7 @@ function resetAppSettings(){if(!confirm('Kembalikan seluruh pengaturan KerjaDesa
 async function kdLoadDesa(){
  const list=document.getElementById('kdDesaList'),st=document.getElementById('kdDesaStatus');if(!list)return;
  try{
-  let rows=(window.KerjaDesaAPI&&localStorage.getItem('kd_auth_token')&&navigator.onLine)?((await KerjaDesaAPI.get('desa')).data||[]):(JSON.parse(localStorage.getItem('kerjadesa')||'{}').serverData?.desa||[]);
+  let rows=(window.KerjaDesaAPI&&sessionStorage.getItem('kd_auth_token')&&navigator.onLine)?((await KerjaDesaAPI.get('desa')).data||[]):(JSON.parse(localStorage.getItem('kerjadesa')||'{}').serverData?.desa||[]);
   list.innerHTML=rows.length?rows.map(x=>'<div class="card item"><b>'+esc(x.nama||x.nama_desa||'-')+'</b><br><span class="small muted">'+esc(x.kecamatan||'-')+' • '+esc(x.kabupaten||'-')+' • '+esc(x.provinsi||'-')+'</span><div class="actions"><button type="button" class="secondary" onclick="kdEditDesa('+JSON.stringify(x).replace(/"/g,'&quot;')+')">✏️ Edit</button><button type="button" class="secondary" onclick="kdDeleteDesa('+JSON.stringify(x.id)+')">🗑️ Hapus</button></div></div>').join(''):'<div class="kd-empty">Belum ada data desa.</div>';
   if(st)st.textContent='Data desa: '+rows.length;
  }catch(e){if(st)st.textContent='❌ '+e.message}
@@ -529,7 +530,7 @@ async function kdSaveDesa(){
  const st=document.getElementById('kdDesaStatus'),id=document.getElementById('desaId').value,nama=document.getElementById('desaNama').value.trim();if(!nama)return alert('Nama desa wajib diisi');
  const payload={nama,kode_desa:document.getElementById('desaKode').value.trim(),kecamatan:document.getElementById('desaKecamatan').value.trim(),kabupaten:document.getElementById('desaKabupaten').value.trim(),provinsi:document.getElementById('desaProvinsi').value.trim(),updated_at:new Date().toISOString()};
  try{
-  if(!window.KerjaDesaAPI||!localStorage.getItem('kd_auth_token')||!navigator.onLine)throw new Error('OFFLINE');
+  if(!window.KerjaDesaAPI||!sessionStorage.getItem('kd_auth_token')||!navigator.onLine)throw new Error('OFFLINE');
   const r=id?await KerjaDesaAPI.update('desa',id,payload):await KerjaDesaAPI.create('desa',payload);
   st.textContent='✅ Data desa tersimpan di server.';kdResetDesaForm();await kdLoadDesa();return r;
  }catch(e){
@@ -540,7 +541,7 @@ async function kdDeleteDesa(id){
  if(!confirm('Hapus data desa ini?'))return;
  try{if(!navigator.onLine)throw new Error('OFFLINE');await KerjaDesaAPI.remove('desa',id);await kdLoadDesa()}catch(e){window.KerjaDesaOfflineSync?.enqueue('desa','DELETE',{},id);const local=JSON.parse(localStorage.getItem('kerjadesa')||'{}');if(local.serverData?.desa)local.serverData.desa=local.serverData.desa.filter(x=>String(x.id)!==String(id));localStorage.setItem('kerjadesa',JSON.stringify(local));await kdLoadDesa()}}
 async function kdLoadReportArchive(){
- const el=document.getElementById('kdReportArchive');if(!el||!window.KerjaDesaAPI||!localStorage.getItem('kd_auth_token')||!navigator.onLine)return;
+ const el=document.getElementById('kdReportArchive');if(!el||!window.KerjaDesaAPI||!sessionStorage.getItem('kd_auth_token')||!navigator.onLine)return;
  try{const r=await KerjaDesaAPI.get('laporan');const rows=r.data||[];el.innerHTML='<h4>📄 Arsip Laporan Server</h4>'+(rows.length?rows.slice().reverse().map(x=>'<div class="card item"><b>'+esc(x.judul||('Laporan '+(x.periode||'')))+'</b><br><span class="small muted">'+esc(x.nama||'-')+' • '+esc(x.periode||'-')+' • Kunjungan: '+esc(x.jumlah_kunjungan||0)+'</span></div>').join(''):'<div class="kd-empty">Belum ada laporan tersimpan.</div>')}catch(e){el.innerHTML='<div class="small muted">Arsip laporan belum dapat dimuat.</div>'}
 }
 function kdFilterDokumen(term){page('home');setTimeout(()=>{const el=document.getElementById('dokumenDesaPanel');if(el){el.style.display='';document.getElementById('docKategori').value=term;renderVillageDocuments();el.scrollIntoView({behavior:'smooth'})}},150);}
@@ -552,7 +553,7 @@ async function saveVillageDocument(){
     const url=await readAsDataURL(file);
     const item={id:Date.now(),name:file.name,desa,kategori:kat,size:file.size,url,createdAt:new Date().toISOString(),synced:false};
     let remote=false;
-    if(window.KerjaDesaAPI&&localStorage.getItem('kd_auth_token')&&navigator.onLine){
+    if(window.KerjaDesaAPI&&sessionStorage.getItem('kd_auth_token')&&navigator.onLine){
       try{const r=await KerjaDesaAPI.create('dokumen',{id:item.id,name:item.name,desa:item.desa,kategori:item.kategori,size:item.size,createdAt:item.createdAt});Object.assign(item,r.data||{}, {url:item.url,synced:true});remote=true}catch(e){console.warn('Dokumen offline:',e.message)}
     }
     villageDocs().push(item);
@@ -570,8 +571,8 @@ function renderVillageDocuments(){
 }
 function openVillageDocument(id){const d=villageDocs().find(x=>x.id===id);if(!d)return;const a=document.createElement('a');a.href=d.url;a.target='_blank';a.rel='noopener';a.click()}
 function deleteVillageDocument(id){if(!confirm('Hapus dokumen ini dari perangkat?'))return;data.docs.villageDocuments=villageDocs().filter(x=>x.id!==id);save();renderVillageDocuments()}
-async function addKegiatan(){let x={id:Date.now(),nama:document.getElementById('knama').value.trim(),desa:document.getElementById('kdesa').value.trim(),tanggal:document.getElementById('ktgl').value,catatan:document.getElementById('kcat').value};if(!x.nama)return alert('Nama kegiatan wajib diisi');try{if(window.KerjaDesaAPI&&localStorage.getItem('kd_auth_token')&&navigator.onLine){const r=await KerjaDesaAPI.create('kegiatan',x);x=r.data||x;x.synced=true}}catch(e){console.warn('Kegiatan offline:',e.message);x.synced=false}if(!x.synced&&window.KerjaDesaOfflineSync)KerjaDesaOfflineSync.enqueue('kegiatan','CREATE',x,x.id);data.kegiatan.push(x);['knama','kdesa','ktgl','kcat'].forEach(id=>document.getElementById(id).value='');save();page('kegiatan');window.KerjaDesaOfflineSync?.processQueue?.()}
-async function addMonitoring(){let x={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),kegiatan:document.getElementById('mkeg').value,petugas:document.getElementById('mpet').value,progres:Number(document.getElementById('mprog').value||0),catatan:document.getElementById('mcat').value,tanggal:new Date().toLocaleString('id-ID'),gps:data.gps,synced:false};if(!x.petugas)return alert('Nama petugas wajib diisi');try{if(window.KerjaDesaAPI&&localStorage.getItem('kd_auth_token')&&navigator.onLine){const r=await KerjaDesaAPI.create('monitoring',x);x=r.data||x;x.synced=true}}catch(e){console.warn('Monitoring offline:',e.message);x.synced=false}if(!x.synced&&window.KerjaDesaOfflineSync)KerjaDesaOfflineSync.enqueue('monitoring','CREATE',x,x.id);data.monitoring.push(x);['mkeg','mpet','mprog','mcat'].forEach(id=>document.getElementById(id).value='');save();page('monitoring');window.KerjaDesaOfflineSync?.processQueue?.()}
+async function addKegiatan(){let x={id:Date.now(),nama:document.getElementById('knama').value.trim(),desa:document.getElementById('kdesa').value.trim(),tanggal:document.getElementById('ktgl').value,catatan:document.getElementById('kcat').value};if(!x.nama)return alert('Nama kegiatan wajib diisi');try{if(window.KerjaDesaAPI&&sessionStorage.getItem('kd_auth_token')&&navigator.onLine){const r=await KerjaDesaAPI.create('kegiatan',x);x=r.data||x;x.synced=true}}catch(e){console.warn('Kegiatan offline:',e.message);x.synced=false}if(!x.synced&&window.KerjaDesaOfflineSync)KerjaDesaOfflineSync.enqueue('kegiatan','CREATE',x,x.id);data.kegiatan.push(x);['knama','kdesa','ktgl','kcat'].forEach(id=>document.getElementById(id).value='');save();page('kegiatan');window.KerjaDesaOfflineSync?.processQueue?.()}
+async function addMonitoring(){let x={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),kegiatan:document.getElementById('mkeg').value,petugas:document.getElementById('mpet').value,progres:Number(document.getElementById('mprog').value||0),catatan:document.getElementById('mcat').value,tanggal:new Date().toLocaleString('id-ID'),gps:data.gps,synced:false};if(!x.petugas)return alert('Nama petugas wajib diisi');try{if(window.KerjaDesaAPI&&sessionStorage.getItem('kd_auth_token')&&navigator.onLine){const r=await KerjaDesaAPI.create('monitoring',x);x=r.data||x;x.synced=true}}catch(e){console.warn('Monitoring offline:',e.message);x.synced=false}if(!x.synced&&window.KerjaDesaOfflineSync)KerjaDesaOfflineSync.enqueue('monitoring','CREATE',x,x.id);data.monitoring.push(x);['mkeg','mpet','mprog','mcat'].forEach(id=>document.getElementById(id).value='');save();page('monitoring');window.KerjaDesaOfflineSync?.processQueue?.()}
 function gps(){if(!navigator.geolocation)return document.getElementById('gpsout').textContent='GPS tidak tersedia';navigator.geolocation.getCurrentPosition(p=>{data.gps={lat:p.coords.latitude,lon:p.coords.longitude};document.getElementById('gpsout').textContent=`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`},e=>document.getElementById('gpsout').textContent='GPS gagal: '+e.message,{enableHighAccuracy:true})}
 function render(){document.getElementById('jmlK').textContent=data.kegiatan.length;document.getElementById('jmlM').textContent=data.monitoring.length;document.getElementById('klist').innerHTML=data.kegiatan.map(x=>`<div class="card item"><b>${esc(x.nama)}</b><br>${esc(x.desa||'-')} • ${esc(x.tanggal||'-')}<br><span class="muted">${esc(x.catatan||'')}</span></div>`).join('');document.getElementById('mlist').innerHTML=data.monitoring.slice().reverse().map(x=>`<div class="card item"><b>Monitoring ${x.progres}%</b><br>Petugas: ${esc(x.petugas)}<br>${esc(x.tanggal)}<br>${esc(x.catatan||'')}<br><span class="muted">${x.gps?`GPS: ${x.gps.lat.toFixed(5)}, ${x.gps.lon.toFixed(5)}`:'GPS belum ada'} • ${x.synced?'Tersinkron':'Offline'}</span></div>`).join('');document.getElementById('online').textContent=navigator.onLine?'🟢 Online':'🔴 Offline — data tetap tersimpan di HP'}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -1056,7 +1057,7 @@ function kdValidateDrpBeforeReport(drp){
 }
 function handleMakeReportClick(e){if(e?.preventDefault)e.preventDefault();const audit=kdValidateDrpBeforeReport(getReportDrp());if(!audit.ok){alert('Laporan belum dapat dibuat.\\n\\n'+audit.problems.map(x=>'• '+x).join('\\n'));return;}const btn=document.getElementById('makeReportBtn'),st=document.getElementById('aiReportStatus');if(btn){btn.disabled=true;btn.textContent='⏳ Sedang menyusun laporan...';}if(st)st.textContent='⏳ Membaca DRP dan menyusun C, D, E, F, serta dokumentasi...';try{makeReport();}catch(err){console.error('makeReport error',err);if(st)st.textContent='❌ Gagal memproses laporan: '+(err?.message||err);alert('Laporan gagal diproses. Detail: '+(err?.message||err));}finally{if(btn){btn.disabled=false;btn.textContent='📑 Buat Laporan Bulanan Otomatis';}}}
 async function kdPersistGeneratedReport(){
-  if(!window.KerjaDesaAPI||!localStorage.getItem('kd_auth_token')||!navigator.onLine||!reportContext)return {synced:false};
+  if(!window.KerjaDesaAPI||!sessionStorage.getItem('kd_auth_token')||!navigator.onLine||!reportContext)return {synced:false};
   const payload={
     judul:'Laporan Kunjungan Lapangan '+String(reportContext.month||'').toUpperCase()+' '+(reportContext.year||''),
     periode:String(reportContext.year||'')+'-'+String(monthNumber(reportContext.month)).padStart(2,'0'),
@@ -1103,10 +1104,10 @@ function saveVisitDates(){const old=loadVisitDates(),arr=[];for(let i=1;i<=SPPD_
 function renderVisitDates(){const old=loadVisitDates();let d=sppdData(),h='<div style="display:grid;gap:10px">';for(let i=1;i<=SPPD_VISITS;i++){const v=old[i-1]||{};const tiba=v.tiba||d.tiba||'',nama=v.nama||d.nama||'',jabatan=v.jabatan||d.jabatan||'',br=v.berangkat||d.berangkat||'',kd=v.kedudukan||d.kedudukan||'';h+=`<div style="border:1px solid #ddd;border-radius:8px;padding:10px"><b>Kunjungan ${i}</b><div class="grid"><label>Tanggal mulai <input id="sppdStart${i}" type="date" value="${v.start||''}"></label><label>Tanggal selesai <input id="sppdEnd${i}" type="date" value="${v.end||''}"></label><label>Jumlah Hari <input id="sppdDays${i}" readonly value="${v.days||dateDiffInclusive(v.start||'',v.end||'')||''}" placeholder="otomatis"></label><label>Tiba di <input id="sppdVisitTiba${i}" value="${esc(tiba)}" placeholder="Lokasi tujuan"></label><label>Nama <input id="sppdVisitNama${i}" value="${esc(nama)}" placeholder="Nama orang pada kunjungan ini"></label><label>Jabatan <input id="sppdVisitJabatan${i}" value="${esc(jabatan)}" placeholder="Jabatan orang pada kunjungan ini"></label><label>Berangkat Dari <input id="sppdVisitBerangkat${i}" value="${esc(br)}"></label><label>Tempat Kedudukan <input id="sppdVisitKedudukan${i}" value="${esc(kd)}"></label></div><button type="button" class="secondary" onclick="saveOneVisit(${i})">💾 Simpan Kunjungan ${i}</button></div>`}h+='</div>';document.getElementById('sppdVisits').innerHTML=h;for(let i=1;i<=SPPD_VISITS;i++){const a=document.getElementById('sppdStart'+i),b=document.getElementById('sppdEnd'+i),day=document.getElementById('sppdDays'+i);const calc=()=>{day.value=dateDiffInclusive(a.value,b.value);saveVisitDates();};a.addEventListener('change',calc);b.addEventListener('change',calc);['sppdVisitTiba','sppdVisitNama','sppdVisitJabatan','sppdVisitBerangkat','sppdVisitKedudukan'].forEach(p=>document.getElementById(p+i).addEventListener('input',()=>{saveVisitDates();}));}}
 function saveOneVisit(i){saveVisitDates();const st=document.getElementById('sppdStatus');if(st)st.textContent='✅ Data Kunjungan '+i+' tersimpan. Nama dan Jabatan dapat berbeda untuk setiap kunjungan.'}
 function visitDates(){return loadVisitDates()}
-async function loadSppdData(){let d={...SPPD_DEFAULT,...JSON.parse(localStorage.getItem('kerjadesa_sppd_editable')||'{}')};try{if(window.KerjaDesaAPI&&localStorage.getItem('kd_auth_token')&&navigator.onLine){const rows=(await KerjaDesaAPI.get('sppd')).data||[];const uid=JSON.parse(localStorage.getItem('kd_user')||'{}').id||'local';const remote=rows.find(x=>String(x.user_id||'')===String(uid));if(remote?.content){d={...d,...remote.content};localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(d));}}}catch(e){console.warn('SPPD hydration:',e.message)}const map={sppdNIK:'nik',sppdNama:'nama',sppdKabupaten:'kabupaten',sppdProvinsi:'provinsi',sppdPosisi:'posisi',sppdJabatan:'jabatan',sppdBulan:'bulan',sppdTahun:'tahun',sppdTiba:'tiba',sppdBerangkat:'berangkat',sppdKedudukan:'kedudukan'};Object.entries(map).forEach(([id,k])=>sppdGet(id).value=d[k]||'');renderSppd()}
+async function loadSppdData(){let d={...SPPD_DEFAULT,...JSON.parse(localStorage.getItem('kerjadesa_sppd_editable')||'{}')};try{if(window.KerjaDesaAPI&&sessionStorage.getItem('kd_auth_token')&&navigator.onLine){const rows=(await KerjaDesaAPI.get('sppd')).data||[];const uid=JSON.parse(sessionStorage.getItem('kd_user')||'{}').id||'local';const remote=rows.find(x=>String(x.user_id||'')===String(uid));if(remote?.content){d={...d,...remote.content};localStorage.setItem('kerjadesa_sppd_editable',JSON.stringify(d));}}}catch(e){console.warn('SPPD hydration:',e.message)}const map={sppdNIK:'nik',sppdNama:'nama',sppdKabupaten:'kabupaten',sppdProvinsi:'provinsi',sppdPosisi:'posisi',sppdJabatan:'jabatan',sppdBulan:'bulan',sppdTahun:'tahun',sppdTiba:'tiba',sppdBerangkat:'berangkat',sppdKedudukan:'kedudukan'};Object.entries(map).forEach(([id,k])=>sppdGet(id).value=d[k]||'');renderSppd()}
 async function syncSppdToServer(){
-  const token=localStorage.getItem('kd_auth_token');
-  const userId=JSON.parse(localStorage.getItem('kd_user')||'{}').id||'local';
+  const token=sessionStorage.getItem('kd_auth_token');
+  const userId=JSON.parse(sessionStorage.getItem('kd_user')||'{}').id||'local';
   const payload={type:'SPPD',title:'Data SPPD',content:sppdData(),user_id:userId,updatedAt:new Date().toISOString()};
   if(!token||!navigator.onLine){
     window.KerjaDesaOfflineSync?.enqueue('sppd','CREATE',payload,'sppd-local');
@@ -1167,30 +1168,32 @@ function kdShowLoginScreen(message){
     if(app)app.style.display='none';
     if(nav)nav.classList.add('hide');
     if(login)login.style.display='';
-    const msg=document.getElementById('loginMsg');if(msg)msg.textContent=message||'Anda telah keluar dari KerjaDesa.';
+    const msg=document.getElementById('loginMsg');if(msg)msg.textContent=message||'Sesi telah berakhir. Silakan masuk kembali.';
     window.scrollTo(0,0);
   }catch(e){console.warn('Tampilan login:',e)}
 }
 function kdLogout(){
-  const token=localStorage.getItem('kd_auth_token')||'';
+  const token=sessionStorage.getItem('kd_auth_token')||'';
   try{
-    localStorage.removeItem('kd_login');
-    localStorage.removeItem('kd_auth_token');
-    localStorage.removeItem('kd_user');
+    sessionStorage.removeItem('kd_login');
+    sessionStorage.removeItem('kd_auth_token');
+    sessionStorage.removeItem('kd_user');
     sessionStorage.setItem('kd_logged_out','1');
   }catch(e){console.warn('Pembersihan sesi lokal gagal.',e)}
   try{kdToggleAccountMenu(false)}catch(e){}
-  // Tampilkan login SEGERA; tidak memakai confirm() dan tidak menunggu server.
-  kdShowLoginScreen('✓ Anda telah keluar. Silakan masuk kembali untuk melanjutkan.');
+  try{kdShowLoginScreen('✓ Anda telah keluar. Silakan masuk kembali untuk melanjutkan.')}catch(e){}
   if(token){
     try{
       fetch((window.KERJADESA_API_BASE||'/api')+'/auth/logout',{
-        method:'POST',headers:{Authorization:'Bearer '+token},keepalive:true
+        method:'POST',
+        headers:{Authorization:'Bearer '+token},
+        keepalive:true,
+        credentials:'include'
       }).catch(()=>{});
     }catch(e){}
   }
-  // Reload sebagai lapisan kedua agar seluruh state aplikasi dibersihkan.
-  setTimeout(()=>{try{location.reload()}catch(e){}},150);
+  // Paksa browser melewati state aplikasi lama setelah sesi dihapus.
+  setTimeout(()=>{try{location.replace('./?logout=1&t='+Date.now())}catch(e){try{location.reload()}catch(_){}}},250);
   return false;
 }
 function kdBindLogoutButtons(){
@@ -1200,14 +1203,14 @@ function kdBindLogoutButtons(){
     btn.dataset.kdLogoutBound='1';
     btn.addEventListener('click',function(e){
       e.preventDefault();
-      e.stopPropagation();
+      e.stopImmediatePropagation();
       kdLogout();
     },true);
   });
 }
 
 async function kdLoadServerDashboard(){
-  if(!window.KerjaDesaAPI||!localStorage.getItem('kd_auth_token')||!navigator.onLine){
+  if(!window.KerjaDesaAPI||!sessionStorage.getItem('kd_auth_token')||!navigator.onLine){
     const st=document.getElementById('kdServerStatus'); if(st)st.textContent='Offline';
     return;
   }
@@ -1431,7 +1434,7 @@ function formatDateLong(iso){
 function sppdXmlEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}
 loadSppdData();
 renderVisitDates();
-if(localStorage.getItem('kd_login')==='1')show();else render();navigator.serviceWorker?.register('./sw.js');updateDocStatus();renderMediaPreviews();if(data.docs?.drp?.parsed){renderDrpPreview(data.docs.drp.parsed);kdAuditDrp(data.docs.drp.parsed);}
+if(sessionStorage.getItem('kd_login')==='1')show();else render();navigator.serviceWorker?.register('./sw.js');updateDocStatus();renderMediaPreviews();if(data.docs?.drp?.parsed){renderDrpPreview(data.docs.drp.parsed);kdAuditDrp(data.docs.drp.parsed);}
 
 /*
 .print-report{font-family:"Times New Roman",serif;color:#111;background:#fff}.report-page{box-sizing:border-box;background:#fff;break-after:page;page-break-after:always;padding:20mm 18mm;min-height:277mm}.portrait-page{page:portrait}.landscape-page{page:landscape;padding:12mm 14mm;min-height:180mm}.cover-head{text-align:center;font-weight:700}.cover-instansi{font-size:18px;line-height:1.55;margin-top:8mm}.cover-logo{display:block;width:105mm;height:105mm;object-fit:contain;margin:28mm auto 24mm}.cover-logo.placeholder{font-size:12px;color:#777;border:1px dashed #aaa;display:flex;align-items:center;justify-content:center}.cover-title{font-size:16px;margin:0 auto 20mm}.cover-name{font-size:18px;margin-bottom:7mm}.cover-position{font-size:16px}.cover-region{font-size:15px;line-height:1.65;margin-top:26mm}.report-page h2{text-align:center;font-size:16px;margin:2mm 0}.report-subtitle{text-align:center;font-weight:700;line-height:1.35}.report-page hr{border:0;border-top:2px solid #666;margin:5mm 0}.report-page h3{font-size:14px;margin:5mm 0 3mm}.report-page p,.report-page li{font-size:11px;line-height:1.45;text-align:justify}.identity-table{width:75%;border-collapse:collapse;margin-bottom:5mm}.identity-table td{border:0;padding:2px 5px;font-size:11px}.identity-table td:first-child{width:150px}.wide-table,.result-table{width:100%;border-collapse:collapse;font-size:10px}.wide-table th,.wide-table td,.result-table th,.result-table td{border:1px solid #666;padding:4px;vertical-align:top}.wide-table th{text-align:center}.result-table td:nth-child(1){width:35px;text-align:center}.result-table td:nth-child(2){width:95px}.result-table td:nth-child(3){width:150px}.doc-landscape-grid{display:grid;grid-template-columns:1fr;gap:8mm}.doc-roll{display:grid;grid-template-columns:42% 58%;gap:6mm;align-items:center;min-height:48mm;break-inside:avoid}.doc-note{border:1px solid #333;border-radius:8px;padding:8px;font-size:10px;line-height:1.45;min-height:38mm}.doc-photo-frame{border:1px solid #333;border-radius:12px;padding:5px;text-align:center;min-height:42mm;display:flex;align-items:center;justify-content:center}.doc-photo-frame img{max-width:100%;max-height:58mm;object-fit:contain}.signature{text-align:center;margin-top:12mm;font-size:11px}@media print{body{background:#fff}.no-print,.nav,header{display:none!important}.report-page{box-shadow:none;margin:0}}
