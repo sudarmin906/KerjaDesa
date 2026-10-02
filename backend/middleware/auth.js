@@ -41,7 +41,7 @@ function csrfValid(req) {
 function setAuthResponseCookies(res, token) {
   const secure=process.env.NODE_ENV==='production';
   const csrf=crypto.randomBytes(32).toString('hex');
-  const sessionFlags=['Path=/','HttpOnly',secure?'Secure':'','SameSite=Lax','Max-Age='+(SESSION_TTL_MS/1000)].filter(Boolean).join('; ');
+  const sessionFlags=['Path=/','HttpOnly',secure?'Secure':'',secure?'SameSite=None':'SameSite=Lax','Max-Age='+(SESSION_TTL_MS/1000)].filter(Boolean).join('; ');
   const csrfFlags=['Path=/',secure?'Secure':'','SameSite=Lax','Max-Age='+(SESSION_TTL_MS/1000)].filter(Boolean).join('; ');
   res.setHeader('Set-Cookie',[
     SESSION_COOKIE+'='+encodeURIComponent(token)+'; '+sessionFlags,
@@ -50,7 +50,7 @@ function setAuthResponseCookies(res, token) {
 }
 function clearAuthResponseCookies(res) {
   const secure=process.env.NODE_ENV==='production';
-  const flags=['Path=/',secure?'Secure':'','SameSite=Lax','Max-Age=0'].filter(Boolean).join('; ');
+  const flags=['Path=/',secure?'Secure':'',secure?'SameSite=None':'SameSite=Lax','Max-Age=0'].filter(Boolean).join('; ');
   res.setHeader('Set-Cookie',[
     SESSION_COOKIE+'=; '+flags,
     CSRF_COOKIE+'=; '+flags
