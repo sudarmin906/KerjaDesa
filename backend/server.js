@@ -75,8 +75,18 @@ function safeStaticPath(urlPath) {
   return candidate;
 }
 
+function isPublicStaticPath(pathname) {
+  const normalized = String(pathname || '').replace(/\\/g, '/');
+  if (!normalized || normalized === '/') return true;
+  const clean = normalized.replace(/^\\/+/, '');
+  if (/^(backend|\.git|\.github|deploy|scripts|data)(?:\\/|$)/i.test(clean)) return false;
+  if (/(^|\\/)(?:\.env|\.env\\.|.*\\.(?:pem|key|crt|p12|pfx|sqlite|db|log|bak|sql|yml|yaml|toml|ini|conf))$/i.test(clean)) return false;
+  return true;
+}
+
 function serveStatic(req, res, pathname) {
   if (req.method !== 'GET' && req.method !== 'HEAD') return false;
+  if (!isPublicStaticPath(pathname)) return false;
   let filePath;
   try { filePath = safeStaticPath(pathname); } catch { return false; }
   if (!filePath) return false;
