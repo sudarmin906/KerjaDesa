@@ -914,7 +914,24 @@ function renderReportFromNarratives(nar){
  reportHtml='<div class="print-report">'+cover+ident+csec+dsec+ef+g+'</div>';document.getElementById('reportPrint').innerHTML=reportHtml;document.getElementById('docResult2').innerHTML='<div class="card no-print"><h3>Pratinjau Laporan Sesuai Format Master</h3>'+reportHtml+'</div>';document.getElementById('reportActions').classList.remove('hide');reportText=document.getElementById('reportPrint').innerText;page('laporan');window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
 }
 function getReportDrp(){const d=data.docs||{},parsed=d.drp?.parsed;if(parsed?.all?.length)return parsed;const arr=Array.isArray(data.drpActivities)?data.drpActivities:[];if(!arr.length)return null;const header={nama:document.getElementById('rNama')?.value||'',posisi:document.getElementById('rPosisi')?.value||'PLD',kecamatan:document.getElementById('rKec')?.value||'',kabupaten:document.getElementById('rKab')?.value||'',provinsi:document.getElementById('rProv')?.value||'',periode:periodLabel()};const kunlap=arr.filter(x=>x.kunjungan);return {header,aktivitas:arr.filter(x=>!x.kunjungan),kunlap:kunlap.length?kunlap:arr,all:arr,count:arr.length,source:'DRP-local'};}
-function handleMakeReportClick(e){if(e?.preventDefault)e.preventDefault();const btn=document.getElementById('makeReportBtn'),st=document.getElementById('aiReportStatus');if(btn){btn.disabled=true;btn.textContent='⏳ Sedang menyusun laporan...';}if(st)st.textContent='⏳ Membaca DRP dan menyusun C, D, E, F, serta dokumentasi...';try{makeReport();}catch(err){console.error('makeReport error',err);if(st)st.textContent='❌ Gagal memproses laporan: '+(err?.message||err);alert('Laporan gagal diproses. Detail: '+(err?.message||err));}finally{if(btn){btn.disabled=false;btn.textContent='📑 Buat Laporan Bulanan Otomatis';}}}
+function kdValidateDrpBeforeReport(drp){
+  drp=drp||getReportDrp();
+  const h=drp?.header||{}, all=Array.isArray(drp?.all)?drp.all:[], kun=Array.isArray(drp?.kunlap)?drp.kunlap:[];
+  const expected=Number(h.totalLaporan||0);
+  const problems=[];
+  if(!all.length) problems.push('DRP belum memiliki aktivitas yang terbaca.');
+  if(expected && all.length!==expected) problems.push('Jumlah aktivitas terbaca ('+all.length+') belum sama dengan total DRP ('+expected+').');
+  if(!kun.length) problems.push('Belum ada data kunjungan lapangan yang terbaca dari DRP.');
+  if(problems.length){
+    const msg='⛔ Laporan belum boleh dibuat\\n\\n'+problems.map(x=>'• '+x).join('\\n')+'\\n\\nPeriksa kembali DRP sebelum melanjutkan.';
+    const st=document.getElementById('aiReportStatus'); if(st)st.textContent=msg.replace(/\\n/g,' ');
+    return {ok:false,problems};
+  }
+  const photos=Array.isArray(activityPhotos)?activityPhotos:[];
+  const matched=photos.filter(p=>p&&p.matchedActivityIndex!=null).length;
+  return {ok:true,activityCount:all.length,visitCount:kun.length,photoCount:photos.length,matchedPhotos:matched,unmatchedPhotos:photos.length-matched};
+}
+function handleMakeReportClick(e){if(e?.preventDefault)e.preventDefault();const audit=kdValidateDrpBeforeReport(getReportDrp());if(!audit.ok){alert('Laporan belum dapat dibuat.\\n\\n'+audit.problems.map(x=>'• '+x).join('\\n'));return;}const btn=document.getElementById('makeReportBtn'),st=document.getElementById('aiReportStatus');if(btn){btn.disabled=true;btn.textContent='⏳ Sedang menyusun laporan...';}if(st)st.textContent='⏳ Membaca DRP dan menyusun C, D, E, F, serta dokumentasi...';try{makeReport();}catch(err){console.error('makeReport error',err);if(st)st.textContent='❌ Gagal memproses laporan: '+(err?.message||err);alert('Laporan gagal diproses. Detail: '+(err?.message||err));}finally{if(btn){btn.disabled=false;btn.textContent='📑 Buat Laporan Bulanan Otomatis';}}}
 async function kdPersistGeneratedReport(){
   if(!window.KerjaDesaAPI||!localStorage.getItem('kd_auth_token')||!navigator.onLine||!reportContext)return {synced:false};
   const payload={
@@ -1474,7 +1491,7 @@ kdWorkflowSetup();kdAddHomeQuick();
     if(document.getElementById('kdUpgradeCenter'))return;
     const home=document.getElementById('home');if(!home)return;
     const card=document.createElement('div');card.id='kdUpgradeCenter';card.className='card kd-data-center';
-    card.innerHTML='<h2 style="margin-top:0">🧭 Upgrade Control Center</h2><p class="muted">Pusat pemeriksaan upgrade KerjaDesa Pro. Menampilkan kondisi aplikasi dan milestone yang benar-benar ada di repository.</p><div id="kdUpgradeCenterView"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button onclick="kdUpgradeRefresh()">↻ Perbarui Status</button><button class="secondary" onclick="window.open("kerjadesa_upgrade_manifest.json","_blank")">📋 Lihat Registry</button></div>';
+    card.innerHTML='<h2 style="margin-top:0">🧭 Upgrade Control Center</h2><p class="muted">Pusat pemeriksaan upgrade KerjaDesa Pro. Menampilkan kondisi aplikasi dan milestone yang benar-benar ada di repository.</p><div id="kdUpgradeCenterView"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button onclick="kdUpgradeRefresh()">↻ Perbarui Status</button><button class="secondary" onclick="window.open('kerjadesa_upgrade_manifest.json','_blank')">📋 Lihat Registry</button></div>';
     const twin=document.getElementById('kdTwinCard');
     if(twin&&twin.parentNode) twin.parentNode.insertBefore(card,twin.nextSibling);
     else {const anchor=home.querySelector('.kd-data-center');if(anchor)anchor.after(card);else home.appendChild(card);}
