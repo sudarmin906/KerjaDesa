@@ -229,6 +229,58 @@ async function seedAdmin() {
   }
 }
 
+
+async function resetAdminPassword(req, res) {
+  const enabled = String(process.env.ADMIN_RESET_ENABLED || '').trim().toLowerCase() === 'true';
+  if (!enabled) return sendJson(res, 404, { success: false, message: 'Reset admin tidak tersedia.' });
+
+  const configuredToken = String(process.env.ADMIN_BOOTSTRAP_TOKEN || '');
+  if (configuredToken.length < 32) return sendJson(res, 404, { success: false, message: 'Reset admin tidak tersedia.' });
+  if (!productionRequestIsSecure(req)) return sendJson(res, 400, { success: false, message: 'Reset admin wajib menggunakan HTTPS.' });
+
+  const ip = req.socket?.remoteAddress || 'unknown';
+  if (!bootstrapAllowed(ip)) return sendJson(res, 429, { success: false, message: 'Terlalu banyak percobaan reset. Coba lagi nanti.' });
+  if (bootstrapInProgress) return sendJson(res, 409, { success: false, message: 'Reset admin sedang diproses.' });
+
+  bootstrapInProgress = true;
+  try {
+    const body = await parseJsonBody(req);
+    if (!secretMatches(body.reset_token, configuredToken)) {
+      recordBootstrapFailure(ip);
+      return sendJson(res, 401, { success: false, message: 'Reset credential tidak valid.' });
+    }
+
+    const username = String(body.username || 'admin').trim();
+    if (!/^[A-Za-z0-9._-]{3,64}$/.test(username)) {
+      return sendJson(res, 422, { success: false, message: 'Username tidak valid.' });
+    }
+
+    const password = validatePassword(body.password);
+    const user = await findByField('users', 'username', username);
+    if (!user || String(user.role || '').toUpperCase() !== 'ADMIN') {
+      return sendJson(res, 404, { success: false, message: 'Akun admin tidak ditemukan.' });
+    }
+
+    const updated = await update('users', user.id, {
+      password_hash: hashPassword(password),
+      status: 'ACTIVE',
+      updated_at: new Date().toISOString()
+    });
+
+    bootstrapAttempts.delete(ip);
+    await writeAudit({ user: updated || user, action: 'RESET_ADMIN_PASSWORD', resource: 'auth', recordId: user.id });
+    res.setHeader('Cache-Control', 'no-store, max-age=0');
+    return sendJson(res, 200, {
+      success: true,
+      message: 'Password admin berhasil direset. Matikan ADMIN_RESET_ENABLED setelah login berhasil.'
+    });
+  } catch (error) {
+    return sendJson(res, error.statusCode || 400, { success: false, message: error.message });
+  } finally {
+    bootstrapInProgress = false;
+  }
+}
+
 async function bootstrapAdmin(req, res) {
   const configuredToken = String(process.env.ADMIN_BOOTSTRAP_TOKEN || '');
   if (configuredToken.length < 32) return sendJson(res, 404, { success: false, message: 'Bootstrap admin tidak tersedia.' });
@@ -520,6 +572,7 @@ async function resourceHandler(req, res, resource, id, method, auth) {
 module.exports = {
   login,
   bootstrapAdmin,
+  resetAdminPassword,
   logout,
   dashboard,
   resourceHandler,
