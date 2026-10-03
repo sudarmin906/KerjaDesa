@@ -194,7 +194,7 @@
     return p;
   }
   async function refreshApbdesAggregate(apbdesId){
-    if(!apbdesId||!API()||!localStorage.getItem('kd_auth_token')||!navigator.onLine)return;
+    if(!apbdesId||!API()||!sessionStorage.getItem('kd_login')==='1'||!navigator.onLine)return;
     try{
       const out=await API().get('realisasi');
       const rows=Array.isArray(out.data)?out.data:[];
@@ -220,12 +220,12 @@
     const isLocalId=id && String(id).startsWith('local-');
     try{
       let out;
-      if(id&&!isLocalId&&API()&&localStorage.getItem('kd_auth_token')&&navigator.onLine){
+      if(id&&!isLocalId&&API()&&sessionStorage.getItem('kd_login')==='1'&&navigator.onLine){
         const current=state.rows.find(x=>String(x.id)===String(id))||{};
         if(current.version!==undefined)p.base_version=Number(current.version||1);
         out=await API().update(r,id,p);
       }
-      else if((!id||isLocalId)&&API()&&localStorage.getItem('kd_auth_token')&&navigator.onLine)out=await API().create(r,p);
+      else if((!id||isLocalId)&&API()&&sessionStorage.getItem('kd_login')==='1'&&navigator.onLine)out=await API().create(r,p);
       const item=out?.data||Object.assign({id:id||('local-'+Date.now()),updated_at:new Date().toISOString()},p);
       localUpsert(r,item);
       if(!out)queue(id&&!isLocalId?'UPDATE':'CREATE',r,p,item.id);
@@ -251,7 +251,7 @@
   async function del(id){
     if(!confirm('Hapus data ini?'))return;
     try{
-      if(API()&&localStorage.getItem('kd_auth_token')&&navigator.onLine)await API().remove(state.resource,id);else queue('DELETE',state.resource,{},id);
+      if(API()&&sessionStorage.getItem('kd_login')==='1'&&navigator.onLine)await API().remove(state.resource,id);else queue('DELETE',state.resource,{},id);
     }catch(e){
       if(e&&e.status){toast(e.message||'Server menolak penghapusan.');return;}
       queue('DELETE',state.resource,{},id);
