@@ -814,20 +814,40 @@ async function processDrpFile(f,st){
   return parsed;
 }
 async function autoProcessOne(kind){
-  const f=document.getElementById(kind==='drp'?'drpFile':'sppdFile')?.files?.[0];if(!f)return;
-  await kdValidateFile(f,kind==='drp'?'drp':'drp');
-  const st=document.getElementById(kind==='drp'?'drpStatus':'sppdStatus');
-  if(st)st.innerHTML='<span class="loading">⏳ Memproses '+esc(f.name)+'...</span>';
+  const isDrp=kind==='drp';
+  const fileId=isDrp?'drpFile':'sppdFile';
+  const statusId=isDrp?'drpStatus':'sppdStatus';
+  const input=document.getElementById(fileId);
+  const st=document.getElementById(statusId);
+  const f=input?.files?.[0];
+  if(!f){
+    if(st)st.innerHTML='<span class="warn">Tidak ada file yang dipilih.</span>';
+    return null;
+  }
   try{
-    if(kind==='drp'){
-      await processDrpFile(f,st);
-    }else{
-      const txt=await readFile(f);data.docs=data.docs||{};
-      const summary=summarizeDoc(txt);
-      data.docs.sppd={name:f.name,text:txt,summary,parsed:parseSPPD(txt),processedAt:new Date().toISOString()};
-      save();if(st)st.innerHTML='<span class="ok">✓ Selesai: '+esc(f.name)+'</span>';updateDocStatus();
+    if(st)st.innerHTML='<span class="loading">⏳ Memeriksa '+esc(f.name)+'...</span>';
+    await kdValidateFile(f,isDrp?'drp':'drp');
+    if(st)st.innerHTML='<span class="loading">⏳ Membaca '+esc(f.name)+'...</span>';
+    if(isDrp){
+      const parsed=await processDrpFile(f,st);
+      if(input)input.value='';
+      return parsed;
     }
-  }catch(e){if(st)st.innerHTML='<span class="warn">Gagal membaca: '+esc(e.message)+'</span>'}
+    const txt=await readFile(f);
+    if(!txt)throw new Error('Isi dokumen tidak dapat dibaca oleh browser.');
+    data.docs=data.docs||{};
+    const summary=summarizeDoc(txt);
+    data.docs.sppd={name:f.name,text:txt,summary,parsed:parseSPPD(txt),processedAt:new Date().toISOString()};
+    save();
+    if(st)st.innerHTML='<span class="ok">✓ Selesai: '+esc(f.name)+'</span>';
+    updateDocStatus();
+    if(input)input.value='';
+    return data.docs.sppd;
+  }catch(e){
+    console.error('KerjaDesa gagal memproses dokumen',kind,e);
+    if(st)st.innerHTML='<span class="warn">❌ Gagal membaca: '+esc(e?.message||e)+'</span>';
+    return null;
+  }
 }
 async function processPackageFiles(input){
   const files=[...(input.files||[])];if(!files.length)return;
@@ -1608,7 +1628,7 @@ function kdBindCoreActions(){
  q('[data-kd-security-run]',()=>kdRunSecurityCenter()); q('[data-kd-security-clear]',()=>kdClearLocalSecureData());
  q('[data-kd-download-word]',()=>downloadWord()); q('[data-kd-print-pdf]',()=>printPdf()); q('[data-kd-improve-gpt]',()=>improveReportWithGPT()); q('[data-kd-copy-gpt]',()=>copyGPTPrompt());
  document.querySelectorAll('[data-kd-filter-lists]').forEach(e=>e.addEventListener('input',kdFilterLists));
- document.querySelectorAll('[data-kd-upload-drp]').forEach(e=>e.addEventListener('change',()=>autoProcessOne('drp')));
+ document.querySelectorAll('[data-kd-upload-drp]').forEach(e=>e.addEventListener('change',()=>{void autoProcessOne('drp')}));
  document.querySelectorAll('[data-kd-package-input]').forEach(e=>e.addEventListener('change',e2=>processPackageFiles(e2.currentTarget)));
  document.querySelectorAll('[data-kd-profile-input]').forEach(e=>e.addEventListener('change',e2=>loadProfilePhoto(e2.currentTarget)));
  document.querySelectorAll('[data-kd-logo-input]').forEach(e=>e.addEventListener('change',e2=>loadLogo(e2.currentTarget)));
