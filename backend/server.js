@@ -5,7 +5,7 @@ const { URL } = require('url');
 const { ensureDatabase } = require('./database/store');
 const { health: postgresHealth } = require('./database/postgres');
 const { authenticate, requireAuth, sendJson, csrfValid } = require('./middleware/auth');
-const { login, bootstrapAdmin, logout, dashboard, resourceHandler, seedAdmin } = require('./controllers/apiController');
+const { login, bootstrapAdmin, resetAdminPassword, logout, dashboard, resourceHandler, seedAdmin } = require('./controllers/apiController');
 const { publicUser } = require('./middleware/auth');
 
 const PORT = Number(process.env.PORT || 3000);
@@ -149,6 +149,7 @@ async function route(req, res) {
     }
 
     if (req.method === 'POST' && pathName === '/api/auth/bootstrap') return bootstrapAdmin(req, res);
+    if (req.method === 'POST' && pathName === '/api/auth/reset-admin') return resetAdminPassword(req, res);
     if (req.method === 'POST' && pathName === '/api/auth/login') return login(req, res);
     if (req.method === 'POST' && pathName === '/api/auth/logout') {
       if (!csrfValid(req)) return sendJson(res, 403, { success: false, message: 'CSRF token tidak valid.' });
