@@ -19,8 +19,8 @@ async function ensureDatabase() {
   // Managed databases can become reachable a few seconds after the app starts.
   // Retry schema initialization instead of terminating the whole service on the
   // first ECONNREFUSED / transient connection error.
-  const attempts = Math.max(1, Number(process.env.DB_STARTUP_RETRIES || 5));
-  const delayMs = Math.max(250, Number(process.env.DB_STARTUP_RETRY_MS || 1000));
+  const attempts = Math.max(1, Number(process.env.DB_STARTUP_RETRIES || 20));
+  const delayMs = Math.max(250, Number(process.env.DB_STARTUP_RETRY_MS || 3000));
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
