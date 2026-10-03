@@ -1,6 +1,7 @@
 /*
- * Optional PostgreSQL adapter.
- * Enable with DATABASE_URL. JSON store remains the default fallback.
+ * PostgreSQL adapter.
+ * Supports a full DATABASE_URL as well as Blitz Cloud's separate
+ * DB_HOST / DB_PORT / NAMA_DB / PENGGUNA_DB / KATA SANDI DB variables.
  */
 let Pool = null;
 let pool = null;
@@ -9,8 +10,25 @@ function connectionString() {
   return process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRESQL_URL || '';
 }
 
+function discreteConfig() {
+  const host = process.env.DB_HOST || '';
+  const database = process.env.DB_NAME || process.env.NAMA_DB || '';
+  const user = process.env.DB_USER || process.env.PENGGUNA_DB || '';
+  const password = process.env.DB_PASSWORD || process.env.KATA_SANDI_DB || '';
+  const port = process.env.DB_PORT || '';
+  if (!host || !database || !user || !password) return null;
+  return {
+    host,
+    database,
+    user,
+    password,
+    ...(port ? { port: Number(port) } : {})
+  };
+}
+
 function enabled() {
-  return Boolean(connectionString()) && String(process.env.KERJADESA_DB_DISABLED || '') !== '1';
+  return Boolean(connectionString() || discreteConfig())
+    && String(process.env.KERJADESA_DB_DISABLED || '') !== '1';
 }
 
 function getPool() {
@@ -19,18 +37,19 @@ function getPool() {
     try {
       Pool = require('pg').Pool;
     } catch {
-      throw new Error('PostgreSQL adapter membutuhkan dependency pg saat DATABASE_URL digunakan.');
+      throw new Error('PostgreSQL adapter membutuhkan dependency pg.');
     }
   }
+
   if (!pool) {
+    const config = discreteConfig();
     pool = new Pool({
-      connectionString: connectionString(),
+      ...(connectionString() ? { connectionString: connectionString() } : config),
       max: Number(process.env.PG_POOL_MAX || 5),
       connectionTimeoutMillis: Math.max(1000, Number(process.env.PG_CONNECTION_TIMEOUT_MS || 3000)),
       idleTimeoutMillis: Math.max(1000, Number(process.env.PG_IDLE_TIMEOUT_MS || 10000)),
-      // Production uses TLS by default. Blitz Cloud's managed PostgreSQL is
-      // reachable over its private network and explicitly does not require TLS;
-      // allow the deployment platform to opt out with DB_SSL=false.
+      // Blitz Cloud managed PostgreSQL uses the private network without TLS.
+      // Set DB_SSL=true only when the database endpoint explicitly requires TLS.
       ssl: (() => {
         const configured = String(process.env.DB_SSL || '').trim().toLowerCase();
         const useSsl = configured
@@ -47,7 +66,7 @@ function getPool() {
 
 async function query(text, params = []) {
   const p = getPool();
-  if (!p) throw new Error('PostgreSQL belum diaktifkan. Set DATABASE_URL.');
+  if (!p) throw new Error('PostgreSQL belum diaktifkan. Set DATABASE_URL atau DB_HOST/DB_NAME/DB_USER/DB_PASSWORD.');
   return p.query(text, params);
 }
 
@@ -57,8 +76,6 @@ async function health() {
     const result = await query('SELECT NOW() AS now');
     return { enabled: true, status: 'healthy', now: result.rows[0].now };
   } catch (error) {
-    // The API health endpoint must stay reachable while PostgreSQL is starting
-    // or temporarily unavailable; ensureDatabase() handles the actual fallback.
     return { enabled: true, status: 'unavailable' };
   }
 }
