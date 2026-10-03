@@ -54,9 +54,12 @@ function securityHeaders(res, sensitive=false) {
 function cors(req, res) {
   const configured = String(process.env.CORS_ORIGIN || '').split(',').map(x => x.trim()).filter(Boolean);
   const requestOrigin = req.headers.origin || '';
+  const defaultProductionOrigin = 'https://sudarmin906.github.io';
   const allow = configured.length
     ? (configured.includes(requestOrigin) ? requestOrigin : '')
-    : (process.env.NODE_ENV === 'production' ? '' : '*');
+    : (process.env.NODE_ENV === 'production'
+      ? (requestOrigin === defaultProductionOrigin ? requestOrigin : '')
+      : '*');
 
   if (allow) res.setHeader('Access-Control-Allow-Origin', allow);
   if (requestOrigin && allow) res.setHeader('Vary', 'Origin');
