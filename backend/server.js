@@ -52,18 +52,25 @@ function securityHeaders(res, sensitive=false) {
 }
 
 function cors(req, res) {
-  const configured = String(process.env.CORS_ORIGIN || '').split(',').map(x => x.trim()).filter(Boolean);
-  const requestOrigin = req.headers.origin || '';
-  const defaultProductionOrigin = 'https://sudarmin906.github.io';
-  const allow = configured.length
-    ? (configured.includes(requestOrigin) ? requestOrigin : '')
-    : (process.env.NODE_ENV === 'production'
-      ? (requestOrigin === defaultProductionOrigin ? requestOrigin : '')
-      : '*');
+  const configured = String(process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map(x => x.trim().replace(/\/$/, ''))
+    .filter(Boolean);
+  const requestOrigin = String(req.headers.origin || '').trim().replace(/\/$/, '');
+  const trustedProductionOrigins = new Set([
+    'https://sudarmin906.github.io'
+  ]);
+  // Keep the explicit environment allow-list, but always retain the known
+  // KerjaDesa production frontend. This prevents a stale/misformatted
+  // CORS_ORIGIN value from breaking the GitHub Pages -> Blitz login flow.
+  const allowedOrigins = new Set([...configured, ...trustedProductionOrigins]);
+  const allow = requestOrigin
+    ? (allowedOrigins.has(requestOrigin) ? requestOrigin : '')
+    : (process.env.NODE_ENV === 'production' ? '' : '*');
 
   if (allow) res.setHeader('Access-Control-Allow-Origin', allow);
   if (requestOrigin && allow) res.setHeader('Vary', 'Origin');
-  if (allow) res.setHeader('Access-Control-Allow-Credentials','true');
+  if (allow) res.setHeader('Access-Control-Allow-Credentials', 'true');
   securityHeaders(res, true);
   res.setHeader('Access-Control-Allow-Headers', ALLOWED_HEADERS);
   res.setHeader('Access-Control-Allow-Methods', ALLOWED_METHODS);
