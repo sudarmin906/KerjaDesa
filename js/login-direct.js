@@ -9,12 +9,42 @@
     if(el) el.textContent=text||'';
   }
 
+  function ensureAuthModule(){
+    if(window.KerjaDesaAuthAPI?.login) return Promise.resolve(true);
+    return new Promise(function(resolve,reject){
+      var existing=document.querySelector('script[data-kd-auth-loader="1"]');
+      if(existing){
+        existing.addEventListener('load',function(){resolve(!!window.KerjaDesaAuthAPI?.login);},{once:true});
+        existing.addEventListener('error',function(){reject(new Error('Modul autentikasi gagal dimuat.'));},{once:true});
+        return;
+      }
+      var script=document.createElement('script');
+      script.src='js/api-auth.js?v=3';
+      script.async=false;
+      script.dataset.kdAuthLoader='1';
+      script.onload=function(){
+        if(window.KerjaDesaAuthAPI?.login) resolve(true);
+        else reject(new Error('Modul autentikasi belum tersedia.'));
+      };
+      script.onerror=function(){reject(new Error('Modul autentikasi gagal dimuat.'));};
+      document.head.appendChild(script);
+    });
+  }
+
   async function fallbackLogin(){
     var user=(document.getElementById('user')?.value||'').trim();
     var pass=document.getElementById('pass')?.value||'';
     if(!user||!pass){setMsg('Username dan password wajib diisi.');return;}
+    setMsg('Menyiapkan autentikasi...');
+    try{
+      await ensureAuthModule();
+    }catch(e){
+      console.warn('Modul autentikasi gagal dimuat:',e);
+      setMsg(e?.message||'Modul autentikasi belum siap. Muat ulang aplikasi.');
+      return;
+    }
     if(!window.KerjaDesaAuthAPI?.login){
-      setMsg('Modul autentikasi belum siap. Silakan muat ulang aplikasi.');
+      setMsg('Modul autentikasi belum siap. Muat ulang aplikasi.');
       return;
     }
     setMsg('Menghubungkan ke server...');
