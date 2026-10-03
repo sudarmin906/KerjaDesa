@@ -52,9 +52,7 @@ function getPool() {
       // Set DB_SSL=true only when the database endpoint explicitly requires TLS.
       ssl: (() => {
         const configured = String(process.env.DB_SSL || '').trim().toLowerCase();
-        const useSsl = configured
-          ? /^(1|true|yes)$/i.test(configured)
-          : String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+        const useSsl = /^(1|true|yes)$/i.test(configured);
         return useSsl
           ? { rejectUnauthorized: String(process.env.DB_SSL_REJECT_UNAUTHORIZED || 'true') !== 'false' }
           : undefined;
