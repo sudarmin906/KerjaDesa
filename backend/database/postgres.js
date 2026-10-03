@@ -7,14 +7,14 @@ let Pool = null;
 let pool = null;
 
 function connectionString() {
-  return process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRESQL_URL || '';
+  return process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.POSTGRESQL_URL || process.env.URL_BASIS_DATA || '';
 }
 
 function discreteConfig() {
   const host = process.env.DB_HOST || '';
   const database = process.env.DB_NAME || process.env.NAMA_DB || '';
   const user = process.env.DB_USER || process.env.PENGGUNA_DB || '';
-  const password = process.env.DB_PASSWORD || process.env.KATA_SANDI_DB || '';
+  const password = process.env.DB_PASSWORD || process.env.KATA_SANDI_DB || process.env['KATA SANDI DB'] || '';
   const port = process.env.DB_PORT || '';
   if (!host || !database || !user || !password) return null;
   return {
