@@ -192,7 +192,9 @@ const server = http.createServer((req, res) => {
 
 async function bootstrap() {
   await ensureDatabase();
-  if (process.env.ADMIN_PASSWORD) {
+  const adminPassword = process.env.ADMIN_PASSWORD || process.env['KATA SANDI ADMIN'] || '';
+  if (adminPassword) {
+    if (!process.env.ADMIN_PASSWORD) process.env.ADMIN_PASSWORD = adminPassword;
     await seedAdmin();
   } else if (String(process.env.NODE_ENV || '').toLowerCase() === 'production' && String(process.env.ADMIN_BOOTSTRAP_TOKEN || '').length < 32) {
     throw new Error('Set ADMIN_PASSWORD atau ADMIN_BOOTSTRAP_TOKEN pada production.');
