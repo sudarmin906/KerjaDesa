@@ -16,44 +16,31 @@ services:
     networks:
       - internal
 
-  api:
-    build: ./backend
-    restart: unless-stopped
-    # Start the API as soon as PostgreSQL container starts so the API can
-    # apply its own retry/fallback logic when managed PostgreSQL is unavailable.
-    depends_on:
-      postgres:
-        condition: service_started
-    environment:
-      NODE_ENV: production
-      HOST: 0.0.0.0
-      PORT: 3000
-      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
-      ADMIN_NAME: ${ADMIN_NAME:-Administrator KerjaDesa}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
-      ADMIN_BOOTSTRAP_TOKEN: ${ADMIN_BOOTSTRAP_TOKEN:-}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
-      PG_POOL_MAX: ${PG_POOL_MAX:-10}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-kerjadesa}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-kerjadesa}
-    expose:
-      - "3000"
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-    networks:
-      - internal
-
   web:
     build:
       context: .
     restart: unless-stopped
     depends_on:
-      api:
+      postgres:
         condition: service_healthy
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 80
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_NAME: ${ADMIN_NAME:-Administrator KerjaDesa}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_BOOTSTRAP_TOKEN: ${ADMIN_BOOTSTRAP_TOKEN:-}
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+      PG_POOL_MAX: ${PG_POOL_MAX:-10}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kerjadesa}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-kerjadesa}
     expose:
       - "80"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:80/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     networks:
       - internal
 
@@ -62,7 +49,7 @@ services:
     restart: unless-stopped
     depends_on:
       web:
-        condition: service_started
+        condition: service_healthy
     environment:
       KERJADESA_DOMAIN: ${KERJADESA_DOMAIN:-localhost}
     ports:
