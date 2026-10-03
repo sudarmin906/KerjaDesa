@@ -110,7 +110,7 @@
     state.resource=r;
     const cached=cacheRows(r); state.rows=cached.slice();
     render();
-    if(!API()||!localStorage.getItem('kd_auth_token')||!navigator.onLine)return;
+    if(!API()||!sessionStorage.getItem('kd_login')||!navigator.onLine)return;
     try{
       const deps=[...(schemas[r]||[])].map(x=>x[0]).filter(k=>['rkpdes_id','apbdes_id','rab_id','kegiatan_id','drp_id'].includes(k));
       const depMap={rkpdes_id:'rkpdes',apbdes_id:'apbdes',rab_id:'rab',kegiatan_id:'kegiatan',drp_id:'drp'};
