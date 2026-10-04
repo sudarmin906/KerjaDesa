@@ -1036,15 +1036,60 @@ async function getPhotoOcrWorker(){
  return photoOcrWorker;
 }
 function normalizePhotoDate(raw){
- const s=String(raw||'').replace(/\\/g,'/').replace(/-/g,'/').replace(/\s+/g,' ').trim();
+ const s=String(raw||'').replace(/\\/g,'/').replace(/[.\\-]/g,'/').replace(/\s+/g,' ').trim();
+ const months={januari:1,februari:2,maret:3,april:4,mei:5,juni:6,juli:7,agustus:8,september:9,oktober:10,november:11,desember:12,
+ jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,agu:8,ags:8,sep:9,okt:10,nov:11,des:12};
  let m=s.match(/(20\d{2})\/(\d{1,2})\/(\d{1,2})/);if(m)return m[3].padStart(2,'0')+'/'+m[2].padStart(2,'0')+'/'+m[1];
  m=s.match(/(\d{1,2})\/(\d{1,2})\/(20\d{2})/);if(m)return m[1].padStart(2,'0')+'/'+m[2].padStart(2,'0')+'/'+m[3];
  m=s.match(/(?:^|[^0-9])(20\d{2})(\d{2})(\d{2})(?:[^0-9]|$)/);if(m)return m[3]+'/'+m[2]+'/'+m[1];
  m=s.match(/(?:^|[^0-9])(\d{2})(\d{2})(20\d{2})(?:[^0-9]|$)/);if(m)return m[1]+'/'+m[2]+'/'+m[3];
+ m=s.match(/(?:^|[^0-9])(\d{1,2})\s*(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember|jan|feb|mar|apr|jun|jul|agu|ags|sep|okt|nov|des)\s*(20\d{2})(?:[^0-9]|$)/i);
+ if(m)return m[1].padStart(2,'0')+'/'+String(months[m[2].toLowerCase()]).padStart(2,'0')+'/'+m[3];
  return ''
 }
 function extractPhotoDate(name){return normalizePhotoDate(name)}
-function extractDatesFromOcr(text){const out=[];String(text||'').replace(/(20\d{2})[\/-](\d{1,2})[\/-](\d{1,2})|(\d{1,2})[\/-](\d{1,2})[\/-](20\d{2})/g,a=>{const x=normalizePhotoDate(a);if(x&&!out.includes(x))out.push(x)});return out}
+function extractDatesFromOcr(text){
+ const out=[];
+ const src=String(text||'');
+ src.replace(/(20\d{2})[\/-](\d{1,2})[\/-](\d{1,2})|(\d{1,2})[\/-](\d{1,2})[\/-](20\d{2})/g,a=>{const x=normalizePhotoDate(a);if(x&&!out.includes(x))out.push(x)});
+ src.replace(/(?:^|[^0-9])(\d{1,2})\s*(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember|Jan|Feb|Mar|Apr|Jun|Jul|Agu|Ags|Sep|Okt|Nov|Des)\s*(20\d{2})(?:[^0-9]|$)/gi,a=>{const x=normalizePhotoDate(a);if(x&&!out.includes(x))out.push(x)});
+ return out
+}
+async function extractExifDate(file){
+ try{
+  if(!file||!/jpe?g$/i.test(file.name||''))return '';
+  const b=await file.arrayBuffer(),v=new DataView(b);
+  if(v.getUint16(0,false)!==0xFFD8)return '';
+  let off=2;
+  while(off+4<v.byteLength){
+   if(v.getUint8(off)!==0xFF){off++;continue}
+   const marker=v.getUint8(off+1);if(marker===0xDA||marker===0xD9)break;
+   const len=v.getUint16(off+2,false);
+   if(marker===0xE1&&len>=10){
+    const p=off+4;
+    if(v.getUint32(p,false)===0x45786966&&v.getUint16(p+6,false)===0x002A){
+     const t=p+6,le=v.getUint16(t,false)===0x4949,rd=le?()=>v.getUint16(t,false):()=>v.getUint16(t,false);
+     const u16=(x)=>v.getUint16(x,le),u32=(x)=>v.getUint32(x,le),base=t;
+     const ifd0=base+u32(base+4);
+     const count=u16(ifd0);let exifPtr=0;
+     for(let i=0;i<count;i++){const q=ifd0+2+i*12,tag=u16(q),type=u16(q+2);if(tag===0x8769){exifPtr=u32(q+8);break}}
+     if(exifPtr){
+      const ex=base+exifPtr,n=u16(ex);
+      for(let i=0;i<n;i++){const q=ex+2+i*12,tag=u16(q),type=u16(q+2),cnt=u32(q+4);if(tag===0x9003||tag===0x0132){
+       const bytes=type===2?cnt:0;if(bytes>0){const pos=bytes<=4?q+8:base+u32(q+8);let s='';for(let k=0;k<Math.min(bytes,32);k++){const z=v.getUint8(pos+k);if(!z)s+= ' ';else s+=String.fromCharCode(z)}const d=normalizePhotoDate(s);if(d)return d}
+      }}
+     }
+    }
+   }
+   off+=2+len;
+  }
+ }catch(e){console.warn('EXIF tanggal foto gagal',e)}
+ return ''
+}
+async function detectPhotoDate(file){
+ const byName=extractPhotoDate(file?.name||'');if(byName)return byName;
+ const exif=await extractExifDate(file);return exif||''
+}
 function photoTokens(s){return String(s||'').toLowerCase().replace(/[^a-z0-9à-ÿ]+/gi,' ').split(/\s+/).filter(w=>w.length>=4)}
 function sameDayMonth(a,b){
  const x=dateKey(a),y=dateKey(b);
@@ -1098,7 +1143,7 @@ async function loadActivityPhotos(input){
  const files=[...input.files];await loadActivityPhotoFiles(files);input.value='';
 }
 (function kdPhotoRuntimeGuard(){
- const VERSION='PHOTO-RUNTIME-2026.10.04-01';
+ const VERSION='PHOTO-RUNTIME-2026.10.04-02';
  window.KERJADESA_PHOTO_ENGINE_VERSION=VERSION;
  async function run(input){
    const files=[...(input?.files||[])];
@@ -1130,7 +1175,7 @@ async function loadActivityPhotoFiles(files){
  const existing=activityPhotos||[];
  const existingNames=new Set(existing.map(p=>String(p.name||'').toLowerCase()));
  const uniqueFiles=files.filter(f=>!existingNames.has(String(f.name||'').toLowerCase()));
- const items=uniqueFiles.map((f,i)=>({f,i,date:extractPhotoDate(f.name)}));
+ const items=await Promise.all(uniqueFiles.map(async(f,i)=>({f,i,date:await detectPhotoDate(f)})));
  if(!items.length){renderMediaPreviews();return;}
  const st=document.getElementById('photoOcrStatus');
  const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];
@@ -1143,7 +1188,7 @@ async function loadActivityPhotoFiles(files){
    const dataUrl=await readAsDataURL(x.f);
    activityPhotos.push({
      name:x.f.name,url:dataUrl,date:x.date||'',ocrText:'',ocrDate:'',
-     source:x.date?'Nama file':'Menunggu OCR',
+     source:x.date?'Nama file/EXIF':'Menunggu OCR',
      matchedActivityIndex:null,matchedActivityNo:null,matchScore:0,matchConfidence:'belum cocok'
    });
  }
@@ -1172,7 +1217,7 @@ async function loadActivityPhotoFiles(files){
            p.ocrText=r?.text||'';
            p.ocrDate=r?.date||'';
            p.date=r?.date||p.date||'';
-           p.source=p.date?(r?.date?'OCR + nama file':'Nama file'):'Belum terdeteksi';
+           p.source=p.date?(r?.date?'OCR + metadata':'Metadata file'):'Belum terdeteksi';
            matchPhotoToDrp(p,acts);
          }
          data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;
