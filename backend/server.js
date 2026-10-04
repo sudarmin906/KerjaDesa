@@ -193,7 +193,10 @@ async function route(req, res) {
     }
     if (req.method === 'GET' && pathName === '/api/auth/me') {
       const auth = await requireAuth(req, res);
-      return auth && sendJson(res, 200, { success: true, user: publicUser(auth.user) });
+      if (!auth) return null;
+      const { setCsrfResponseCookie } = require('./middleware/auth');
+      const csrfToken = setCsrfResponseCookie(res, req, auth.rememberMe);
+      return sendJson(res, 200, { success: true, user: publicUser(auth.user), csrf_token: csrfToken, remember_me: !!auth.rememberMe });
     }
 
     const auth = await authenticate(req);
