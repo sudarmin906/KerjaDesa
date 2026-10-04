@@ -1132,40 +1132,67 @@ async function loadActivityPhotoFiles(files){
  const uniqueFiles=files.filter(f=>!existingNames.has(String(f.name||'').toLowerCase()));
  const items=uniqueFiles.map((f,i)=>({f,i,date:extractPhotoDate(f.name)}));
  if(!items.length){renderMediaPreviews();return;}
- activityPhotos=existing;photoOcrBusy=true;
- const st=document.getElementById('photoOcrStatus');if(st)st.textContent='⚡ Menganalisis foto dan mencocokkannya dengan DRP...';
+ const st=document.getElementById('photoOcrStatus');
  const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];
  const dateCounts={};acts.forEach(a=>{const k=dateKey(a.tanggal);if(k)dateCounts[k]=(dateCounts[k]||0)+1});
- const needsOcr=items.filter(x=>!x.date||(x.date&&dateCounts[dateKey(x.date)]>1));
- const results=new Array(items.length);
- items.forEach(x=>{if(x.date)results[x.i]={text:'',date:x.date,source:'Nama file'}});
- if(needsOcr.length){
-   for(let j=0;j<needsOcr.length;j++){
-    const x=needsOcr[j];
-    results[x.i]=await ocrPhoto(x.f,j,needsOcr.length);
-    results[x.i].date=results[x.i].date||x.date||'';
-    results[x.i].source=results[x.i].date?'OCR + nama file':'Belum terdeteksi';
-   }
- }
+
+ // IMPORTANT: save/render the original photo files FIRST.
+ // OCR must never block persistence or report generation on mobile devices.
+ activityPhotos=existing;
  for(const x of items){
-  const dataUrl=await readAsDataURL(x.f),o=results[x.i]||{text:'',date:''};
-  activityPhotos.push({
-   name:x.f.name,url:dataUrl,date:o.date||x.date||'',ocrText:o.text||'',ocrDate:o.date||'',
-   source:o.source||(o.date?'OCR foto':(x.date?'Nama file':'Belum terdeteksi')),
-   matchedActivityIndex:null,matchedActivityNo:null,matchScore:0,matchConfidence:'belum cocok'
-  });
+   const dataUrl=await readAsDataURL(x.f);
+   activityPhotos.push({
+     name:x.f.name,url:dataUrl,date:x.date||'',ocrText:'',ocrDate:'',
+     source:x.date?'Nama file':'Menunggu OCR',
+     matchedActivityIndex:null,matchedActivityNo:null,matchScore:0,matchConfidence:'belum cocok'
+   });
  }
  activityPhotos.forEach(p=>matchPhotoToDrp(p,acts));
  data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;
- photoOcrBusy=false;
  try{
    if(window.KerjaDesaSecureStorage?.saveNamed) await window.KerjaDesaSecureStorage.saveNamed('activityPhotos',activityPhotos);
  }catch(e){console.error('Vault foto gagal disimpan:',e)}
  await save();
  renderMediaPreviews();
- if(st){
-  const ambiguous=needsOcr.filter(x=>x.date&&dateCounts[dateKey(x.date)]>1).length;
-  st.textContent=activityPhotos.length+' foto selesai dianalisis. '+(needsOcr.length?'OCR digunakan untuk '+needsOcr.length+' foto (termasuk '+ambiguous+' foto dengan tanggal yang ambigu).':'Semua foto memiliki tanggal unik sehingga OCR tidak diperlukan.');
+ if(st)st.textContent='✅ '+activityPhotos.length+' foto tersimpan. Foto sudah siap masuk laporan; analisis tanggal/keterangan dilanjutkan di latar belakang.';
+
+ // OCR is optional/background work. A slow OCR operation must not prevent
+ // the documentation photos from appearing in the report.
+ const needsOcr=items.filter(x=>!x.date||(x.date&&dateCounts[dateKey(x.date)]>1));
+ if(needsOcr.length){
+   photoOcrBusy=true;
+   void (async()=>{
+     try{
+       for(let j=0;j<needsOcr.length;j++){
+         const x=needsOcr[j];
+         const r=await ocrPhoto(x.f,j,needsOcr.length);
+         const idx=activityPhotos.findIndex(p=>String(p.name||'').toLowerCase()===String(x.f.name||'').toLowerCase());
+         if(idx>=0){
+           const p=activityPhotos[idx];
+           p.ocrText=r?.text||'';
+           p.ocrDate=r?.date||'';
+           p.date=r?.date||p.date||'';
+           p.source=p.date?(r?.date?'OCR + nama file':'Nama file'):'Belum terdeteksi';
+           matchPhotoToDrp(p,acts);
+         }
+         data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;
+         try{
+           if(window.KerjaDesaSecureStorage?.saveNamed) await window.KerjaDesaSecureStorage.saveNamed('activityPhotos',activityPhotos);
+         }catch(e){console.error('Vault OCR foto gagal disimpan:',e)}
+         await save();
+         renderMediaPreviews();
+         if(st)st.textContent='🔎 OCR foto '+(j+1)+'/'+needsOcr.length+' selesai. '+activityPhotos.length+' foto tetap tersedia di laporan.';
+       }
+     }catch(e){
+       console.error('Background OCR foto gagal:',e);
+     }finally{
+       photoOcrBusy=false;
+       if(st)st.textContent=activityPhotos.length+' foto tersimpan. Pencocokan otomatis selesai; foto yang belum cocok tetap dimasukkan ke laporan.';
+     }
+   })();
+ }else{
+   photoOcrBusy=false;
+   if(st)st.textContent=activityPhotos.length+' foto selesai diproses dan siap dimasukkan ke laporan.';
  }
 }
 function setPhotoActivity(photoIndex,activityIndex){const p=activityPhotos[Number(photoIndex)];if(!p)return;const idx=activityIndex===''?null:Number(activityIndex);p.matchedActivityIndex=Number.isInteger(idx)&&idx>=0?idx:null;const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];p.matchedActivityNo=p.matchedActivityIndex!=null?(acts[p.matchedActivityIndex]?.no||p.matchedActivityIndex+1):null;p.reportDate=p.matchedActivityIndex!=null?(acts[p.matchedActivityIndex]?.tanggal||''):'';p.matchScore=p.matchedActivityIndex!=null?scorePhotoActivity(p,acts[p.matchedActivityIndex]):0;p.matchConfidence=p.matchedActivityIndex!=null?'manual':'belum cocok';data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;save();renderMediaPreviews()}
