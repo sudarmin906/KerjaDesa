@@ -207,4 +207,4 @@ function sendJson(res, status, body) {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(JSON.stringify(body));
 }
-module.exports = { issueSession, revokeSession, authenticate, requireAuth, requireRole, publicUser, sendJson, csrfValid, setAuthResponseCookies, clearAuthResponseCookies };
+module.exports = { issueSession, revokeSession, authenticate, requireAuth, requireRole, publicUser, sendJson, csrfValid, setAuthResponseCookies, setCsrfResponseCookie, clearAuthResponseCookies };
