@@ -653,6 +653,25 @@ async function readPdfBasic(file){
       window.pdfjsLib=mod;
       window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.mjs';
     }
+    try{
+      const apiBase=window.KERJADESA_API_BASE || '/api';
+      const csrf=sessionStorage.getItem('kd_csrf_token') || '';
+      const raw=await file.arrayBuffer();
+      const controller=new AbortController();
+      const timer=setTimeout(()=>controller.abort(),20000);
+      const response=await fetch(apiBase+'/drp/extract-pdf',{
+        method:'POST',
+        credentials:'include',
+        headers:{'Content-Type':'application/pdf','X-CSRF-Token':csrf},
+        body:raw,
+        signal:controller.signal
+      });
+      clearTimeout(timer);
+      const result=await response.json().catch(()=>({}));
+      const serverText=String(result.text||'');
+      if(response.ok && result.success && serverText && /LAPORAN BULANAN|DAFTAR LAPORAN AKTIVITAS|DAFTAR LAPORAN KUNJUNGAN LAPANGAN|IDENTITAS TPP/i.test(serverText)) return serverText;
+      if(result.message) console.warn('Server PDF extraction unavailable:',result.message);
+    }catch(e){ console.warn('Server PDF extraction unavailable; using local fallback.',e); }
     const buf=await file.arrayBuffer();
     const pdf=await window.pdfjsLib.getDocument({data:new Uint8Array(buf),disableWorker:true,isEvalSupported:false}).promise;
     let pages=[];
