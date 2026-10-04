@@ -710,10 +710,12 @@ async function extractDrpPdf(req, res) {
     }
 
     if (!text) return sendJson(res, 422, { success: false, code: 'PDF_NO_TEXT', message: 'PDF berhasil diterima tetapi tidak menghasilkan teks.' });
+    const normalizedText = text.replace(/\f+$/g, '').trim();
+    const pages = normalizedText ? ((normalizedText.match(/\f/g) || []).length + 1) : 0;
     return sendJson(res, 200, {
       success: true,
-      text,
-      pages: (text.match(/\f/g) || []).length + 1,
+      text: normalizedText,
+      pages,
       bytes: total,
       extractor
     });
