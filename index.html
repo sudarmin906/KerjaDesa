@@ -232,7 +232,7 @@ html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#26344
 <script src="js/deployment-config.js"></script><script src="js/login-direct.js?v=20261004auth06"></script><script src="js/security-hardening.js?v=20261004auth06"></script><script src="js/secure-storage.js?v=1"></script><script src="js/security-center.js?v=1"></script><script src="js/frontend-api-config.js?v=20261004auth06"></script><script src="js/api-auth.js?v=20261004auth06"></script><script src="js/connect-integration.js"></script><script src="js/offline-sync.js"></script><script src="js/integrated-domain-modules.js"></script>
 <header class="kd-min-header"><div class="kd-min-brand"><div class="kd-logo-mark" aria-hidden="true"><i></i><i></i><i></i></div><div class="kd-logo-text">KerjaDesa</div></div><div class="kd-account"><button type="button" class="kd-account-btn" aria-label="Menu akun" title="Akun & Pengaturan" data-kd-account-toggle="1">👤</button><div id="kdAccountMenu" class="kd-account-menu"><button type="button" data-kd-account-page="pengaturan">⚙️ <span>Pengaturan</span></button><button type="button" data-kd-account-page="security">🛡️ <span>Pusat Keamanan</span></button><button type="button" id="kdLogoutBtn" data-kd-logout="1">↪ <span>Keluar</span></button></div></div></header>
 <main>
-<section id="login" class="card login-card"><div class="login-hero"><span class="login-tag">Sistem Kerja Pendamping Desa</span><img class="login-photo" src="foto_profil.jpg" alt="Sudarmin Aripuddin"><h2>Selamat Datang di<br><span style="color:#ffd34d">KerjaDesa</span></h2><p>Administrasi, dokumentasi, monitoring, DRP, laporan bulanan, dan SPPD dalam satu aplikasi yang dapat digunakan dari HP.</p><div style="margin-top:10px;font-size:12px;opacity:.85">Kecamatan Sendana • Kabupaten Majene • Sulawesi Barat</div></div><div class="login-form"><h2>Masuk ke Aplikasi</h2><p class="muted">Gunakan akun Anda untuk membuka dashboard KerjaDesa.</p><input id="user" name="username" value="" placeholder="Username" autocomplete="username"><input id="pass" name="password" value="" type="password" placeholder="Password" autocomplete="current-password" data-kd-enter-login="1"><label style="display:flex;align-items:center;gap:8px;margin:10px 0 4px;font-size:13px;cursor:pointer"><input id="rememberMe" name="rememberMe" type="checkbox" style="width:auto;margin:0"> <span>Ingat saya di perangkat ini</span></label><button id="loginBtn" type="button" data-kd-login="1">🔐 Masuk ke KerjaDesa</button><p id="loginMsg" class="muted" aria-live="polite"></p><div style="margin-top:22px;padding:13px;border-radius:14px;background:#f2f7fb;font-size:12px;color:#66788a"><b>Mode Offline Terkontrol</b><br>Data kerja offline tetap berada di perangkat. Jangan gunakan pada perangkat bersama dan selalu keluar setelah selesai.</div></div></section><section id="app">
+<section id="login" class="card login-card"><div class="login-hero"><span class="login-tag">Sistem Kerja Pendamping Desa</span><img class="login-photo" src="foto_profil.jpg" alt="Sudarmin Aripuddin"><h2>Selamat Datang di<br><span style="color:#ffd34d">KerjaDesa</span></h2><p>Administrasi, dokumentasi, monitoring, DRP, laporan bulanan, dan SPPD dalam satu aplikasi yang dapat digunakan dari HP.</p><div style="margin-top:10px;font-size:12px;opacity:.85">Kecamatan Sendana • Kabupaten Majene • Sulawesi Barat</div></div><div class="login-form"><h2>Masuk ke Aplikasi</h2><p class="muted">Gunakan akun Anda untuk membuka dashboard KerjaDesa.</p><form id="kdLoginForm" autocomplete="on" onsubmit="return false;"><input id="user" name="username" value="" placeholder="Username" autocomplete="username"><input id="pass" name="password" value="" type="password" placeholder="Password" autocomplete="current-password" data-kd-enter-login="1"><label style="display:flex;align-items:center;gap:8px;margin:10px 0 4px;font-size:13px;cursor:pointer"><input id="rememberMe" name="rememberMe" type="checkbox" style="width:auto;margin:0"> <span>Ingat saya di perangkat ini</span></label><button id="loginBtn" type="button" data-kd-login="1">🔐 Masuk ke KerjaDesa</button><p id="loginMsg" class="muted" aria-live="polite"></p></form><div style="margin-top:22px;padding:13px;border-radius:14px;background:#f2f7fb;font-size:12px;color:#66788a"><b>Mode Offline Terkontrol</b><br>Data kerja offline tetap berada di perangkat. Jangan gunakan pada perangkat bersama dan selalu keluar setelah selesai.</div></div></section><section id="app">
 <div id="home"><div class="welcome card"><div class="welcome-copy"><span class="tag">Mendampingi Desa • Membangun Negeri</span><h2>Selamat Datang di <span>KerjaDesa</span></h2><p class="muted" style="font-size:15px;max-width:650px">Ruang kerja digital untuk mengelola kegiatan, monitoring lapangan, dokumen, laporan bulanan, dan SPPD Pendamping Desa.</p><div id="kdHomeProfileName" style="margin-top:18px;font-weight:800">SUDARMIN ARIPUDDIN</div><div id="kdHomeProfileRole" class="muted" style="font-size:13px">Pendamping Lokal Desa • Kecamatan Sendana • Kabupaten Majene</div></div><div class="welcome-profile"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"></div></div><div class="stats"><div class="stat-card"><div class="stat-icon si-blue">📋</div><div><div class="stat" id="jmlK">0</div><div class="muted">Kegiatan</div></div></div><div class="stat-card"><div class="stat-icon si-green">📍</div><div><div class="stat" id="jmlM">0</div><div class="muted">Monitoring</div></div></div><div class="stat-card"><div class="stat-icon si-orange">📄</div><div><div class="stat">SPPD</div><div class="muted">Template asli</div></div></div><div class="stat-card"><div class="stat-icon si-purple">📷</div><div><div class="stat">Foto</div><div class="muted">Dokumentasi</div></div></div></div><div class="card kd-data-center" style="margin-top:14px">
 <div class="section-title"><h3>📊 Ringkasan Server</h3><span id="kdServerStatus">Memeriksa...</span></div>
 <div class="grid">
@@ -450,33 +450,24 @@ function kdEnterAppUI(){
 }
 window.kdEnterAppUI=kdEnterAppUI;
 
-async function kdRestoreSavedLogin(){
-  try{
-    if(sessionStorage.getItem('kd_login')==='1'||sessionStorage.getItem('kd_logged_out')==='1') return;
-    const api=window.KerjaDesaAuthAPI;
-    if(!api?.restoreBrowserCredential) return;
-    const cred=await api.restoreBrowserCredential();
-    if(!cred?.username||!cred?.password) return;
-    const user=document.getElementById('user'),pass=document.getElementById('pass');
-    if(user) user.value=cred.username;
-    if(pass) pass.value=cred.password;
-    const msg=document.getElementById('loginMsg');
-    if(msg) msg.textContent='🔐 Akun tersimpan di perangkat. Membuka KerjaDesa...';
-    await doLogin();
-  }catch(e){
-    console.warn('Pemulihan login tersimpan gagal:',e);
-  }
+function kdRestoreSavedLogin(){
+  // Intentionally no-op: KerjaDesa never reads a stored password from the
+  // browser password manager. Native autocomplete=current-password is used.
+  return false;
 }
 
 let kdLoginInProgress=false;
 async function doLogin(){
   if(kdLoginInProgress)return false;
-  const u=(document.getElementById('user')?.value||'').trim();
-  const pw=document.getElementById('pass')?.value||'';
+  const validation=kdValidateLoginForm();
+  const u=validation.username;
+  const pw=validation.password;
   const remember=!!document.getElementById('rememberMe')?.checked;
   const msg=document.getElementById('loginMsg');
   const btn=document.getElementById('loginBtn');
-  if(!u||!pw){if(msg)msg.textContent='Username dan password wajib diisi.';return false}
+  // Hard stop: no auth state transition, no /auth/login request, no /auth/me,
+  // no redirect and no route-guard activity when client validation fails.
+  if(!validation.valid)return false;
   kdLoginInProgress=true;
   const loginEpoch=++kdAuthState.loginEpoch;
   kdSetAuthState('AUTHENTICATING');
@@ -529,13 +520,14 @@ async function doLogin(){
   }
 }
 async function show(){
-  // Never turn an in-flight authentication operation into an unauthenticated
-  // state. The login flow owns the transition until it has verified the session.
-  if(kdAuthState.status==='AUTHENTICATING')return false;
-  if(sessionStorage.getItem('kd_login')!=='1'){
+  // Explicit auth lifecycle: initialization/authentication must never be treated
+  // as an unauthenticated route. Only an authenticated state may enter protected UI.
+  if(kdAuthState.status==='INITIALIZING'||kdAuthState.status==='AUTHENTICATING')return false;
+  if(kdAuthState.status!=='AUTHENTICATED' || sessionStorage.getItem('kd_login')!=='1'){
+    const hadSession=sessionStorage.getItem('kd_login')==='1';
     kdSetAuthState('UNAUTHENTICATED');
-    kdAuthTrace('SHOW BLOCKED',{reason:'NO_LOCAL_AUTH_STATE'});
-    kdShowLoginScreen('Sesi tidak aktif. Silakan masuk kembali.');
+    kdAuthTrace('SHOW BLOCKED',{reason:hadSession?'SESSION_NOT_AUTHENTICATED':'NO_LOCAL_AUTH_STATE'});
+    kdShowLoginScreen(hadSession?'Sesi tidak aktif. Silakan masuk kembali.':'');
     return false;
   }
   kdEnterAppUI();
@@ -2244,17 +2236,17 @@ async function kdRecoverSessionOnBoot(){
       if(typeof window.show==='function') await window.show();
       return;
     }
-    // /auth/me returned 401 and no newer login is in progress: the server has
-    // definitively rejected the existing session.
+    // /auth/me returned 401. This is a real session-expiry event only when
+    // the tab had previously recorded an authenticated session.
+    const hadAuthenticatedSession=sessionStorage.getItem('kd_login')==='1';
     sessionStorage.removeItem('kd_login');
     sessionStorage.removeItem('kd_csrf_token');
     sessionStorage.removeItem('kd_user');
     kdSetAuthState('UNAUTHENTICATED');
-    kdAuthTrace('SESSION INVALIDATED',{source:'BOOT'});
-    if(typeof kdShowLoginScreen==='function')kdShowLoginScreen('Sesi telah berakhir. Silakan masuk kembali.');
-    // If no persistent server session exists, offer the browser password
-    // manager as the optional credential autofill path.
-    if(api.restoreBrowserCredential) void kdRestoreSavedLogin();
+    kdAuthTrace('SESSION INVALIDATED',{source:'BOOT',previously_authenticated:hadAuthenticatedSession});
+    if(typeof kdShowLoginScreen==='function'){
+      kdShowLoginScreen(hadAuthenticatedSession?'Sesi telah berakhir. Silakan masuk kembali.':'');
+    }
   }catch(e){
     kdSetAuthState('UNAUTHENTICATED');
     console.warn('Pemulihan sesi aplikasi gagal:',e);
