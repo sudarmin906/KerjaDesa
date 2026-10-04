@@ -15,11 +15,26 @@ const KerjaDesaAPI = {
     const data = await response.json().catch(() => ({}));
 
     if (response.status === 401) {
-      sessionStorage.removeItem('kd_login');
-      sessionStorage.removeItem('kd_auth_token');
-      sessionStorage.removeItem('kd_csrf_token');
-      sessionStorage.removeItem('kd_user');
-      try{window.kdShowLoginScreen?.('Sesi berakhir karena tidak aktif. Silakan masuk kembali.')}catch(_){ }
+      // Do not let one protected request force a logout blindly. Revalidate the
+      // canonical session first; this prevents a transient/racing 401 from
+      // destroying a session that /auth/me still considers valid.
+      let sessionStillValid=false;
+      try{
+        if(window.KerjaDesaAuthState?.status==='AUTHENTICATING'){
+          sessionStillValid=true;
+        }else if(window.KerjaDesaAuthAPI?.me){
+          sessionStillValid=!!(await window.KerjaDesaAuthAPI.me());
+        }
+      }catch(_){ sessionStillValid=false; }
+      try{window.kdAuthTrace?.('PROTECTED API 401',{endpoint,session_still_valid:sessionStillValid});}catch(_){}
+      if(!sessionStillValid){
+        sessionStorage.removeItem('kd_login');
+        sessionStorage.removeItem('kd_auth_token');
+        sessionStorage.removeItem('kd_csrf_token');
+        sessionStorage.removeItem('kd_user');
+        try{window.KerjaDesaAuthState&&(window.KerjaDesaAuthState.status='UNAUTHENTICATED',window.KerjaDesaAuthState.user=null)}catch(_){}
+        try{window.kdShowLoginScreen?.('Sesi berakhir karena tidak aktif. Silakan masuk kembali.')}catch(_){ }
+      }
     }
     if (!response.ok) {
       const error = new Error(data.message || 'Permintaan API gagal.');
