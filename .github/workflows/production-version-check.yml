@@ -18,9 +18,25 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version_json="$(curl --fail --silent --show-error --retry 3 --retry-delay 2 --max-time 30 "$PRODUCTION_URL/api/version")"
-          health_json="$(curl --fail --silent --show-error --retry 3 --retry-delay 2 --max-time 30 "$PRODUCTION_URL/api/health")"
-          drp_json="$(curl --fail --silent --show-error --retry 3 --retry-delay 2 --max-time 30 "$PRODUCTION_URL/api/health/drp")"
+          fetch_json() {
+            local endpoint="$1"
+            local output="$2"
+            local status
+            status="$(curl --silent --show-error --retry 3 --retry-delay 2 --max-time 30 -o "$output" -w '%{http_code}' "$PRODUCTION_URL$endpoint" || true)"
+            echo "GET $endpoint -> HTTP $status"
+            cat "$output" || true
+            echo
+            if [ "$status" != "200" ]; then
+              echo "Production endpoint check failed for $endpoint (HTTP $status)."
+              exit 1
+            fi
+          }
+          fetch_json /api/version /tmp/version.json
+          fetch_json /api/health /tmp/health.json
+          fetch_json /api/health/drp /tmp/drp-health.json
+          version_json="$(cat /tmp/version.json)"
+          health_json="$(cat /tmp/health.json)"
+          drp_json="$(cat /tmp/drp-health.json)"
           printf '%s\n' "$version_json"
           printf '%s\n' "$health_json"
           printf '%s\n' "$drp_json"
