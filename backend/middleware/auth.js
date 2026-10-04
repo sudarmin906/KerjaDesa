@@ -114,6 +114,14 @@ function setAuthResponseCookies(res, token, req, rememberMe = false) {
   ]);
   return csrf;
 }
+function setCsrfResponseCookie(res, req, rememberMe = false) {
+  const ctx = cookieContext(req);
+  const csrf = crypto.randomBytes(32).toString('hex');
+  const maxAge = rememberMe ? Math.floor(REMEMBER_TTL_MS / 1000) : null;
+  const flags = ['Path=/', ctx.secure ? 'Secure' : '', ctx.sameSite, ctx.partitioned, maxAge !== null ? 'Max-Age=' + maxAge : ''].filter(Boolean).join('; ');
+  res.setHeader('Set-Cookie', [CSRF_COOKIE + '=' + csrf + '; ' + flags]);
+  return csrf;
+}
 function clearAuthResponseCookies(res, req) {
   const ctx=cookieContext(req);
   const flags=['Path=/','HttpOnly',ctx.secure?'Secure':'',ctx.sameSite,ctx.partitioned,'Max-Age=0'].filter(Boolean).join('; ');
