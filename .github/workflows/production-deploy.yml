@@ -56,3 +56,6 @@ jobs:
             docker compose up -d --build --remove-orphans
             docker compose ps
             curl -fsS http://127.0.0.1:${WEB_PORT:-80}/api/health
+            curl -fsS http://127.0.0.1:${WEB_PORT:-80}/api/health/drp
+            curl -fsS http://127.0.0.1:${WEB_PORT:-80}/api/version > /tmp/kerjadesa-version.json
+            node -e "const x=require('/tmp/kerjadesa-version.json'); if(x.commit!==process.env.KERJADESA_COMMIT) { console.error('Production commit mismatch',x.commit,process.env.KERJADESA_COMMIT); process.exit(1) } console.log('Production commit verified:',x.commit)"
