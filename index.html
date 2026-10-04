@@ -963,24 +963,7 @@ function clearSppdDocument(){
  const st=document.getElementById('sppdStatus');if(st)st.textContent='Dokumen SPPD dikosongkan.';
  save();updateDocStatus();
 }
-window.kdProcessSelectedDrp=async function(input){
-  const st=document.getElementById('drpStatus');
-  try{
-    const f=input?.files?.[0];
-    if(!f){
-      if(st)st.innerHTML='<span class="warn">Tidak ada file DRP yang dipilih.</span>';
-      return null;
-    }
-    if(st)st.innerHTML='<span class="loading">📄 File dipilih: '+esc(f.name)+'<br>⏳ Memulai pembacaan DRP...</span>';
-    await new Promise(r=>setTimeout(r,50));
-    if(typeof autoProcessOne!=='function') throw new Error('Modul pemrosesan DRP belum siap. Muat ulang halaman sekali.');
-    return await autoProcessOne('drp');
-  }catch(e){
-    console.error('DRP selection handler',e);
-    if(st)st.innerHTML='<span class="warn">❌ Gagal memulai pembacaan DRP: '+esc(e?.message||e)+'</span>';
-    return null;
-  }
-};
+// DRP selection is bound once by the canonical DRP runtime guard below.
 async function processDrpFile(f,st){
   if(!f)throw new Error('File DRP tidak ditemukan.');
   selectedDRPFile=f;
@@ -2284,9 +2267,9 @@ window.kdRecoverSessionOnBoot=kdRecoverSessionOnBoot;
 
 /* === DRP PIPELINE DIAGNOSTICS 2026.10.04 === */
 window.kdDrpDiagnostics=function(){const f=selectedDRPFile,d=data.docs?.drp;return {fileObjectAvailable:!!f,filename:f?.name||d?.name||'',mime:f?.type||d?.mime||'',size:Number(f?.size||d?.size||0),state:drpRuntimeState.status,parserDataFound:!!d?.parsed?.count,parsedCount:Number(d?.parsed?.count||0),storageAvailable:!!window.KerjaDesaSecureStorage,error:drpRuntimeState.error?.message||''}};
-/* === DRP RUNTIME GUARD 2026.10.04 === */
+/* === DRP CANONICAL RUNTIME 2026.10.04 === */
 (function(){
-  const VERSION='DRP-RUNTIME-2026.10.04-01';
+  const VERSION='DRP-CANONICAL-2026.10.04-02';
   window.KERJADESA_DRP_ENGINE_VERSION=VERSION;
   function status(msg,cls){
     const el=document.getElementById('drpStatus');
@@ -2295,36 +2278,42 @@ window.kdDrpDiagnostics=function(){const f=selectedDRPFile,d=data.docs?.drp;retu
   async function run(input){
     const f=input?.files?.[0];
     if(!f){status('⚠️ Pilih file DRP terlebih dahulu.','warn');return null}
+    if(window.__kdDrpProcessingPromise)return window.__kdDrpProcessingPromise;
     selectedDRPFile=f;
     kdDrpSetState('selected',{fileMeta:kdDrpFileMeta(f),parsed:null,error:null,startedAt:new Date().toISOString(),finishedAt:null});
-    status('📄 FILE TERPILIH: '+esc(f.name)+'<br>⏳ Memulai validasi dan pembacaan DRP...','loading');updateDocStatus();
-    try{
-      if(typeof autoProcessOne!=='function')throw new Error('Mesin pemrosesan DRP belum dimuat.');
-      const result=await autoProcessOne('drp',f);
-      if(result?.count)status('✓ DRP berhasil diproses: '+result.count+' kegiatan ditemukan.','ok');
-      else if(drpRuntimeState.status!=='error')status('❌ DRP tidak menghasilkan data.','warn');
-      return result;
-    }catch(e){
-      console.error('DRP runtime guard:',e);kdDrpSetState('error',{error:e instanceof Error?e:new Error(String(e)),finishedAt:new Date().toISOString()});
-      status('❌ DRP gagal diproses: '+esc(e?.message||e),'warn');updateDocStatus();return null;
-    }
+    status('📄 FILE TERPILIH: '+esc(f.name)+'<br>⏳ Memvalidasi PDF...','loading');
+    updateDocStatus();
+    window.__kdDrpProcessingPromise=(async()=>{
+      try{
+        const result=await autoProcessOne('drp',f);
+        if(result?.count)status('✓ DRP berhasil diproses: '+result.count+' kegiatan ditemukan.','ok');
+        else if(drpRuntimeState.status!=='error')status('❌ DRP tidak menghasilkan data.','warn');
+        return result;
+      }catch(e){
+        console.error('DRP canonical runtime:',e);
+        kdDrpSetState('error',{error:e instanceof Error?e:new Error(String(e)),finishedAt:new Date().toISOString()});
+        status('❌ DRP gagal diproses: '+esc(e?.message||e),'warn');
+        updateDocStatus();
+        return null;
+      }finally{
+        window.__kdDrpProcessingPromise=null;
+      }
+    })();
+    return window.__kdDrpProcessingPromise;
   }
   window.kdProcessSelectedDrp=run;
   function bind(){
     const input=document.getElementById('drpFile');
-    if(!input||input.dataset.kdRuntimeBound==='1')return !!input;
-    input.dataset.kdRuntimeBound='1';
-    input.addEventListener('change',()=>void run(input),true);
-    input.addEventListener('input',()=>void run(input),true);
-    input.addEventListener('click',()=>{kdFileTrace('picker clicked',{id:input.id});},true);
+    if(!input||input.dataset.kdCanonicalBound==='1')return !!input;
+    input.dataset.kdCanonicalBound='1';
+    input.addEventListener('change',()=>void run(input),false);
+    input.addEventListener('click',()=>kdFileTrace?.('DRP_PICKER_CLICKED',{id:input.id}),false);
     status('ℹ️ Mesin DRP siap. Pilih file PDF DRP.','muted');
     return true;
   }
   const boot=()=>{if(!bind())setTimeout(boot,250)};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-  document.addEventListener('change',e=>{if(e.target?.id!=='drpFile')return;const input=e.target,f=input?.files?.[0];if(!f||window.__kdDrpAutoBusy)return;window.__kdDrpAutoBusy=true;Promise.resolve(run(input)).catch(err=>{console.error('DRP delegated change handler',err)}).finally(()=>{window.__kdDrpAutoBusy=false})},true);
 })();
-
 /* === KerjaDesa TAHAP 475: DIGITAL TWIN 2.0 === */
 (function(){
   const KEY='kerjadesa_digital_twin_v20';
