@@ -14,6 +14,15 @@ const CSRF_COOKIE = process.env.NODE_ENV === 'production' ? '__Host-kd_csrf' : '
 function hashToken(token) {
   return crypto.createHash('sha256').update(String(token || '')).digest('hex');
 }
+function authDebug(event, details = {}) {
+  if (String(process.env.AUTH_DEBUG_LOGS || '').toLowerCase() !== 'true') return;
+  const safe = { ...details };
+  delete safe.token;
+  delete safe.access_token;
+  delete safe.refresh_token;
+  delete safe.session_secret;
+  console.info('[AUTH] ' + event, safe);
+}
 
 async function issueSession(user, rememberMe = false) {
   const token = crypto.randomBytes(48).toString('base64url');
@@ -116,7 +125,11 @@ function clearAuthResponseCookies(res, req) {
 async function authenticate(req) {
   await cleanupSessions();
   const token = getToken(req);
-  if (!token) return null;
+  if (!token) {
+    authDebug('SESSION CHECK', { cookie_present: false, authenticated: false });
+    return null;
+  }
+  authDebug('SESSION CHECK', { cookie_present: true });
   let session = null;
   if (postgresEnabled()) {
     const r = await postgresQuery('SELECT user_id,remember_me,created_at,last_seen_at,expires_at FROM auth_sessions WHERE token_hash=$1 LIMIT 1', [hashToken(token)]);
@@ -136,6 +149,11 @@ async function authenticate(req) {
   const now = Date.now();
   const idleLimit = session?.rememberMe ? REMEMBER_IDLE_MS : SESSION_IDLE_MS;
   if (!session || session.expiresAt <= now || now - session.lastSeenAt > idleLimit) {
+    authDebug('SESSION INVALID', {
+      session_present: !!session,
+      expired: !!session && session.expiresAt <= now,
+      idle_expired: !!session && now - session.lastSeenAt > idleLimit
+    });
     await revokeSession(token);
     return null;
   }
@@ -146,9 +164,11 @@ async function authenticate(req) {
   }
   const user = await get('users', session.userId);
   if (!user || String(user.status || '').toUpperCase() === 'INACTIVE') {
+    authDebug('SESSION USER INVALID', { user_present: !!user, inactive: String(user?.status || '').toUpperCase() === 'INACTIVE' });
     await revokeSession(token);
     return null;
   }
+  authDebug('SESSION AUTHENTICATED', { user_id_present: user?.id != null, role: user?.role || '', remember_me: session.rememberMe });
   return { user, token, rememberMe: session.rememberMe };
 }
 async function requireAuth(req, res) {
