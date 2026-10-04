@@ -2083,9 +2083,35 @@ const kdOldShow=show;
 show=function(){kdOldShow();kdWorkflowSetup();kdAddHomeQuick();workflowPage('drp');}
 kdWorkflowSetup();kdAddHomeQuick();
 
+async function kdRecoverSessionOnBoot(){
+  try{
+    if(sessionStorage.getItem('kd_login')!=='1') return;
+    if(window.KerjaDesaAuthAPI?.me && navigator.onLine){
+      const user=await Promise.race([
+        window.KerjaDesaAuthAPI.me(),
+        new Promise(resolve=>setTimeout(()=>resolve(null),4000))
+      ]);
+      if(!user){
+        sessionStorage.removeItem('kd_login');
+        sessionStorage.removeItem('kd_csrf_token');
+        sessionStorage.removeItem('kd_user');
+        return;
+      }
+    }
+    if(typeof window.show==='function') await window.show();
+  }catch(e){
+    console.warn('Pemulihan sesi aplikasi gagal:',e);
+  }
+}
+window.kdRecoverSessionOnBoot=kdRecoverSessionOnBoot;
+
 (function(){
   function bootSavedLogin(){
-    if(sessionStorage.getItem('kd_login')==='1'||sessionStorage.getItem('kd_logged_out')==='1') return;
+    if(sessionStorage.getItem('kd_login')==='1'){
+      void kdRecoverSessionOnBoot();
+      return;
+    }
+    if(sessionStorage.getItem('kd_logged_out')==='1') return;
     if(window.KerjaDesaAuthAPI?.restoreBrowserCredential){
       void kdRestoreSavedLogin();
     }else{
