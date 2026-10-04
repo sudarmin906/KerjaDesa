@@ -1068,10 +1068,11 @@ async function autoProcessOne(kind,fileOverride=null){
   const isDrp=kind==='drp',fileId=isDrp?'drpFile':'sppdFile',statusId=isDrp?'drpStatus':'sppdStatus';
   const input=document.getElementById(fileId),st=document.getElementById(statusId),f=fileOverride||(isDrp?selectedDRPFile:input?.files?.[0]);
   if(!f){if(st)st.innerHTML='<span class="warn">Tidak ada file yang dipilih.</span>';if(isDrp)kdDrpSetState('idle',{fileMeta:null,parsed:null,error:null});return null}
-  if(isDrp){
-    if(st)st.innerHTML='<span class="loading">⏳ Memeriksa '+esc(f.name)+'...</span>';
-    return await handleDrpFile(f,st);
-  }
+  try{
+    if(isDrp){
+      if(st)st.innerHTML='<span class="loading">⏳ Memeriksa '+esc(f.name)+'...</span>';
+      return await handleDrpFile(f,st);
+    }
     await kdValidateFile(f,'drp');
     if(st)st.innerHTML='<span class="loading">⏳ Membaca '+esc(f.name)+'...</span>';
     const txt=await kdWithTimeout(readFile(f),40000,'Pembacaan dokumen');
