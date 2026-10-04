@@ -800,80 +800,45 @@ function extractPdfText(src){
   }
   return out.join('\n');
 }
-async function readPdfBasic(file){
-  // KerjaDesa DRP PDF engine v2026.10.04. Server extraction is the primary path;
-  // browser PDF.js is only a fallback. This avoids CDN/worker failures on Android.
-  let serverError='';
+async function readPdfBasic(file,statusEl){
+  if(!file)throw new Error('File PDF tidak ditemukan.');
+  const apiBase=window.KERJADESA_API_BASE||'/api';
+  const csrf=sessionStorage.getItem('kd_csrf_token')||'';
+  if(!csrf)throw Object.assign(new Error('Sesi login tidak memiliki CSRF token yang valid.'),{code:'DRP_CSRF_MISSING',status:403});
+  if(statusEl)statusEl.innerHTML='<span class="loading">⏳ Mengirim PDF ke server...</span>';
+  kdDrpSetState('uploading',{fileMeta:kdDrpFileMeta(file)});
+  kdFileTrace?.('DRP_UPLOAD_STARTED',{filename:file.name,mime:file.type,size:file.size});
+  const raw=await file.arrayBuffer();
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),25000);
+  let response;
+  let result={};
   try{
-    const apiBase=window.KERJADESA_API_BASE || '/api';
-    const csrf=sessionStorage.getItem('kd_csrf_token') || '';
-    const raw=await file.arrayBuffer();
-    const controller=new AbortController();
-    const timer=setTimeout(()=>controller.abort(),25000);
-    try{
-      const response=await fetch(apiBase+'/drp/extract-pdf',{
-        method:'POST',
-        credentials:'include',
-        headers:{'Content-Type':'application/pdf','X-CSRF-Token':csrf},
-        body:raw,
-        signal:controller.signal
-      });
-      const result=await response.json().catch(()=>({}));
-      const serverText=String(result.text||'').trim();
-      if(response.ok && result.success && serverText) return serverText;
-      serverError=String(result.message||('HTTP '+response.status));
-    }finally{clearTimeout(timer)}
-  }catch(e){serverError=String(e?.message||e||'Server PDF gagal')}
-
-  // Browser fallback for environments where the API is unavailable.
-  try{
-    if(!window.pdfjsLib){
-      const mod=await Promise.race([
-        import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.mjs'),
-        new Promise((_,reject)=>setTimeout(()=>reject(new Error('PDF.js timeout')),10000))
-      ]);
-      window.pdfjsLib=mod;
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.mjs';
-    }
-    const buf=await file.arrayBuffer();
-    const pdf=await window.pdfjsLib.getDocument({data:new Uint8Array(buf),disableWorker:true,isEvalSupported:false}).promise;
-    const pages=[];
-    for(let i=1;i<=pdf.numPages;i++){
-      const page=await pdf.getPage(i);
-      const content=await page.getTextContent({normalizeWhitespace:true,disableCombineTextItems:false});
-      pages.push(content.items.map(x=>x.str||'').join(' '));
-    }
-    const text=pages.join('\n').trim();
-    if(text)return text;
-  }catch(e){serverError=serverError||String(e?.message||e||'PDF.js gagal')}
-
-  // Last lightweight fallback for simple text PDFs.
-  try{
-    const b=new Uint8Array(await file.arrayBuffer());
-    const rawPdf=new TextDecoder('latin1').decode(b);
-    let out='',pos=0;
-    while((pos=rawPdf.indexOf('stream',pos))>=0){
-      let a=pos+6;if(rawPdf[a]==='\r')a++;if(rawPdf[a]==='\n')a++;
-      const end=rawPdf.indexOf('endstream',a);if(end<0)break;
-      let raw=b.slice(a,end),head=rawPdf.slice(Math.max(0,pos-1200),pos);
-      try{
-        if(/\/FlateDecode/.test(head)){
-          const ds=new DecompressionStream('deflate');
-          raw=new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer());
-        }
-        const chunk=extractPdfText(new TextDecoder('latin1').decode(raw));
-        if(chunk)out+='\n'+chunk;
-      }catch(_){}
-      pos=end+9;
-    }
-    const text=(out||'').replace(/\u0000/g,' ').replace(/[ \t]+/g,' ').replace(/\n+/g,'\n').trim();
-    if(text)return text;
-  }catch(e){}
-
-  const scanError=/tidak mengandung teks|tidak ada teks|no text|empty text/i.test(serverError);
-  const err=new Error(scanError?'PDF ini berupa hasil scan/gambar dan belum dapat dibaca otomatis.':'PDF tidak dapat dibaca. Server: '+serverError);
-  if(scanError)err.code='PDF_SCANNED';
-  throw err;
+    response=await fetch(apiBase+'/drp/extract-pdf',{
+      method:'POST',
+      credentials:'include',
+      cache:'no-store',
+      headers:{'Content-Type':'application/pdf','Accept':'application/json','X-CSRF-Token':csrf},
+      body:raw,
+      signal:controller.signal
+    });
+    result=await response.json().catch(()=>({}));
+  }catch(e){
+    const err=Object.assign(new Error(e?.name==='AbortError'?'Server tidak merespons dalam 25 detik.':'Tidak dapat terhubung ke server DRP.'),{code:e?.name==='AbortError'?'DRP_NETWORK_TIMEOUT':'DRP_NETWORK_ERROR'});
+    throw err;
+  }finally{clearTimeout(timer)}
+  kdFileTrace?.('DRP_SERVER_RESPONSE',{status:response.status,success:!!result?.success,extractor:result?.extractor||'',pages:Number(result?.pages||0)});
+  if(!response.ok||!result?.success){
+    const code=String(result?.code||'DRP_SERVER_ERROR');
+    const err=Object.assign(new Error(result?.message||('Server DRP gagal (HTTP '+response.status+').')),{code,status:response.status});
+    throw err;
+  }
+  const text=String(result.text||'').replace(/\u0000/g,' ').trim();
+  if(!text)throw Object.assign(new Error('Server berhasil menerima PDF tetapi tidak menghasilkan teks.'),{code:'PDF_NO_TEXT',status:422});
+  if(statusEl)statusEl.innerHTML='<span class="loading">⏳ Teks PDF diterima ('+Number(result.pages||0)+' halaman). Menganalisis struktur DRP...</span>';
+  kdDrpSetState('text_received',{fileMeta:kdDrpFileMeta(file),extractor:String(result.extractor||''),pages:Number(result.pages||0)});
+  kdFileTrace?.('DRP_TEXT_RECEIVED',{chars:text.length,pages:Number(result.pages||0),extractor:String(result.extractor||'')});
+  return {text,pages:Number(result.pages||0),extractor:String(result.extractor||'')};
 }
 function cleanText(t){return String(t||'').replace(/\u0000/g,' ').replace(/\r/g,'\n').replace(/\b\d+\s*\/\s*\d+\s+No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim()}
 function normText(t){return cleanText(t).replace(/\s+/g,' ').trim()}
