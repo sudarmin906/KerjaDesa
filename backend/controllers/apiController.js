@@ -10,7 +10,7 @@ const {
   clearAuthResponseCookies
 } = require('../middleware/auth');
 const { PDFParse } = require('pdf-parse');
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
 
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 10;
@@ -634,9 +634,8 @@ async function resourceHandler(req, res, resource, id, method, auth) {
 function pdfEngineStatus() {
   let pdftotext = false;
   try {
-    const probe = spawn('pdftotext', ['-v'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    probe.kill?.();
-    pdftotext = true;
+    const probe = spawnSync('pdftotext', ['-v'], { stdio: ['ignore', 'pipe', 'pipe'], timeout: 3000 });
+    pdftotext = !probe.error && probe.status === 0;
   } catch (_) {}
   return { pdftotext, pdf_parse: true, extractor: pdftotext ? 'pdftotext' : 'pdf-parse' };
 }
