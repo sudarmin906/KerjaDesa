@@ -1067,7 +1067,12 @@ window.handleDrpFile=handleDrpFile;
 async function autoProcessOne(kind,fileOverride=null){
   const isDrp=kind==='drp',fileId=isDrp?'drpFile':'sppdFile',statusId=isDrp?'drpStatus':'sppdStatus';
   const input=document.getElementById(fileId),st=document.getElementById(statusId),f=fileOverride||(isDrp?selectedDRPFile:input?.files?.[0]);
-  if(!f){if(st)st.innerHTML='<span class="warn">Tidak ada file yang dipilih.</span>';if(isDrp)kdDrpSetState('idle',{fileMeta:null,parsed:null,error:null});return null}
+  if(!f){
+    if(st)st.innerHTML='<span class="warn">Tidak ada file yang dipilih.</span>';
+    if(isDrp)kdDrpSetState('idle',{fileMeta:null,parsed:null,error:null});
+    return null;
+  }
+  if(isDrp)selectedDRPFile=f;
   try{
     if(isDrp){
       if(st)st.innerHTML='<span class="loading">⏳ Memeriksa '+esc(f.name)+'...</span>';
@@ -1077,13 +1082,19 @@ async function autoProcessOne(kind,fileOverride=null){
     if(st)st.innerHTML='<span class="loading">⏳ Membaca '+esc(f.name)+'...</span>';
     const txt=await kdWithTimeout(readFile(f),40000,'Pembacaan dokumen');
     if(!txt)throw new Error('Isi dokumen tidak dapat dibaca oleh browser.');
-    data.docs=data.docs||{};data.docs.sppd={name:f.name,text:txt,summary:summarizeDoc(txt),parsed:parseSPPD(txt),processedAt:new Date().toISOString()};
-    await save();if(st)st.innerHTML='<span class="ok">✓ Selesai: '+esc(f.name)+'</span>';updateDocStatus();return data.docs.sppd;
+    data.docs=data.docs||{};
+    data.docs.sppd={name:f.name,text:txt,summary:summarizeDoc(txt),parsed:parseSPPD(txt),processedAt:new Date().toISOString()};
+    await save();
+    if(st)st.innerHTML='<span class="ok">✓ Selesai: '+esc(f.name)+'</span>';
+    updateDocStatus();
+    return data.docs.sppd;
   }catch(e){
     console.error('KerjaDesa gagal memproses dokumen',kind,e);
     if(isDrp)kdDrpSetState('error',{error:e instanceof Error?e:new Error(String(e)),finishedAt:new Date().toISOString()});
     const msg=e?.code==='PROCESS_TIMEOUT'||e?.code==='DRP_NETWORK_TIMEOUT'?'Server tidak merespons dalam batas waktu.':e?.code==='DRP_NETWORK_ERROR'?'Tidak dapat terhubung ke server DRP.':e?.code==='DRP_CSRF_MISSING'||e?.status===403?'Permintaan DRP ditolak oleh keamanan server. Sesi perlu diperbarui.':e?.status===401?'Sesi login tidak valid. Silakan masuk kembali.':e?.status===413?'Ukuran PDF terlalu besar. Maksimum 15 MB.':e?.code==='PDF_INVALID'?'PDF tidak valid.':e?.code==='PDF_NO_TEXT'?'PDF berhasil diterima tetapi tidak menghasilkan teks.':e?.code==='DRP_SAVE_FAILED'?'DRP berhasil dibaca tetapi gagal disimpan secara aman.':e?.code==='DRP_COUNT_MISMATCH'?'Struktur DRP terbaca tetapi jumlah kegiatan tidak konsisten.':e?.code==='DRP_STRUCTURE'?'PDF berhasil dibaca, tetapi struktur DRP tidak dikenali.':e?.message||'Dokumen gagal diproses.';
-    if(st)st.innerHTML='<span class="warn">❌ DRP gagal diproses: '+esc(msg)+'</span>';updateDocStatus();return null;
+    if(st)st.innerHTML='<span class="warn">❌ '+(isDrp?'DRP':'Dokumen')+' gagal diproses: '+esc(msg)+'</span>';
+    updateDocStatus();
+    return null;
   }
 }
 async function processPackageFiles(input){
