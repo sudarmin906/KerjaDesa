@@ -151,6 +151,24 @@ async function authenticate(req) {
   }
   return { user, token, rememberMe: session.rememberMe };
 }
+async function requireAuth(req, res) {
+  const auth = await authenticate(req);
+  if (!auth) {
+    sendJson(res, 401, { success: false, code: 'AUTH_SESSION_INVALID', message: 'Sesi tidak valid atau sudah berakhir.' });
+    return null;
+  }
+  return auth;
+}
+async function requireRole(req, res, roles) {
+  const auth = await requireAuth(req, res);
+  if (!auth) return null;
+  const allowed = Array.isArray(roles) ? roles : [roles];
+  if (!allowed.includes(auth.user.role)) {
+    sendJson(res, 403, { success: false, message: 'Akses ditolak untuk role ini.' });
+    return null;
+  }
+  return auth;
+}
 function publicUser(user) {
   if (!user) return null;
   const { password_hash, ...safe } = user;
