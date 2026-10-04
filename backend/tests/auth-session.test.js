@@ -9,7 +9,7 @@ const store = require('../database/store');
 const auth = require('../middleware/auth');
 
 async function main() {
-  const user = store.create('users', {
+  const user = await store.create('users', {
     nama_lengkap: 'KerjaDesa Auth Test',
     username: 'auth-test-' + Date.now(),
     password_hash: 'not-used-in-session-test',
