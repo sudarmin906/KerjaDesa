@@ -951,7 +951,7 @@ function clearDrpData(){
  const rs=document.getElementById('reportPrint');if(rs)rs.innerHTML='';
  save();updateDocStatus();renderMediaPreviews();
 }
-function clearActivityPhotos(){
+async function clearActivityPhotos(){
  if(!confirm('Kosongkan semua foto dokumentasi yang tersimpan di aplikasi?'))return;
  activityPhotos=[];
  kdPhotoOcrQueue=[];
