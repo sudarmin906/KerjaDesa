@@ -355,8 +355,14 @@ async function login(req, res) {
     const ip = req.socket?.remoteAddress || 'unknown';
     const key = ip + ':' + (username.toLowerCase() || 'anonymous');
 
-    if (!username || !password) {
+    if (!username && !password) {
       return sendJson(res, 400, { success: false, code: 'AUTH_INPUT_INVALID', message: 'Username dan password wajib diisi.' });
+    }
+    if (!username) {
+      return sendJson(res, 400, { success: false, code: 'AUTH_INPUT_INVALID', message: 'Username wajib diisi.' });
+    }
+    if (!password) {
+      return sendJson(res, 400, { success: false, code: 'AUTH_INPUT_INVALID', message: 'Password wajib diisi.' });
     }
     if (!loginAllowed(key)) {
       return sendJson(res, 429, { success: false, code: 'AUTH_RATE_LIMIT', message: 'Terlalu banyak percobaan login. Coba lagi beberapa menit.' });
