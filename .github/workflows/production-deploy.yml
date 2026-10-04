@@ -51,6 +51,8 @@ jobs:
             cd "${{ vars.PRODUCTION_APP_DIR }}"
             git fetch origin main
             git reset --hard origin/main
+            export KERJADESA_COMMIT="$(git rev-parse HEAD)"
+            export KERJADESA_BUILD="$(date -u +%Y%m%d%H%M%S)"
             docker compose up -d --build --remove-orphans
             docker compose ps
             curl -fsS http://127.0.0.1:${WEB_PORT:-80}/api/health
