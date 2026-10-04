@@ -410,6 +410,10 @@ async function show(){
   document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';document.getElementById('nav').classList.remove('hide');const account=document.querySelector('.kd-account');if(account)account.style.display='';
   try{
     if(window.KerjaDesaSecureStorage){data=await window.KerjaDesaSecureStorage.load(data);window.data=data;}
+    // Restore persisted documentation photos into the runtime collection before
+    // any report is generated. Without this, photos saved in the secure vault
+    // could appear in the Documentation screen but be missing from report G.
+    activityPhotos=Array.isArray(data.docs?.activityPhotos)?data.docs.activityPhotos:[];
     loadAppSettings();
     render();kdLoadServerDashboard();
     let s={};try{s=JSON.parse(localStorage.getItem('kerjadesa_settings')||'{}')||{}}catch(e){}
