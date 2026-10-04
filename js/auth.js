@@ -20,6 +20,7 @@ const KerjaDesaAuth = {
       sessionStorage.removeItem('kd_auth_token');
       sessionStorage.removeItem('kd_csrf_token');
       sessionStorage.removeItem('kd_user');
+      sessionStorage.removeItem('kd_remember_me');
     }
     location.reload();
   },
