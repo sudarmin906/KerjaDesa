@@ -1137,7 +1137,7 @@ async function kdValidateFile(file,kind){
   if(file.size>max)throw new Error('Ukuran file terlalu besar. Maksimum '+Math.round(max/1024/1024)+' MB.');
   const ext=kdFileExt(file.name);
   const allowed={
-    drp:['pdf','docx','xlsx','xls','csv','txt'],
+    drp:['pdf'],
     packageDoc:['pdf','docx','xlsx','xls','csv','txt'],
     photo:['jpg','jpeg','png','webp','heic','heif'],
     profile:['jpg','jpeg','png','webp'],
@@ -1154,7 +1154,9 @@ async function kdValidateFile(file,kind){
   if(ext==='png'&&!starts('\x89PNG\r\n\x1a\n'))throw new Error('Isi file bukan PNG yang valid.');
   if(ext==='webp'&&!(starts('RIFF')&&ascii.slice(8,12)==='WEBP'))throw new Error('Isi file bukan WebP yang valid.');
   if(['docx','xlsx'].includes(ext)&&!(head[0]===0x50&&head[1]===0x4b))throw new Error('Dokumen Office tidak memiliki signature ZIP yang valid.');
+  if(kind==='drp'&&ext!=='pdf')throw new Error('DRP harus berupa file PDF.');
   if(ext==='pdf'&&!starts('%PDF-'))throw new Error('Isi file bukan PDF yang valid.');
+  if(kind==='drp'&&mime&&mime!=='application/pdf'&&mime!=='application/octet-stream')throw new Error('MIME DRP bukan application/pdf.');
   if(['heic','heif'].includes(ext)&&ascii.slice(4,12)!=='ftypheic'&&ascii.slice(4,12)!=='ftypheif')throw new Error('Isi file bukan HEIC/HEIF yang valid.');
   if(['jpg','jpeg','png','webp','heic','heif'].includes(ext)&&mime&&!mime.startsWith('image/'))throw new Error('MIME file gambar tidak sesuai.');
   return true;
