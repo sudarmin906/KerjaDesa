@@ -87,7 +87,7 @@
       status.innerHTML=
         '<b>'+ (secure?'🟢 HTTPS aktif':'🔴 Gunakan HTTPS') +'</b><br>'+
         '<span class="small muted">Sesi: '+(hasSession()?'Aktif':'Tidak aktif')+
-        ' • Token: sessionStorage • Service Worker: '+(sw?'aktif':'tidak tersedia')+
+        ' • Session: HttpOnly cookie • CSRF: sessionStorage • Service Worker: '+(sw?'aktif':'tidak tersedia')+
         '</span><br><span class="small muted">Kredensial lama yang tersimpan di localStorage dibersihkan otomatis.</span>';
     }
     document.getElementById('kdSecurityClearLegacy')?.addEventListener('click',()=>{
