@@ -2317,7 +2317,7 @@ window.kdDrpDiagnostics=function(){const f=selectedDRPFile,d=data.docs?.drp;retu
   }
   const boot=()=>{if(!bind())setTimeout(boot,250)};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-  document.addEventListener('change',e=>{if(e.target?.id!=='drpFile')return;const input=e.target,f=input?.files?.[0];if(!f)return;if(window.__kdDrpAutoBusy)return;window.__kdDrpAutoBusy=true;Promise.resolve(run(input)).catch(err=>{console.error('DRP delegated change handler',err)}).finally(()=>{window.__kdDrpAutoBusy=false})},true);
+  document.addEventListener('change',e=>{if(e.target?.id!=='drpFile')return;const input=e.target,f=input?.files?.[0];if(!f||window.__kdDrpAutoBusy)return;window.__kdDrpAutoBusy=true;Promise.resolve(run(input)).catch(err=>{console.error('DRP delegated change handler',err)}).finally(()=>{window.__kdDrpAutoBusy=false})},true);
 })();
 
 /* === KerjaDesa TAHAP 475: DIGITAL TWIN 2.0 === */
