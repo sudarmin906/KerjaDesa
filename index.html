@@ -2266,7 +2266,9 @@ window.kdRecoverSessionOnBoot=kdRecoverSessionOnBoot;
 
 
 /* === DRP PIPELINE DIAGNOSTICS 2026.10.04 === */
-window.kdDrpDiagnostics=function(){const f=selectedDRPFile,d=data.docs?.drp;return {fileObjectAvailable:!!f,filename:f?.name||d?.name||'',mime:f?.type||d?.mime||'',size:Number(f?.size||d?.size||0),state:drpRuntimeState.status,parserDataFound:!!d?.parsed?.count,parsedCount:Number(d?.parsed?.count||0),storageAvailable:!!window.KerjaDesaSecureStorage,error:drpRuntimeState.error?.message||''}};
+window.kdDrpDiagnostics=function(){const f=selectedDRPFile,d=data.docs?.drp;return {engine:String(window.KERJADESA_DRP_ENGINE_VERSION||''),fileObjectAvailable:!!f,filename:f?.name||d?.name||'',mime:f?.type||d?.mime||'',size:Number(f?.size||d?.size||0),state:drpRuntimeState.status,parserDataFound:!!d?.parsed?.count,parsedCount:Number(d?.parsed?.count||0),aktivitasCount:Number(d?.parsed?.aktivitas?.length||0),kunlapCount:Number(d?.parsed?.kunlap?.length||0),pages:Number(d?.pages||0),extractor:d?.extractor||'',storageAvailable:!!window.KerjaDesaSecureStorage,error:drpRuntimeState.error?.message||''}};
+window.kdGetProductionVersion=async function(){const base=window.KERJADESA_API_BASE||'/api';const r=await fetch(base+'/version',{credentials:'include',cache:'no-store'});if(!r.ok)throw new Error('Version endpoint HTTP '+r.status);return await r.json()};
+
 /* === DRP CANONICAL RUNTIME 2026.10.04 === */
 (function(){
   const VERSION='DRP-CANONICAL-2026.10.04-02';
