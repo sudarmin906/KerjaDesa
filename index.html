@@ -391,6 +391,34 @@ html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#26344
 let data={"kegiatan":[],"monitoring":[],"gps":null,"docs":{}};window.data=data;let deferred=null;let reportHtml='';let reportText='';let profilePhoto='foto_profil.jpg';let logoPhoto='';let activityPhotos=[];
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
 async function save(){try{if(!window.KerjaDesaSecureStorage)throw new Error('Secure Offline Vault belum tersedia.');await window.KerjaDesaSecureStorage.save(data);render()}catch(e){console.error('Secure save gagal:',e);alert('Data belum tersimpan: Secure Offline Vault tidak tersedia.')}}
+/* Authentication lifecycle is explicit so INITIALIZING/SESSION_CHECK never
+   masquerades as UNAUTHENTICATED and an old boot request cannot log out a
+   login that started after it. */
+const kdAuthState=window.KerjaDesaAuthState||{
+  status:'INITIALIZING',
+  user:null,
+  loginEpoch:0,
+  bootEpoch:0
+};
+window.KerjaDesaAuthState=kdAuthState;
+function kdSetAuthState(status,user){
+  kdAuthState.status=status;
+  kdAuthState.user=user||null;
+  window.KD_AUTH_STATUS=status;
+}
+function kdAuthTrace(event,details){
+  let enabled=window.KERJADESA_AUTH_DEBUG===true;
+  try{enabled=enabled||new URLSearchParams(location.search).get('authdebug')==='1'}catch(_){}
+  if(!enabled)return;
+  const safe={};
+  Object.keys(details||{}).forEach(k=>{
+    if(k==='password'||k==='token'||k==='access_token'||k==='refresh_token'||k==='session_secret')return;
+    safe[k]=details[k];
+  });
+  console.info('[AUTH] '+event,safe);
+}
+window.kdAuthTrace=kdAuthTrace;
+
 function kdEnterAppUI(){
   // Auth success must immediately leave the login screen. Do not depend on
   // optional dashboard modules or async hydration to perform this transition.
@@ -404,9 +432,11 @@ function kdEnterAppUI(){
     if(nav){nav.classList.remove('hide');nav.style.display='grid';}
     const account=document.querySelector('.kd-account');if(account)account.style.display='';
     window.scrollTo(0,0);
+    kdAuthTrace('AUTH UI ENTERED',{status:kdAuthState.status});
     return true;
   }catch(e){
     console.error('Transisi login → aplikasi gagal:',e);
+    kdAuthTrace('AUTH UI ENTER FAILED',{message:e?.message||String(e)});
     return false;
   }
 }
@@ -440,24 +470,40 @@ async function doLogin(){
   const btn=document.getElementById('loginBtn');
   if(!u||!pw){if(msg)msg.textContent='Username dan password wajib diisi.';return false}
   kdLoginInProgress=true;
+  const loginEpoch=++kdAuthState.loginEpoch;
+  kdSetAuthState('AUTHENTICATING');
+  kdAuthTrace('LOGIN STARTED',{username_present:!!u,remember_me:remember});
   if(btn){btn.disabled=true;btn.dataset.originalText=btn.textContent;btn.textContent='⏳ Memproses login...';}
   if(msg)msg.textContent='Memproses login...';
   try{
     sessionStorage.removeItem('kd_logged_out');
     if(!window.KerjaDesaAuthAPI?.login)throw Object.assign(new Error('Server authentication sedang bermasalah. Silakan coba lagi.'),{code:'AUTH_CLIENT_UNAVAILABLE'});
+    kdAuthTrace('LOGIN REQUEST',{api_base:window.KERJADESA_API_BASE||'/api'});
     const result=await window.KerjaDesaAuthAPI.login(u,pw,remember);
+    kdAuthTrace('LOGIN RESPONSE',{success:!!result?.success,user_present:!!result?.user,session_present:!!result?.csrf_token,remember_me:!!result?.remember_me});
     if(!result?.success)throw Object.assign(new Error('Server authentication sedang bermasalah. Silakan coba lagi.'),{code:'AUTH_UNKNOWN_ERROR'});
+    if(loginEpoch!==kdAuthState.loginEpoch)return false;
     if(msg)msg.textContent='Login berhasil. Memverifikasi session...';
     // The API has already created the HttpOnly session. Verify it before
     // exposing the protected UI so a cookie/session mismatch cannot masquerade
     // as a successful login.
+    kdAuthTrace('SESSION CHECK STARTED',{});
     const verified=await window.KerjaDesaAuthAPI.me();
+    kdAuthTrace('SESSION CHECK RESULT',{authenticated:!!verified,user_present:!!verified});
     if(!verified)throw Object.assign(new Error('Login berhasil tetapi session gagal dibuat. Silakan coba lagi.'),{code:'AUTH_SESSION_VERIFY_FAILED'});
+    if(loginEpoch!==kdAuthState.loginEpoch)return false;
     sessionStorage.setItem('kd_user',JSON.stringify(verified));
-    kdEnterAppUI();
+    kdSetAuthState('AUTHENTICATED',verified);
+    kdAuthTrace('AUTH STATE UPDATED',{status:kdAuthState.status,role:verified?.role||'',user_id_present:verified?.id!=null});
+    if(!kdEnterAppUI())throw Object.assign(new Error('Transisi ke KerjaDesa gagal.'),{code:'AUTH_UI_TRANSITION_FAILED'});
+    kdAuthTrace('NAVIGATION TO DASHBOARD',{route:'home'});
     await show();
+    kdAuthTrace('DASHBOARD LOAD COMPLETE',{authenticated:sessionStorage.getItem('kd_login')==='1'});
     return true;
   }catch(e){
+    if(loginEpoch!==kdAuthState.loginEpoch)return false;
+    kdSetAuthState('UNAUTHENTICATED');
+    kdAuthTrace('LOGIN FAILED',{code:e?.code||'',status:e?.status||0});
     console.warn('Login server gagal:',e?.code||e?.message||e);
     if(msg){
       const code=e?.code||'';
@@ -475,7 +521,15 @@ async function doLogin(){
   }
 }
 async function show(){
-  if(sessionStorage.getItem('kd_login')!=='1'){kdShowLoginScreen('Sesi tidak aktif. Silakan masuk kembali.');return false;}
+  // Never turn an in-flight authentication operation into an unauthenticated
+  // state. The login flow owns the transition until it has verified the session.
+  if(kdAuthState.status==='AUTHENTICATING')return false;
+  if(sessionStorage.getItem('kd_login')!=='1'){
+    kdSetAuthState('UNAUTHENTICATED');
+    kdAuthTrace('SHOW BLOCKED',{reason:'NO_LOCAL_AUTH_STATE'});
+    kdShowLoginScreen('Sesi tidak aktif. Silakan masuk kembali.');
+    return false;
+  }
   kdEnterAppUI();
   try{
     if(window.KerjaDesaSecureStorage){data=await window.KerjaDesaSecureStorage.load(data);window.data=data;}
@@ -2109,40 +2163,64 @@ show=function(){kdOldShow();kdWorkflowSetup();kdAddHomeQuick();workflowPage('drp
 kdWorkflowSetup();kdAddHomeQuick();
 
 async function kdRecoverSessionOnBoot(){
+  const bootEpoch=++kdAuthState.bootEpoch;
+  const loginEpochAtStart=kdAuthState.loginEpoch;
   try{
-    if(sessionStorage.getItem('kd_logged_out')==='1') return;
+    if(sessionStorage.getItem('kd_logged_out')==='1') {
+      kdSetAuthState('UNAUTHENTICATED');
+      return;
+    }
+    if(kdLoginInProgress||kdAuthState.status==='AUTHENTICATING')return;
     const api=window.KerjaDesaAuthAPI;
     if(!api?.me)return;
+    kdSetAuthState('INITIALIZING');
+    kdAuthTrace('SESSION CHECK STARTED',{source:'BOOT',boot_epoch:bootEpoch});
     let user=null;
     try{
       user=await api.me();
     }catch(error){
       // A transient network/server failure must not silently destroy a valid
       // client state. Protected API calls will surface the real failure.
-      if(sessionStorage.getItem('kd_login')==='1'){
+      kdAuthTrace('SESSION CHECK ERROR',{source:'BOOT',status:error?.status||0,code:error?.code||''});
+      if(sessionStorage.getItem('kd_login')==='1' || kdAuthState.loginEpoch!==loginEpochAtStart || kdLoginInProgress){
         console.warn('Pemeriksaan session sementara gagal:',error?.message||error);
         return;
       }
+      kdSetAuthState('UNAUTHENTICATED');
       return;
     }
+    // A boot check that started before a login must never overwrite the result
+    // of that newer login. This is the root-cause guard for the observed
+    // "Login berhasil" -> return to login race.
+    if(bootEpoch!==kdAuthState.bootEpoch || loginEpochAtStart!==kdAuthState.loginEpoch || kdLoginInProgress || sessionStorage.getItem('kd_login')==='1'){
+      kdAuthTrace('STALE BOOT CHECK IGNORED',{boot_epoch:bootEpoch,login_epoch:kdAuthState.loginEpoch});
+      return;
+    }
+    kdAuthTrace('SESSION CHECK RESULT',{source:'BOOT',authenticated:!!user,user_present:!!user});
     if(user){
       sessionStorage.setItem('kd_login','1');
       sessionStorage.setItem('kd_user',JSON.stringify(user));
       sessionStorage.removeItem('kd_logged_out');
+      kdSetAuthState('AUTHENTICATED',user);
       kdEnterAppUI();
       if(typeof window.show==='function') await window.show();
       return;
     }
-    // /auth/me returned 401: the server has definitively rejected the session.
+    // /auth/me returned 401 and no newer login is in progress: the server has
+    // definitively rejected the existing session.
     sessionStorage.removeItem('kd_login');
     sessionStorage.removeItem('kd_csrf_token');
     sessionStorage.removeItem('kd_user');
+    kdSetAuthState('UNAUTHENTICATED');
+    kdAuthTrace('SESSION INVALIDATED',{source:'BOOT'});
     if(typeof kdShowLoginScreen==='function')kdShowLoginScreen('Sesi telah berakhir. Silakan masuk kembali.');
     // If no persistent server session exists, offer the browser password
     // manager as the optional credential autofill path.
     if(api.restoreBrowserCredential) void kdRestoreSavedLogin();
   }catch(e){
+    kdSetAuthState('UNAUTHENTICATED');
     console.warn('Pemulihan sesi aplikasi gagal:',e);
+    kdAuthTrace('BOOT RECOVERY ERROR',{message:e?.message||String(e)});
   }
 }
 window.kdRecoverSessionOnBoot=kdRecoverSessionOnBoot;
