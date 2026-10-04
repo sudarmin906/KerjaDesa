@@ -49,7 +49,7 @@
     }
     setMsg('Menghubungkan ke server...');
     try{
-      const result=await window.KerjaDesaAuthAPI.login(user,pass);
+      const result=await window.KerjaDesaAuthAPI.login(user,pass,remember);
       if(!result?.success) throw new Error(result?.message||'Login gagal.');
       setMsg('Login berhasil. Membuka KerjaDesa...');
       // Do the visual transition independently from optional UI wrappers.
@@ -73,7 +73,6 @@
       if(typeof window.doLogin==='function'){
         Promise.resolve(window.doLogin()).catch(function(e){
           console.warn('doLogin gagal:',e);
-          fallbackLogin();
         });
       }else{
         fallbackLogin();
