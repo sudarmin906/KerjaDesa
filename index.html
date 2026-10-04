@@ -753,11 +753,25 @@ function parseDrpActivities(text, sectionTitle, totalTitle, kunlap, fallbackYear
   }
   return out;
 }
+function reconcileDrpSection(rows,text,totalTitle){
+  const raw=normText(text);
+  const m=raw.match(new RegExp(escReg(totalTitle)+'\\s+(\\d+)\\s+laporan\\b','i'));
+  const expected=m?Number(m[1]):0;
+  if(!expected)return rows;
+  const numbered=rows.filter(x=>Number(x?.no)>=1&&Number(x?.no)<=expected);
+  if(numbered.length===expected)return numbered.sort((a,b)=>Number(a.no)-Number(b.no));
+  return rows.slice(0,expected);
+}
 function parseDRP(text){
   const header=parseDrpHeader(text);
   const reportYear=(String(header.periode||'').match(/20\d{2}/)||[])[0]||'';
-  const aktivitas=parseDrpActivities(text,'DAFTAR LAPORAN AKTIVITAS','Total Laporan Aktivitas',false,reportYear);
-  const kunlap=parseDrpActivities(text,'DAFTAR LAPORAN KUNJUNGAN LAPANGAN','Total Laporan Kunjungan Lapangan',true,reportYear);
+  const aktivitasRaw=parseDrpActivities(text,'DAFTAR LAPORAN AKTIVITAS','Total Laporan Aktivitas',false,reportYear);
+  const kunlapRaw=parseDrpActivities(text,'DAFTAR LAPORAN KUNJUNGAN LAPANGAN','Total Laporan Kunjungan Lapangan',true,reportYear);
+  // The DRP itself declares the authoritative section totals (e.g. 6 + 17 = 23).
+  // If a PDF text extractor produces a false-positive row, reconcile by the
+  // explicit section row numbers before building the report dataset.
+  const aktivitas=reconcileDrpSection(aktivitasRaw,text,'Total Laporan Aktivitas');
+  const kunlap=reconcileDrpSection(kunlapRaw,text,'Total Laporan Kunjungan Lapangan');
   const all=aktivitas.concat(kunlap).sort((a,b)=>a.tanggal.localeCompare(b.tanggal)||a.no-b.no).map((x,i)=>({...x,no:i+1,deskripsi:cleanText(x.deskripsi)}));
   const cleanGroup=(arr)=>arr.map(x=>all.find(y=>y.tanggal===x.tanggal&&y.deskripsi===x.deskripsi)||x);
   return {header,aktivitas:cleanGroup(aktivitas),kunlap:cleanGroup(kunlap),all,count:all.length,source:'DRP'}
