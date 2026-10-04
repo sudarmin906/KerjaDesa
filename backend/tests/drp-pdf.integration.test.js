@@ -37,6 +37,13 @@ assert.equal(parsed.count, 24);
 assert.equal(parsed.aktivitas.length, 7);
 assert.equal(parsed.kunlap.length, 17);
 assert.equal(Number(parsed.header.totalLaporan), 24);
+assert.equal(parsed.diagnostics.declaredActivities, 7);
+assert.equal(parsed.diagnostics.parsedActivities, 7);
+assert.equal(parsed.diagnostics.declaredFieldVisits, 17);
+assert.equal(parsed.diagnostics.parsedFieldVisits, 17);
+assert.equal(parsed.diagnostics.declaredTotal, 24);
+assert.equal(parsed.diagnostics.parsedTotal, 24);
+assert.equal(parsed.diagnostics.totalDelta, 0);
 
 console.log(JSON.stringify({
   test: 'DRP real PDF extraction + frontend parser',
