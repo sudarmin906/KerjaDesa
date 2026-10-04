@@ -737,5 +737,6 @@ module.exports = {
   dashboard,
   resourceHandler,
   seedAdmin,
-  extractDrpPdf
+  extractDrpPdf,
+  pdfEngineStatus
 };
