@@ -92,6 +92,7 @@ const KerjaDesaAuthAPI = {
       const data = await response.json().catch(() => ({}));
       const err = new Error(data.message || ('Pemeriksaan sesi gagal (HTTP ' + response.status + ').'));
       err.status = response.status;
+      err.code = response.status >= 500 ? 'AUTH_SESSION_CHECK_FAILED' : 'AUTH_SESSION_ERROR';
       throw err;
     }
     const data = await response.json();
