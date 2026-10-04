@@ -1,0 +1,48 @@
+name: KerjaDesa Production Version Check
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production-version-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check production version identity
+        env:
+          PRODUCTION_URL: https://kerjadesa-pro.blitz.cloud
+        shell: bash
+        run: |
+          set -euo pipefail
+          version_json="$(curl --fail --silent --show-error --retry 3 --retry-delay 2 --max-time 30 "$PRODUCTION_URL/api/version")"
+          health_json="$(curl --fail --silent --show-error --retry 3 --retry-delay 2 --max-time 30 "$PRODUCTION_URL/api/health")"
+          drp_json="$(curl --fail --silent --show-error --retry 3 --retry-delay 2 --max-time 30 "$PRODUCTION_URL/api/health/drp")"
+          printf '%s\n' "$version_json"
+          printf '%s\n' "$health_json"
+          printf '%s\n' "$drp_json"
+          node - "$GITHUB_SHA" "$version_json" "$health_json" "$drp_json" <<'NODE'
+          const expected = process.argv[2];
+          const version = JSON.parse(process.argv[3]);
+          const health = JSON.parse(process.argv[4]);
+          const drp = JSON.parse(process.argv[5]);
+          if (!version.success) throw new Error('Production /api/version returned success=false');
+          if (version.commit !== expected) {
+            throw new Error('Production commit mismatch: expected ' + expected + ', got ' + version.commit);
+          }
+          if (!health.success) throw new Error('Production /api/health is not healthy');
+          if (!drp.success) throw new Error('Production /api/health/drp is not healthy');
+          if (!drp.pdftotext && !drp.pdf_parse) throw new Error('Production PDF extractor is unavailable');
+          console.log(JSON.stringify({
+            status: 'PASS',
+            expected_commit: expected,
+            production_commit: version.commit,
+            environment: version.environment,
+            drp_extractor: drp.pdf_extractor || drp.extractor || null,
+            pdftotext: !!drp.pdftotext,
+            pdf_parse: !!drp.pdf_parse
+          }, null, 2));
+          NODE
