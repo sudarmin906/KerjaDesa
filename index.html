@@ -1987,7 +1987,9 @@ function kdBindCoreActions(){
  });
  document.querySelectorAll('[data-kd-profile-input]').forEach(e=>e.addEventListener('change',e2=>loadProfilePhoto(e2.currentTarget)));
  document.querySelectorAll('[data-kd-logo-input]').forEach(e=>e.addEventListener('change',e2=>loadLogo(e2.currentTarget)));
- document.querySelectorAll('[data-kd-photo-input]').forEach(e=>e.addEventListener('change',e2=>loadActivityPhotos(e2.currentTarget)));
+ // Documentation photo upload is handled exclusively by the dedicated
+ // PHOTO-RUNTIME guard below to prevent duplicate change handlers.
+ document.querySelectorAll('[data-kd-photo-input]').forEach(e=>e.dataset.kdPhotoCoreBound='1');
 }
 function kdBindStaticActions(){
   document.querySelectorAll('#kdWorkflowToolbar [data-step]').forEach(b=>b.addEventListener('click',()=>workflowPage(b.dataset.step)));
