@@ -1,4 +1,6 @@
 FROM node:22-alpine
+ARG KERJADESA_COMMIT=unknown
+ARG KERJADESA_BUILD=unknown
 
 RUN apk add --no-cache poppler-utils
 WORKDIR /app
@@ -6,6 +8,8 @@ COPY . .
 WORKDIR /app/backend
 RUN npm install --omit=dev --no-audit --no-fund
 ENV NODE_ENV=production
+ENV KERJADESA_COMMIT=$KERJADESA_COMMIT
+ENV KERJADESA_BUILD=$KERJADESA_BUILD
 ENV HOST=0.0.0.0
 EXPOSE 3000
 CMD ["npm","start"]
