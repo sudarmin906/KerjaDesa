@@ -654,7 +654,7 @@ async function readPdfBasic(file){
       window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.mjs';
     }
     const buf=await file.arrayBuffer();
-    const pdf=await window.pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+    const pdf=await window.pdfjsLib.getDocument({data:new Uint8Array(buf),disableWorker:true,isEvalSupported:false}).promise;
     let pages=[];
     for(let i=1;i<=pdf.numPages;i++){
       const page=await pdf.getPage(i);
@@ -888,7 +888,22 @@ async function processPackageFiles(input){
     if(st)st.innerHTML='<span class="warn">❌ Paket gagal: '+esc(e.message)+'</span>';
   }finally{input.value='';}
 }
-async function processDocs(){document.getElementById('docStatus').textContent='Memproses dokumen...';const a=document.getElementById('drpFile').files[0],b=document.getElementById('sppdFile').files[0];if(a)await autoProcessOne('drp');if(b)await autoProcessOne('sppd');updateDocStatus()}
+async function processDocs(){
+  const status=document.getElementById('docStatus');
+  if(status)status.textContent='Memproses dokumen...';
+  const a=document.getElementById('drpFile')?.files?.[0],b=document.getElementById('sppdFile')?.files?.[0];
+  let drpResult=null,sppdResult=null;
+  if(a)drpResult=await autoProcessOne('drp');
+  if(b)sppdResult=await autoProcessOne('sppd');
+  const drpSaved=!!data.docs?.drp?.parsed;
+  const sppdSaved=!!data.docs?.sppd?.text;
+  if(drpSaved||sppdSaved){
+    updateDocStatus();
+    return {drp:drpResult,sppd:sppdResult};
+  }
+  if(status)status.innerHTML='<span class="warn">❌ Dokumen belum berhasil diproses. Lihat pesan pada bagian Upload DRP/SPPD untuk mengetahui penyebabnya.</span>';
+  return null;
+}
 function updateDocStatus(){
   const d=data.docs||{};
   const n=[d.drp?.name,d.sppd?.name].filter(Boolean).length;
