@@ -5,7 +5,7 @@ const { URL } = require('url');
 const { ensureDatabase } = require('./database/store');
 const { health: postgresHealth } = require('./database/postgres');
 const { authenticate, requireAuth, sendJson, csrfValid } = require('./middleware/auth');
-const { login, bootstrapAdmin, resetAdminPassword, logout, dashboard, resourceHandler, seedAdmin } = require('./controllers/apiController');
+const { login, bootstrapAdmin, resetAdminPassword, logout, dashboard, resourceHandler, seedAdmin, extractDrpPdf } = require('./controllers/apiController');
 const { publicUser } = require('./middleware/auth');
 
 const PORT = Number(process.env.PORT || 3000);
@@ -166,6 +166,7 @@ async function route(req, res) {
     if (!csrfValid(req)) return sendJson(res, 403, { success: false, message: 'CSRF token tidak valid.' });
 
     if (req.method === 'GET' && pathName === '/api/dashboard') return dashboard(req, res, auth);
+    if (req.method === 'POST' && pathName === '/api/drp/extract-pdf') return extractDrpPdf(req, res);
 
     const match = pathName.match(/^\/api\/(desa|kegiatan|monitoring|dokumen|laporan|sppd|wilayah|apbdes|rkpdes|rab|realisasi|lpj|penduduk|kpm|blt|stunting|bumdes|koperasi|agenda|notifications|ai_knowledge|gps_points|drp|users)(?:\/([^/]+))?$/);
     if (match) return resourceHandler(req, res, match[1], match[2], req.method, auth);
