@@ -104,7 +104,22 @@
       }
     },true);
 
+    var user=document.getElementById('user');
     var pass=document.getElementById('pass');
+    // Clear stale authentication errors as soon as the user edits credentials.
+    // This prevents "Username atau password salah" from remaining visible while
+    // the user is entering a new password, which can falsely look like login
+    // is still failing before a new request has even been submitted.
+    [user,pass].forEach(function(field){
+      if(!field||field.dataset.kdLoginInputBound==='1')return;
+      field.dataset.kdLoginInputBound='1';
+      field.addEventListener('input',function(){
+        var msg=document.getElementById('loginMsg');
+        if(msg && /Username atau password salah|Server authentication sedang bermasalah|Tidak dapat terhubung|Login berhasil tetapi session/i.test(msg.textContent||'')){
+          msg.textContent='';
+        }
+      },false);
+    });
     if(pass&&!pass.dataset.kdDirectEnterBound){
       pass.dataset.kdDirectEnterBound='1';
       pass.addEventListener('keydown',function(ev){
