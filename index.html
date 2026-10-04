@@ -831,9 +831,11 @@ function clearDrpData(){
 function clearActivityPhotos(){
  if(!confirm('Kosongkan semua foto dokumentasi yang tersimpan di aplikasi?'))return;
  activityPhotos=[];
+ kdPhotoOcrQueue=[];
  data.docs=data.docs||{};data.docs.activityPhotos=[];
  const f=document.getElementById('photoFiles');if(f)f.value='';
  const st=document.getElementById('photoOcrStatus');if(st)st.textContent='Foto dokumentasi dikosongkan.';
+ try{if(window.KerjaDesaSecureStorage?.saveNamed)await window.KerjaDesaSecureStorage.saveNamed('activityPhotos',[])}catch(e){console.error('Vault foto gagal dikosongkan:',e)}
  save();renderMediaPreviews();
 }
 function clearSppdDocument(){
@@ -1202,7 +1204,7 @@ async function loadActivityPhotos(input){
  const files=[...input.files];await loadActivityPhotoFiles(files);input.value='';
 }
 (function kdPhotoRuntimeGuard(){
- const VERSION='PHOTO-RUNTIME-2026.10.04-04';
+ const VERSION='PHOTO-RUNTIME-2026.10.04-05';
  window.KERJADESA_PHOTO_ENGINE_VERSION=VERSION;
  async function run(input){
    const files=[...(input?.files||[])];
@@ -1228,82 +1230,140 @@ async function loadActivityPhotos(input){
  const boot=()=>{if(!bind())setTimeout(boot,250)};
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
-async function loadActivityPhotoFiles(files){
- files=[...(files||[])];if(!files.length)return;
- for(const file of files) await kdValidateFile(file,'photo');
- const existing=activityPhotos||[];
- const existingNames=new Set(existing.map(p=>String(p.name||'').toLowerCase()));
- const uniqueFiles=files.filter(f=>!existingNames.has(String(f.name||'').toLowerCase()));
- const items=await Promise.all(uniqueFiles.map(async(f,i)=>({f,i,date:await detectPhotoDate(f)})));
- if(!items.length){renderMediaPreviews();return;}
- const st=document.getElementById('photoOcrStatus');
- const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];
- const dateCounts={};acts.forEach(a=>{const k=dateKey(a.tanggal);if(k)dateCounts[k]=(dateCounts[k]||0)+1});
+let kdPhotoOcrQueue=[];
+let kdPhotoOcrRunning=false;
+let kdPhotoBatchNo=0;
 
- // IMPORTANT: save/render the original photo files FIRST.
- // OCR must never block persistence or report generation on mobile devices.
- activityPhotos=existing;
- for(const x of items){
-   const dataUrl=await readAsDataURL(x.f);
-   activityPhotos.push({
-     name:x.f.name,url:dataUrl,date:x.date||'',ocrText:'',ocrDate:'',
-     source:x.date?'Nama file/EXIF':'Menunggu OCR',
-     matchedActivityIndex:null,matchedActivityNo:null,matchScore:0,matchConfidence:'belum cocok'
-   });
- }
- activityPhotos.forEach(p=>matchPhotoToDrp(p,acts));
- data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;
+function photoFileKey(file){
+ const f=file||{};
+ return [String(f.name||'').toLowerCase(),Number(f.size||0),Number(f.lastModified||0)].join('|');
+}
+function storedPhotoKey(photo){
+ return [String(photo?.name||'').toLowerCase(),Number(photo?.size||0),Number(photo?.lastModified||0)].join('|');
+}
+function currentPhotoActs(){
+ return data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];
+}
+async function persistActivityPhotos(){
+ data.docs=data.docs||{};
+ data.docs.activityPhotos=activityPhotos;
  try{
    if(window.KerjaDesaSecureStorage?.saveNamed) await window.KerjaDesaSecureStorage.saveNamed('activityPhotos',activityPhotos);
  }catch(e){console.error('Vault foto gagal disimpan:',e)}
  await save();
- renderMediaPreviews();
- if(st)st.textContent='✅ '+activityPhotos.length+' foto tersimpan. Foto sudah siap masuk laporan; analisis tanggal/keterangan dilanjutkan di latar belakang.';
+}
 
- // OCR is optional/background work. A slow OCR operation must not prevent
- // the documentation photos from appearing in the report.
- // Always run OCR once for every newly uploaded photo. The visible date stamp
- // on field photos is the authoritative source when available, even if the
- // filename/EXIF contains a different filesystem date.
- const needsOcr=items;
- if(needsOcr.length){
-   photoOcrBusy=true;
-   void (async()=>{
-     try{
-       for(let j=0;j<needsOcr.length;j++){
-         const x=needsOcr[j];
-         const r=await ocrPhoto(x.f,j,needsOcr.length);
-         const idx=activityPhotos.findIndex(p=>String(p.name||'').toLowerCase()===String(x.f.name||'').toLowerCase());
-         if(idx>=0){
-           const p=activityPhotos[idx];
-           const metadataDate=p.date||'';
-           p.ocrText=r?.text||'';
-           p.ocrDate=r?.date||'';
-           p.ocrDates=Array.isArray(r?.dates)?r.dates:[];
-           const resolvedDate=choosePhotoDrpDate(metadataDate,p.ocrDates,acts);
-           p.date=resolvedDate;
-           p.source=p.date?(p.ocrDates.length?'OCR ↔ DRP date':'Metadata file ↔ DRP date'):'Belum terdeteksi';
-           matchPhotoToDrp(p,acts);
-         }
-         data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;
-         try{
-           if(window.KerjaDesaSecureStorage?.saveNamed) await window.KerjaDesaSecureStorage.saveNamed('activityPhotos',activityPhotos);
-         }catch(e){console.error('Vault OCR foto gagal disimpan:',e)}
-         await save();
+async function runPhotoOcrQueue(){
+ if(kdPhotoOcrRunning)return;
+ kdPhotoOcrRunning=true;
+ const st=document.getElementById('photoOcrStatus');
+ try{
+   while(kdPhotoOcrQueue.length){
+     const batch=kdPhotoOcrQueue.shift();
+     const acts=currentPhotoActs();
+     for(let j=0;j<batch.length;j++){
+       const item=batch[j];
+       const p=activityPhotos.find(x=>x._photoKey===item.key);
+       if(!p)continue;
+       try{
+         const r=await ocrPhoto(item.file,j,batch.length);
+         const metadataDate=p.date||'';
+         p.ocrText=r?.text||'';
+         p.ocrDate=r?.date||'';
+         p.ocrDates=Array.isArray(r?.dates)?r.dates:[];
+         const resolvedDate=choosePhotoDrpDate(metadataDate,p.ocrDates,acts);
+         p.date=resolvedDate;
+         p.source=p.date?(p.ocrDates.length?'OCR ↔ DRP date':'Metadata file ↔ DRP date'):'Belum terdeteksi';
+         matchPhotoToDrp(p,acts);
+         delete p._photoKey;
+         await persistActivityPhotos();
          renderMediaPreviews();
-         if(st)st.textContent='🔎 OCR foto '+(j+1)+'/'+needsOcr.length+' selesai. '+activityPhotos.length+' foto tetap tersedia di laporan.';
+         if(st)st.textContent='🔎 Memproses foto baru: '+(j+1)+'/'+batch.length+' • Total tersimpan: '+activityPhotos.length;
+       }catch(e){
+         console.warn('OCR satu foto gagal, foto tetap dipertahankan:',e);
+         p.source=p.date?'Metadata file — OCR gagal':'Tanggal belum terdeteksi — OCR gagal';
+         delete p._photoKey;
+         await persistActivityPhotos();
+         renderMediaPreviews();
        }
-     }catch(e){
-       console.error('Background OCR foto gagal:',e);
-     }finally{
-       photoOcrBusy=false;
-       if(st)st.textContent=activityPhotos.length+' foto tersimpan. Pencocokan otomatis selesai; foto yang belum cocok tetap dimasukkan ke laporan.';
      }
-   })();
- }else{
-   photoOcrBusy=false;
-   if(st)st.textContent=activityPhotos.length+' foto selesai diproses dan siap dimasukkan ke laporan.';
+   }
+ }finally{
+   kdPhotoOcrRunning=false;
+   const pending=kdPhotoOcrQueue.reduce((n,b)=>n+b.length,0);
+   if(st)st.textContent=activityPhotos.length+' foto tersimpan. '+(pending?'Foto tambahan masih dalam antrean. ':'Semua foto siap dimasukkan ke dokumentasi.');
  }
+}
+
+async function loadActivityPhotoFiles(files){
+ files=[...(files||[])];if(!files.length)return;
+ for(const file of files) await kdValidateFile(file,'photo');
+
+ const existing=activityPhotos||[];
+ // Do NOT use filename alone as identity. Android can reuse generic names
+ // (for example file_000xxx.png) for different photos. A different size or
+ // modification time must therefore be accepted as a new photo.
+ const existingKeys=new Set(existing.map(storedPhotoKey));
+ const uniqueFiles=[];
+ for(const f of files){
+   const key=photoFileKey(f);
+   if(!existingKeys.has(key)){
+     existingKeys.add(key);
+     uniqueFiles.push({file:f,key});
+   }
+ }
+ if(!uniqueFiles.length){
+   renderMediaPreviews();
+   const st=document.getElementById('photoOcrStatus');
+   if(st)st.textContent=activityPhotos.length+' foto sudah tersimpan. Tidak ada foto baru yang diabaikan.';
+   return;
+ }
+
+ const st=document.getElementById('photoOcrStatus');
+ if(st)st.textContent='⏳ Menyimpan '+uniqueFiles.length+' foto baru...';
+
+ const acts=currentPhotoActs();
+ const items=[];
+ for(const item of uniqueFiles){
+   const f=item.file;
+   const date=await detectPhotoDate(f);
+   const dataUrl=await readAsDataURL(f);
+   const photo={
+     name:f.name,
+     size:Number(f.size||0),
+     lastModified:Number(f.lastModified||0),
+     url:dataUrl,
+     date:date||'',
+     ocrText:'',
+     ocrDate:'',
+     ocrDates:[],
+     source:date?'Nama file/EXIF':'Menunggu OCR',
+     matchedActivityIndex:null,
+     matchedActivityNo:null,
+     matchedActivityDate:'',
+     matchedActivityKey:'',
+     matchScore:0,
+     matchConfidence:'belum cocok',
+     _photoKey:item.key
+   };
+   activityPhotos.push(photo);
+   matchPhotoToDrp(photo,acts);
+   items.push({file:f,key:item.key});
+ }
+ data.docs=data.docs||{};
+ data.docs.activityPhotos=activityPhotos;
+
+ // IMPORTANT: photos are persisted BEFORE OCR. Adding another batch can never
+ // overwrite or wait for the previous OCR batch.
+ await persistActivityPhotos();
+ renderMediaPreviews();
+ if(st)st.textContent='✅ '+uniqueFiles.length+' foto baru ditambahkan. Total: '+activityPhotos.length+'. Foto aman; pencocokan OCR berjalan berurutan.';
+
+ // Queue OCR instead of launching a second worker concurrently when the user
+ // selects another batch before the previous batch finishes.
+ kdPhotoBatchNo++;
+ kdPhotoOcrQueue.push(items);
+ void runPhotoOcrQueue();
 }
 function setPhotoActivity(photoIndex,activityIndex){const p=activityPhotos[Number(photoIndex)];if(!p)return;const idx=activityIndex===''?null:Number(activityIndex);const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];const a=Number.isInteger(idx)&&idx>=0?acts[idx]:null;p.matchedActivityIndex=a?idx:null;p.matchedActivityNo=a?.no||null;p.matchedActivityDate=a?dateKey(a.tanggal):'';p.matchedActivityKey=a?drpActivityKey(a):'';p.reportDate=a?.tanggal||'';p.matchScore=a?scorePhotoActivity(p,a):0;p.matchConfidence=a?'manual':'belum cocok';data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;save();renderMediaPreviews()}
 function renderMediaPreviews(){const d=data.docs||{};profilePhoto=d.profilePhoto||profilePhoto;logoPhoto=d.logoPhoto||'';activityPhotos=d.activityPhotos||[];const pp=document.getElementById('profilePreview'),lp=document.getElementById('logoPreview'),pr=document.getElementById('photoPreview');if(pp){const u=safeMediaUrl(profilePhoto);pp.innerHTML=u?'<img class="profile-preview" src="'+esc(u)+'" alt="Foto profil">':'';}if(lp){const u=safeMediaUrl(logoPhoto);lp.innerHTML=u?'<img class="logo-preview" src="'+esc(u)+'" alt="Logo Kemendesa">':'<span class="small muted">Belum ada logo. Upload logo resmi Kemendesa.</span>';}if(pr){const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];pr.innerHTML=activityPhotos.map((p,i)=>{const a=findActivityForPhoto(p,acts);const u=safeMediaUrl(p.url);const options='<option value="">Pilih kegiatan DRP</option>'+acts.map((x,j)=>'<option value="'+j+'"'+(p.matchedActivityIndex===j?' selected':'')+'>'+esc((x.no||j+1)+'. '+shortActivityTitle(x))+'</option>').join('');return '<div class="photo-card">'+(u?'<img src="'+esc(u)+'" alt="Foto '+(i+1)+'">':'')+'<div class="photo-meta">'+esc(p.name)+(p.date?'<br>Tanggal: '+esc(p.date):'<br><b>Tanggal belum terbaca</b>')+(a?'<br>DRP: <b>'+esc(shortActivityTitle(a))+'</b>':'<br><span class="muted">Belum cocok dengan DRP</span>')+'<br><span class="small muted">Kecocokan: '+esc(p.matchConfidence||'belum cocok')+'</span><select style="margin-top:6px" onchange="setPhotoActivity('+i+',this.value)">'+options+'</select></div></div>'}).join('');}}
@@ -1405,7 +1465,7 @@ function buildDocumentation(acts){
  const rows=[];for(let i=0;i<groups.length;i+=2)rows.push('<tr>'+documentationCell(groups[i])+(groups[i+1]?documentationCell(groups[i+1]):'<td class="master-doc-cell empty"></td>')+'</tr>');
  return '<table class="master-doc-table"><tbody>'+rows.join('')+'</tbody></table>';
 }
-function documentationCell(g){const photos=g.photos.map(p=>{const u=safeMediaUrl(p.url);return u?'<div class="master-doc-photo"><img src="'+esc(u)+'" alt="Dokumentasi"></div>':''}).join(''),date=g.act.tanggal?dateKey(g.act.tanggal):'Belum terdeteksi',activity=String(g.act.deskripsi||g.act.judul||'-').replace(/\s+/g,' ').trim();return '<td class="master-doc-cell"><div class="master-doc-info"><div>Lokasi: <b>'+esc(locationVillage(g.act.lokasi))+'</b></div><div>Tanggal: <b>'+esc(date)+'</b></div><div>Kegiatan: <b>'+esc(activity)+'</b></div></div><div class="master-doc-photos">'+photos+'</div></td>'}
+function documentationCell(g){const photos=(g.photos||[]).map(p=>{const u=safeMediaUrl(p.url);return u?'<div class="master-doc-photo"><img src="'+esc(u)+'" alt="Dokumentasi"></div>':''}).join(''),date=g.act.tanggal?dateKey(g.act.tanggal):'Belum terdeteksi',activity=String(g.act.deskripsi||g.act.judul||'-').replace(/\s+/g,' ').trim(),count=(g.photos||[]).length;return '<td class="master-doc-cell"><div class="master-doc-info"><div>Lokasi: <b>'+esc(locationVillage(g.act.lokasi))+'</b></div><div>Tanggal: <b>'+esc(date)+'</b></div><div>Kegiatan: <b>'+esc(activity)+'</b></div><div>Jumlah Foto: <b>'+count+'</b></div></div><div class="master-doc-photos">'+photos+'</div></td>'}
 let reportContext=null;
 function renderReportFromNarratives(nar){
  const c=reportContext;if(!c)return;const {nama,posisi,nik,jabatan,kec,kab,prov,month,year,acts}=c,signDate=acts.length?dateLongId(acts[acts.length-1].tanggal):('30 '+month+' '+year),safeLogo=safeMediaUrl(logoPhoto),logo=safeLogo?'<img class="cover-logo" src="'+esc(safeLogo)+'" alt="Logo Kemendesa">':'<div class="cover-logo placeholder">LOGO KEMENDESA PDT</div>';
