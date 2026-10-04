@@ -13,6 +13,19 @@
     try{return sessionStorage.getItem('kd_login')==='1';}catch(e){return false;}
   }
 
+  function authStatus(){
+    try{return window.KerjaDesaAuthState?.status||'UNAUTHENTICATED';}catch(e){return 'UNAUTHENTICATED';}
+  }
+
+  function hadAuthenticatedSession(){
+    try{return sessionStorage.getItem('kd_login')==='1';}catch(e){return false;}
+  }
+
+  function canEnterProtectedUI(){
+    const status=authStatus();
+    return hasSession() || status==='INITIALIZING' || status==='AUTHENTICATING' || status==='AUTHENTICATED';
+  }
+
   function clearLegacyAuth(){
     try{LEGACY_KEYS.forEach(k=>localStorage.removeItem(k));}catch(e){}
   }
@@ -42,7 +55,13 @@
 
   function guard(){
     clearLegacyAuth();
-    if(!hasSession())showLogin('Sesi tidak aktif. Silakan masuk kembali.');
+    // A fresh login page is not an expired session. Never inject the
+    // "Sesi tidak aktif" message merely because no session exists yet.
+    if(hasSession() || ['INITIALIZING','AUTHENTICATING','AUTHENTICATED'].includes(authStatus())) return;
+    const loggedOut=sessionStorage.getItem('kd_logged_out')==='1';
+    if(loggedOut) return;
+    const login=document.getElementById('login');
+    if(login && login.style.display==='none') showLogin('');
   }
 
   function patchNavigation(){
@@ -113,6 +132,17 @@
   }else{
     guard();patchNavigation();addSecurityPanel();
   }
-  window.addEventListener('pageshow',()=>{clearLegacyAuth();if(!hasSession())showLogin('Sesi tidak aktif. Silakan masuk kembali.');patchNavigation();});
-  window.addEventListener('storage',()=>{if(!hasSession())showLogin('Sesi telah berakhir. Silakan masuk kembali.');});
+  window.addEventListener('pageshow',()=>{
+    clearLegacyAuth();
+    // Do not overwrite the initial login form with a session-expired message.
+    if(!hasSession() && authStatus()==='UNAUTHENTICATED' && sessionStorage.getItem('kd_logged_out')!=='1' && document.getElementById('app')?.style.display==='block'){
+      showLogin('Sesi tidak aktif. Silakan masuk kembali.');
+    }
+    patchNavigation();
+  });
+  window.addEventListener('storage',(event)=>{
+    if(event.key!=='kd_login' || event.newValue==='1') return;
+    // Only a real transition from an authenticated tab is a session-loss event.
+    if(event.oldValue==='1' && authStatus()!=='AUTHENTICATING') showLogin('Sesi telah berakhir. Silakan masuk kembali.');
+  });
 })();
