@@ -28,6 +28,17 @@ async function ensureSchema() {
     );
     CREATE INDEX IF NOT EXISTS idx_kerjadesa_records_resource ON kerjadesa_records(resource);
     CREATE INDEX IF NOT EXISTS idx_kerjadesa_records_resource_username ON kerjadesa_records(resource, ((data->>'username')));
+    CREATE TABLE IF NOT EXISTS auth_sessions (
+      id BIGSERIAL PRIMARY KEY,
+      token_hash CHAR(64) NOT NULL UNIQUE,
+      user_id BIGINT NOT NULL,
+      remember_me BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      expires_at TIMESTAMPTZ NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_auth_sessions_user ON auth_sessions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires ON auth_sessions(expires_at);
   `);
 }
 
