@@ -456,6 +456,31 @@ function kdRestoreSavedLogin(){
   return false;
 }
 
+function kdValidateLoginForm(){
+  const username=(document.getElementById('user')?.value||'').trim();
+  const password=document.getElementById('pass')?.value||'';
+  const msg=document.getElementById('loginMsg');
+  kdAuthTrace('FORM VALIDATION STARTED',{username_present:!!username,password_present:!!password});
+  if(!username && !password){
+    if(msg)msg.textContent='Username dan password wajib diisi.';
+    kdAuthTrace('FORM VALIDATION FAILED',{reason:'BOTH_EMPTY'});
+    return {valid:false,username,password,reason:'BOTH_EMPTY'};
+  }
+  if(!username){
+    if(msg)msg.textContent='Username wajib diisi.';
+    kdAuthTrace('FORM VALIDATION FAILED',{reason:'USERNAME_EMPTY'});
+    return {valid:false,username,password,reason:'USERNAME_EMPTY'};
+  }
+  if(!password){
+    if(msg)msg.textContent='Password wajib diisi.';
+    kdAuthTrace('FORM VALIDATION FAILED',{reason:'PASSWORD_EMPTY'});
+    return {valid:false,username,password,reason:'PASSWORD_EMPTY'};
+  }
+  kdAuthTrace('FORM VALIDATION PASSED',{username_present:true,password_present:true});
+  return {valid:true,username,password,reason:''};
+}
+window.kdValidateLoginForm=kdValidateLoginForm;
+
 let kdLoginInProgress=false;
 async function doLogin(){
   if(kdLoginInProgress)return false;
