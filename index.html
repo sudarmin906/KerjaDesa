@@ -642,23 +642,16 @@ function extractPdfText(src){
   return out.join('\n');
 }
 async function readPdfBasic(file){
-  // Primary PDF reader: PDF.js in the browser. This handles compressed/hex-encoded
-  // PDF text used by the official DRP PDF. It is loaded only when a PDF is uploaded.
+  // KerjaDesa DRP PDF engine v2026.10.04. Server extraction is the primary path;
+  // browser PDF.js is only a fallback. This avoids CDN/worker failures on Android.
+  let serverError='';
   try{
-    if(!window.pdfjsLib){
-      const mod=await Promise.race([
-        import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.mjs'),
-        new Promise((_,reject)=>setTimeout(()=>reject(new Error('PDF.js timeout')),8000))
-      ]);
-      window.pdfjsLib=mod;
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.mjs';
-    }
+    const apiBase=window.KERJADESA_API_BASE || '/api';
+    const csrf=sessionStorage.getItem('kd_csrf_token') || '';
+    const raw=await file.arrayBuffer();
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),25000);
     try{
-      const apiBase=window.KERJADESA_API_BASE || '/api';
-      const csrf=sessionStorage.getItem('kd_csrf_token') || '';
-      const raw=await file.arrayBuffer();
-      const controller=new AbortController();
-      const timer=setTimeout(()=>controller.abort(),20000);
       const response=await fetch(apiBase+'/drp/extract-pdf',{
         method:'POST',
         credentials:'include',
@@ -666,44 +659,59 @@ async function readPdfBasic(file){
         body:raw,
         signal:controller.signal
       });
-      clearTimeout(timer);
       const result=await response.json().catch(()=>({}));
-      const serverText=String(result.text||'');
-      if(response.ok && result.success && serverText && /LAPORAN BULANAN|DAFTAR LAPORAN AKTIVITAS|DAFTAR LAPORAN KUNJUNGAN LAPANGAN|IDENTITAS TPP/i.test(serverText)) return serverText;
-      if(result.message) console.warn('Server PDF extraction unavailable:',result.message);
-    }catch(e){ console.warn('Server PDF extraction unavailable; using local fallback.',e); }
+      const serverText=String(result.text||'').trim();
+      if(response.ok && result.success && serverText) return serverText;
+      serverError=String(result.message||('HTTP '+response.status));
+    }finally{clearTimeout(timer)}
+  }catch(e){serverError=String(e?.message||e||'Server PDF gagal')}
+
+  // Browser fallback for environments where the API is unavailable.
+  try{
+    if(!window.pdfjsLib){
+      const mod=await Promise.race([
+        import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.mjs'),
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error('PDF.js timeout')),10000))
+      ]);
+      window.pdfjsLib=mod;
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.mjs';
+    }
     const buf=await file.arrayBuffer();
     const pdf=await window.pdfjsLib.getDocument({data:new Uint8Array(buf),disableWorker:true,isEvalSupported:false}).promise;
-    let pages=[];
+    const pages=[];
     for(let i=1;i<=pdf.numPages;i++){
       const page=await pdf.getPage(i);
-      const c=await page.getTextContent({normalizeWhitespace:true,disableCombineTextItems:false});
-      pages.push(c.items.map(x=>x.str||'').join(' '));
+      const content=await page.getTextContent({normalizeWhitespace:true,disableCombineTextItems:false});
+      pages.push(content.items.map(x=>x.str||'').join(' '));
     }
-    const text=pages.join('\n');
-    if(text && /LAPORAN BULANAN|DAFTAR LAPORAN AKTIVITAS|DAFTAR LAPORAN KUNJUNGAN LAPANGAN/i.test(text)) return text;
-  }catch(e){
-    console.warn('PDF.js gagal, mencoba pembaca cadangan',e);
-  }
-  // Fallback for simple text PDFs.
-  const b=new Uint8Array(await file.arrayBuffer());
-  const rawPdf=new TextDecoder('latin1').decode(b);
-  let out='',pos=0;
-  while((pos=rawPdf.indexOf('stream',pos))>=0){
-    let a=pos+6;if(rawPdf[a]==='\r')a++;if(rawPdf[a]==='\n')a++;
-    let end=rawPdf.indexOf('endstream',a);if(end<0)break;
-    let raw=b.slice(a,end),head=rawPdf.slice(Math.max(0,pos-1200),pos);
-    try{
-      if(/\/FlateDecode/.test(head)){
-        const ds=new DecompressionStream('deflate');
-        raw=new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer());
-      }
-      const chunk=extractPdfText(new TextDecoder('latin1').decode(raw));
-      if(chunk) out+='\n'+chunk;
-    }catch(e){}
-    pos=end+9;
-  }
-  return (out||'').replace(/\u0000/g,' ').replace(/[ \t]+/g,' ').replace(/\n+/g,'\n').trim();
+    const text=pages.join('\n').trim();
+    if(text)return text;
+  }catch(e){serverError=serverError||String(e?.message||e||'PDF.js gagal')}
+
+  // Last lightweight fallback for simple text PDFs.
+  try{
+    const b=new Uint8Array(await file.arrayBuffer());
+    const rawPdf=new TextDecoder('latin1').decode(b);
+    let out='',pos=0;
+    while((pos=rawPdf.indexOf('stream',pos))>=0){
+      let a=pos+6;if(rawPdf[a]==='\r')a++;if(rawPdf[a]==='\n')a++;
+      const end=rawPdf.indexOf('endstream',a);if(end<0)break;
+      let raw=b.slice(a,end),head=rawPdf.slice(Math.max(0,pos-1200),pos);
+      try{
+        if(/\/FlateDecode/.test(head)){
+          const ds=new DecompressionStream('deflate');
+          raw=new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer());
+        }
+        const chunk=extractPdfText(new TextDecoder('latin1').decode(raw));
+        if(chunk)out+='\n'+chunk;
+      }catch(_){}
+      pos=end+9;
+    }
+    const text=(out||'').replace(/\u0000/g,' ').replace(/[ \t]+/g,' ').replace(/\n+/g,'\n').trim();
+    if(text)return text;
+  }catch(e){}
+
+  throw new Error('PDF tidak dapat dibaca. Server: '+serverError);
 }
 function cleanText(t){return String(t||'').replace(/\u0000/g,' ').replace(/\r/g,'\n').replace(/\b\d+\s*\/\s*\d+\s+No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim()}
 function normText(t){return cleanText(t).replace(/\s+/g,' ').trim()}
@@ -1736,6 +1744,45 @@ const kdOldShow=show;
 show=function(){kdOldShow();kdWorkflowSetup();kdAddHomeQuick();workflowPage('drp');}
 kdWorkflowSetup();kdAddHomeQuick();
 
+
+/* === DRP RUNTIME GUARD 2026.10.04 === */
+(function(){
+  const VERSION='DRP-RUNTIME-2026.10.04-01';
+  window.KERJADESA_DRP_ENGINE_VERSION=VERSION;
+  function status(msg,cls){
+    const el=document.getElementById('drpStatus');
+    if(el)el.innerHTML='<span class="'+(cls||'muted')+'">'+msg+'</span>';
+  }
+  async function run(input){
+    const f=input?.files?.[0];
+    if(!f){status('⚠️ Pilih file DRP terlebih dahulu.','warn');return}
+    status('📄 File dipilih: '+esc(f.name)+'<br>⏳ Membaca DRP '+VERSION+'...','loading');
+    try{
+      if(typeof autoProcessOne!=='function')throw new Error('Mesin pemrosesan DRP belum dimuat.');
+      const result=await autoProcessOne('drp');
+      if(result?.count)status('✓ DRP selesai dibaca: '+result.count+' kegiatan ditemukan.','ok');
+      return result;
+    }catch(e){
+      console.error('DRP runtime guard:',e);
+      status('❌ DRP gagal dibaca: '+esc(e?.message||e),'warn');
+      return null;
+    }
+  }
+  window.kdProcessSelectedDrp=run;
+  function bind(){
+    const input=document.getElementById('drpFile');
+    if(!input||input.dataset.kdRuntimeBound==='1')return !!input;
+    input.dataset.kdRuntimeBound='1';
+    input.addEventListener('change',()=>void run(input),true);
+    input.addEventListener('input',()=>void run(input),true);
+    input.addEventListener('click',()=>{input.value=''},true);
+    status('ℹ️ Mesin DRP siap. Pilih file PDF DRP.','muted');
+    return true;
+  }
+  const boot=()=>{if(!bind())setTimeout(boot,250)};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  document.addEventListener('change',e=>{if(e.target?.id==='drpFile')void run(e.target)},true);
+})();
 
 /* === KerjaDesa TAHAP 475: DIGITAL TWIN 2.0 === */
 (function(){
