@@ -37,25 +37,35 @@ function csrfValid(req) {
   if(!cookie || !header || cookie.length!==header.length) return false;
   return crypto.timingSafeEqual(Buffer.from(cookie),Buffer.from(header));
 }
-function setAuthResponseCookies(res, token) {
-  const secure=process.env.NODE_ENV==='production';
+function cookieContext(req) {
+  const secure = process.env.NODE_ENV === 'production';
+  const origin = String(req?.headers?.origin || '').replace(/\/$/, '');
+  const host = String(req?.headers?.host || '');
+  const forwardedProto = String(req?.headers?.['x-forwarded-proto'] || '').split(',')[0].trim();
+  const protocol = forwardedProto || (secure ? 'https' : 'http');
+  const requestOrigin = host ? protocol + '://' + host : '';
+  const sameOrigin = !origin || !requestOrigin || origin === requestOrigin;
+  return {
+    secure,
+    sameOrigin,
+    sameSite: secure ? (sameOrigin ? 'SameSite=Lax' : 'SameSite=None') : 'SameSite=Lax',
+    partitioned: secure && !sameOrigin ? 'Partitioned' : ''
+  };
+}
+function setAuthResponseCookies(res, token, req) {
+  const ctx=cookieContext(req);
   const csrf=crypto.randomBytes(32).toString('hex');
-  // The frontend is hosted on GitHub Pages while the API runs on Blitz.
-  // Partitioned keeps the server session usable in that cross-site embedding
-  // context on browsers that enforce third-party cookie partitioning.
-  const partitioned = secure ? 'Partitioned' : '';
-  const sessionFlags=['Path=/','HttpOnly',secure?'Secure':'',secure?'SameSite=None':'SameSite=Lax',partitioned,'Max-Age='+(SESSION_TTL_MS/1000)].filter(Boolean).join('; ');
-  const csrfFlags=['Path=/',secure?'Secure':'',secure?'SameSite=None':'SameSite=Lax',partitioned,'Max-Age='+(SESSION_TTL_MS/1000)].filter(Boolean).join('; ');
+  const sessionFlags=['Path=/','HttpOnly',ctx.secure?'Secure':'',ctx.sameSite,ctx.partitioned,'Max-Age='+(SESSION_TTL_MS/1000)].filter(Boolean).join('; ');
+  const csrfFlags=['Path=/',ctx.secure?'Secure':'',ctx.sameSite,ctx.partitioned,'Max-Age='+(SESSION_TTL_MS/1000)].filter(Boolean).join('; ');
   res.setHeader('Set-Cookie',[
     SESSION_COOKIE+'='+encodeURIComponent(token)+'; '+sessionFlags,
     CSRF_COOKIE+'='+csrf+'; '+csrfFlags
   ]);
   return csrf;
 }
-function clearAuthResponseCookies(res) {
-  const secure=process.env.NODE_ENV==='production';
-  const partitioned = secure ? 'Partitioned' : '';
-  const flags=['Path=/',secure?'Secure':'',secure?'SameSite=None':'SameSite=Lax',partitioned,'Max-Age=0'].filter(Boolean).join('; ');
+function clearAuthResponseCookies(res, req) {
+  const ctx=cookieContext(req);
+  const flags=['Path=/','HttpOnly',ctx.secure?'Secure':'',ctx.sameSite,ctx.partitioned,'Max-Age=0'].filter(Boolean).join('; ');
   res.setHeader('Set-Cookie',[
     SESSION_COOKIE+'=; '+flags,
     CSRF_COOKIE+'=; '+flags
