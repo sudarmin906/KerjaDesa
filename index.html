@@ -1772,6 +1772,8 @@ async function kdLogout(){
     sessionStorage.removeItem('kd_auth_token');
     sessionStorage.removeItem('kd_csrf_token');
     sessionStorage.removeItem('kd_user');
+    kdSetAuthState('UNAUTHENTICATED');
+    kdAuthTrace('LOGOUT LOCAL STATE CLEARED',{status:kdAuthState.status});
     sessionStorage.setItem('kd_logged_out','1');
     try{window.kdClearSensitiveCache?.()}catch(e){}
   }catch(e){console.warn('Pembersihan sesi lokal gagal.',e)}
