@@ -1126,7 +1126,7 @@ function updateDocStatus(){
     if(['selected','validating','uploading','text_received','parsing','saving'].includes(drpRuntimeState.status))status.innerHTML='<span class="loading">⏳ '+esc(({selected:'File dipilih',validating:'Memvalidasi PDF',uploading:'Mengirim PDF ke server',text_received:'Membaca teks PDF',parsing:'Menganalisis DRP',saving:'Menyimpan hasil'})[drpRuntimeState.status]||'Memproses DRP')+'...</span>';
     else if(drpRuntimeState.status==='error')status.innerHTML='<span class="warn">❌ DRP gagal diproses: '+esc(drpRuntimeState.error?.message||'Kesalahan tidak diketahui')+'</span>';
     else if(drpRuntimeState.status==='selected')status.innerHTML='<span class="badge">FILE TERPILIH</span> '+esc(drpName);
-    else if(d.drp?.parsed)status.innerHTML='<span class="ok">✓ DRP berhasil diproses.</span> '+esc(d.drp.name||drpName);
+    else if(d.drp?.parsed)status.innerHTML='<span class="ok">✓ DRP berhasil diproses.</span> '+esc(d.drp.name||drpName)+' • '+Number(d.drp.parsed.aktivitas?.length||0)+' Aktivitas • '+Number(d.drp.parsed.kunlap?.length||0)+' Kunjungan Lapangan • '+Number(d.drp.parsed.count||0)+' Total';
     else status.textContent=n?n+' dokumen tersimpan di perangkat dan siap menjadi sumber laporan.':'Belum ada dokumen yang diproses.';
   }
   const result=document.getElementById('docResult');if(!result)return;
@@ -2337,7 +2337,7 @@ window.kdGetProductionVersion=async function(){const base=window.KERJADESA_API_B
     window.__kdDrpProcessingPromise=(async()=>{
       try{
         const result=await handleDrpFile(f,document.getElementById('drpStatus'));
-        if(result?.count)status('✓ DRP berhasil diproses: '+result.count+' kegiatan ditemukan.','ok');
+        if(result?.count)status('✓ DRP berhasil diproses: '+result.count+' total ('+Number(result.aktivitas?.length||0)+' aktivitas + '+Number(result.kunlap?.length||0)+' kunjungan lapangan).','ok');
         else if(drpRuntimeState.status!=='error')status('❌ DRP tidak menghasilkan data.','warn');
         return result;
       }catch(e){
