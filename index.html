@@ -464,7 +464,7 @@ async function doLogin(){
       if(code==='AUTH_INVALID_CREDENTIALS'||e?.status===401) msg.textContent='Username atau password salah.';
       else if(code==='AUTH_NETWORK_ERROR') msg.textContent='Tidak dapat terhubung ke server.';
       else if(code==='AUTH_SESSION_CREATE_FAILED'||code==='AUTH_SESSION_VERIFY_FAILED') msg.textContent='Login berhasil tetapi session gagal dibuat. Silakan coba lagi.';
-      else if(code==='AUTH_DATABASE_UNAVAILABLE'||code==='AUTH_SERVER_ERROR'||code==='AUTH_CLIENT_UNAVAILABLE') msg.textContent='Server authentication sedang bermasalah. Silakan coba lagi.';
+      else if(code==='AUTH_DATABASE_UNAVAILABLE'||code==='AUTH_SERVER_ERROR'||code==='AUTH_CLIENT_UNAVAILABLE'||code==='AUTH_SESSION_CHECK_FAILED') msg.textContent='Server authentication sedang bermasalah. Silakan coba lagi.';
       else if(e?.status===429) msg.textContent='Terlalu banyak percobaan login. Coba lagi beberapa menit.';
       else msg.textContent=e?.message||'Server authentication sedang bermasalah. Silakan coba lagi.';
     }
