@@ -391,6 +391,27 @@ html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#26344
 let data={"kegiatan":[],"monitoring":[],"gps":null,"docs":{}};window.data=data;let deferred=null;let reportHtml='';let reportText='';let profilePhoto='foto_profil.jpg';let logoPhoto='';let activityPhotos=[];
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
 async function save(){try{if(!window.KerjaDesaSecureStorage)throw new Error('Secure Offline Vault belum tersedia.');await window.KerjaDesaSecureStorage.save(data);render()}catch(e){console.error('Secure save gagal:',e);alert('Data belum tersimpan: Secure Offline Vault tidak tersedia.')}}
+function kdEnterAppUI(){
+  // Auth success must immediately leave the login screen. Do not depend on
+  // optional dashboard modules or async hydration to perform this transition.
+  try{
+    sessionStorage.removeItem('kd_logged_out');
+    const login=document.getElementById('login');
+    const app=document.getElementById('app');
+    const nav=document.getElementById('nav');
+    if(login){login.style.display='none';login.setAttribute('aria-hidden','true');}
+    if(app){app.style.display='block';app.classList.remove('hide');}
+    if(nav){nav.classList.remove('hide');nav.style.display='grid';}
+    const account=document.querySelector('.kd-account');if(account)account.style.display='';
+    window.scrollTo(0,0);
+    return true;
+  }catch(e){
+    console.error('Transisi login → aplikasi gagal:',e);
+    return false;
+  }
+}
+window.kdEnterAppUI=kdEnterAppUI;
+
 async function doLogin(){
   const u=(document.getElementById('user')?.value||'').trim(),pw=document.getElementById('pass')?.value||'',msg=document.getElementById('loginMsg');
   if(!u||!pw){if(msg)msg.textContent='Username dan password wajib diisi.';return}
@@ -398,7 +419,11 @@ async function doLogin(){
   try{
     if(!window.KerjaDesaAuthAPI)throw new Error('Modul autentikasi belum siap.');
     const result=await window.KerjaDesaAuthAPI.login(u,pw);
-    if(result?.success){show();return}
+    if(result?.success){
+      kdEnterAppUI();
+      await show();
+      return;
+    }
     if(msg)msg.textContent='Login gagal.';
   }catch(e){
     console.warn('Login server gagal.',e);
@@ -407,7 +432,7 @@ async function doLogin(){
 }
 async function show(){
   if(sessionStorage.getItem('kd_login')!=='1'){kdShowLoginScreen('Sesi tidak aktif. Silakan masuk kembali.');return false;}
-  document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';document.getElementById('nav').classList.remove('hide');const account=document.querySelector('.kd-account');if(account)account.style.display='';
+  kdEnterAppUI();
   try{
     if(window.KerjaDesaSecureStorage){data=await window.KerjaDesaSecureStorage.load(data);window.data=data;}
     // Restore persisted documentation photos into the runtime collection before
