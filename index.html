@@ -853,7 +853,10 @@ async function readPdfBasic(file){
     if(text)return text;
   }catch(e){}
 
-  throw new Error('PDF tidak dapat dibaca. Server: '+serverError);
+  const scanError=/tidak mengandung teks|tidak ada teks|no text|empty text/i.test(serverError);
+  const err=new Error(scanError?'PDF ini berupa hasil scan/gambar dan belum dapat dibaca otomatis.':'PDF tidak dapat dibaca. Server: '+serverError);
+  if(scanError)err.code='PDF_SCANNED';
+  throw err;
 }
 function cleanText(t){return String(t||'').replace(/\u0000/g,' ').replace(/\r/g,'\n').replace(/\b\d+\s*\/\s*\d+\s+No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/No\.\s+Tanggal\s+Waktu\s+Durasi\s+Jenis(?: Kegiatan)?/gi,' ').replace(/[ \t]+/g,' ').replace(/\n{2,}/g,'\n').trim()}
 function normText(t){return cleanText(t).replace(/\s+/g,' ').trim()}
