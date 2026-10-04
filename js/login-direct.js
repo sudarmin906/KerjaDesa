@@ -49,9 +49,13 @@
     }
     setMsg('Menghubungkan ke server...');
     try{
-      await window.KerjaDesaAuthAPI.login(user,pass);
+      const result=await window.KerjaDesaAuthAPI.login(user,pass);
+      if(!result?.success) throw new Error(result?.message||'Login gagal.');
       setMsg('Login berhasil. Membuka KerjaDesa...');
-      if(typeof window.show==='function') window.show();
+      // Do the visual transition independently from optional UI wrappers.
+      // This prevents a successful server login from remaining on the login screen.
+      if(typeof window.kdEnterAppUI==='function') window.kdEnterAppUI();
+      if(typeof window.show==='function') await window.show();
       else window.location.reload();
     }catch(e){
       console.warn('Login server gagal:',e);
