@@ -631,6 +631,16 @@ async function resourceHandler(req, res, resource, id, method, auth) {
   return sendJson(res, 405, { success: false, message: 'Method tidak didukung.' });
 }
 
+function pdfEngineStatus() {
+  let pdftotext = false;
+  try {
+    const probe = spawn('pdftotext', ['-v'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    probe.kill?.();
+    pdftotext = true;
+  } catch (_) {}
+  return { pdftotext, pdf_parse: true, extractor: pdftotext ? 'pdftotext' : 'pdf-parse' };
+}
+
 function extractWithPdftotext(buffer) {
   return new Promise((resolve, reject) => {
     const child = spawn('pdftotext', ['-layout', '-', '-'], { stdio: ['pipe', 'pipe', 'pipe'] });
@@ -640,8 +650,8 @@ function extractWithPdftotext(buffer) {
       if (done) return;
       done = true;
       try { child.kill('SIGKILL'); } catch (_) {}
-      reject(new Error('pdftotext timeout'));
-    }, 12000);
+      reject(Object.assign(new Error('pdftotext timeout'), { code: 'PDF_EXTRACT_TIMEOUT' }));
+    }, 15000);
     child.stdout.on('data', chunk => out.push(chunk));
     child.stderr.on('data', chunk => err.push(chunk));
     child.on('error', error => {
@@ -662,42 +672,61 @@ async function extractDrpPdf(req, res) {
   const MAX_BYTES = 15 * 1024 * 1024;
   const chunks = [];
   let total = 0;
+  let timeoutId = null;
+  let timedOut = false;
   try {
-    req.setTimeout?.(25000);
+    timeoutId = setTimeout(() => { timedOut = true; try { req.destroy(); } catch (_) {} }, 25000);
     for await (const chunk of req) {
+      if (timedOut) throw Object.assign(new Error('Permintaan PDF melebihi batas waktu 25 detik.'), { code: 'PDF_REQUEST_TIMEOUT' });
       total += chunk.length;
-      if (total > MAX_BYTES) return sendJson(res, 413, { success: false, message: 'PDF terlalu besar. Maksimum 15 MB.' });
+      if (total > MAX_BYTES) return sendJson(res, 413, { success: false, code: 'PDF_TOO_LARGE', message: 'PDF terlalu besar. Maksimum 15 MB.' });
       chunks.push(chunk);
     }
-    if (!total) return sendJson(res, 400, { success: false, message: 'File PDF kosong.' });
+    if (!total) return sendJson(res, 400, { success: false, code: 'PDF_EMPTY', message: 'File PDF kosong.' });
     const buffer = Buffer.concat(chunks, total);
     if (buffer.slice(0, 5).toString('ascii') !== '%PDF-') {
-      return sendJson(res, 422, { success: false, message: 'File bukan PDF yang valid.' });
+      return sendJson(res, 422, { success: false, code: 'PDF_INVALID', message: 'File bukan PDF yang valid.' });
     }
 
     let text = '';
-    try {
-      text = String(await extractWithPdftotext(buffer) || '').replace(/\u0000/g, ' ').trim();
-    } catch (popplerError) {
-      console.warn('pdftotext extraction unavailable, trying pdf-parse:', popplerError.message);
+    let extractor = '';
+    const engine = pdfEngineStatus();
+    if (engine.pdftotext) {
+      try {
+        text = String(await extractWithPdftotext(buffer) || '').replace(/\u0000/g, ' ').trim();
+        extractor = 'pdftotext';
+      } catch (error) {
+        console.warn('pdftotext extraction failed; trying pdf-parse fallback:', error?.message || error);
+      }
+    }
+    if (!text) {
       const parser = new PDFParse({ data: buffer, pageJoiner: '\n' });
       try {
         const result = await parser.getText();
         text = String(result?.text || '').replace(/\u0000/g, ' ').trim();
+        extractor = 'pdf-parse';
       } finally {
         await parser.destroy?.();
       }
     }
 
-    if (!text) return sendJson(res, 422, { success: false, message: 'PDF terbaca tetapi tidak mengandung teks.' });
+    if (!text) return sendJson(res, 422, { success: false, code: 'PDF_NO_TEXT', message: 'PDF berhasil diterima tetapi tidak menghasilkan teks.' });
     return sendJson(res, 200, {
       success: true,
       text,
-      pages: (text.match(/\f/g) || []).length + 1
+      pages: (text.match(/\f/g) || []).length + 1,
+      bytes: total,
+      extractor
     });
   } catch (error) {
-    console.error('DRP PDF extraction failed:', error);
-    return sendJson(res, 422, { success: false, message: 'Server gagal membaca PDF DRP: ' + String(error?.message || error).slice(0, 300) });
+    const code = error?.code || 'PDF_EXTRACTION_FAILED';
+    console.error('DRP PDF extraction failed:', error?.message || error);
+    if (!res.headersSent) {
+      const status = code === 'PDF_TOO_LARGE' ? 413 : (code === 'PDF_REQUEST_TIMEOUT' || code === 'PDF_EXTRACT_TIMEOUT' ? 504 : 422);
+      return sendJson(res, status, { success: false, code, message: code === 'PDF_REQUEST_TIMEOUT' ? 'Server tidak menerima PDF dalam batas waktu 25 detik.' : code === 'PDF_EXTRACT_TIMEOUT' ? 'Server berhasil menerima PDF tetapi extractor tidak merespons dalam batas waktu.' : 'Server gagal membaca PDF DRP: ' + String(error?.message || error).slice(0, 300) });
+    }
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
 }
 
