@@ -98,6 +98,8 @@ const KerjaDesaAuthAPI = {
       throw err;
     }
     const data = await response.json();
+    if(data.csrf_token)sessionStorage.setItem('kd_csrf_token',String(data.csrf_token));
+    if(data.remember_me!==undefined)sessionStorage.setItem('kd_remember_me',data.remember_me?'1':'0');
     return data.user || null;
   },
 
