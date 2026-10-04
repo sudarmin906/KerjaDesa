@@ -2465,6 +2465,27 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
       el.className='kd-file-name ok';
       el.title=names.join('\n');
     }
+    // DRP: this final file-bridge is the authoritative handoff from the
+    // native File Input to the real parser. This runs after the browser
+    // has populated input.files, including Android WebView/PWA.
+    if(kind==='drp' && files.length && !window.__kdDrpBridgeBusy){
+      window.__kdDrpBridgeBusy=true;
+      const start=()=>{
+        const current=document.getElementById('drpFile');
+        const file=current?.files?.[0];
+        if(!file){window.__kdDrpBridgeBusy=false;return;}
+        const handler=window.kdProcessSelectedDrp;
+        const work=typeof handler==='function'
+          ? handler(current)
+          : (typeof autoProcessOne==='function' ? autoProcessOne('drp',file) : Promise.reject(new Error('Mesin pemrosesan DRP belum siap.')));
+        Promise.resolve(work).catch(err=>{
+          console.error('DRP file bridge:',err);
+          const s=document.getElementById('drpStatus');
+          if(s)s.innerHTML='<span class="warn">❌ Gagal memulai pemrosesan DRP: '+esc(err?.message||err)+'</span>';
+        }).finally(()=>{window.__kdDrpBridgeBusy=false;});
+      };
+      setTimeout(start,0);
+    }
   }
   function bind(){
     for(const [id,status,kind] of map){
