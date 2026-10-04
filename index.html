@@ -414,6 +414,13 @@ async function show(){
     // any report is generated. Without this, photos saved in the secure vault
     // could appear in the Documentation screen but be missing from report G.
     activityPhotos=Array.isArray(data.docs?.activityPhotos)?data.docs.activityPhotos:[];
+    try{
+      if(window.KerjaDesaSecureStorage?.loadNamed){
+        const savedPhotos=await window.KerjaDesaSecureStorage.loadNamed('activityPhotos',null);
+        if(Array.isArray(savedPhotos)&&savedPhotos.length) activityPhotos=savedPhotos;
+      }
+    }catch(e){console.warn('Gagal memuat vault foto terpisah:',e)}
+    data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;
     loadAppSettings();
     render();kdLoadServerDashboard();
     let s={};try{s=JSON.parse(localStorage.getItem('kerjadesa_settings')||'{}')||{}}catch(e){}
@@ -1149,7 +1156,13 @@ async function loadActivityPhotoFiles(files){
   });
  }
  activityPhotos.forEach(p=>matchPhotoToDrp(p,acts));
- data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;photoOcrBusy=false;save();renderMediaPreviews();
+ data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;
+ photoOcrBusy=false;
+ try{
+   if(window.KerjaDesaSecureStorage?.saveNamed) await window.KerjaDesaSecureStorage.saveNamed('activityPhotos',activityPhotos);
+ }catch(e){console.error('Vault foto gagal disimpan:',e)}
+ await save();
+ renderMediaPreviews();
  if(st){
   const ambiguous=needsOcr.filter(x=>x.date&&dateCounts[dateKey(x.date)]>1).length;
   st.textContent=activityPhotos.length+' foto selesai dianalisis. '+(needsOcr.length?'OCR digunakan untuk '+needsOcr.length+' foto (termasuk '+ambiguous+' foto dengan tanggal yang ambigu).':'Semua foto memiliki tanggal unik sehingga OCR tidak diperlukan.');
@@ -1177,7 +1190,7 @@ function dateKey(s){
  m=x.toLowerCase().match(/(\d{1,2})\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+(20\d{2})/);
  return m?m[1].padStart(2,'0')+'/'+String(months[m[2]]).padStart(2,'0')+'/'+m[3]:x;
 }
-function safeMediaUrl(v){const s=String(v??'').trim();if(!s)return '';try{const u=new URL(s,location.href);if(u.protocol==='blob:'||u.protocol==='https:'||u.protocol==='http:')return u.href;if(u.protocol==='data:'&&/^data:image\/(png|jpeg|jpg|webp|gif);base64,/i.test(s))return s;}catch(e){}return ''}
+function safeMediaUrl(v){const s=String(v??'').trim();if(!s)return '';try{const u=new URL(s,location.href);if(u.protocol==='blob:'||u.protocol==='https:'||u.protocol==='http:')return u.href;if(u.protocol==='data:'&&/^data:image\/[^;,]+;base64,/i.test(s))return s;}catch(e){}return ''}
 function locationVillage(s){let x=String(s||'').replace(/^SULAWESI BARAT\s*\/?/i,'').trim();const p=x.split('/').map(v=>v.trim()).filter(Boolean);return p.length?p[p.length-1]:x||'-'}
 function deriveNarratives(acts){
  const t=acts.map(x=>String(x.deskripsi||'')).join(' ').replace(/\s+/g,' ').trim(),l=t.toLowerCase(),has=(...w)=>w.some(k=>l.includes(k)),tujuan=[],hasil=[],follow=[],recs=[];
