@@ -80,3 +80,20 @@ CREATE INDEX IF NOT EXISTS idx_kegiatan_desa ON kegiatan(desa_id);
 CREATE INDEX IF NOT EXISTS idx_monitoring_kegiatan ON monitoring(kegiatan_id);
 CREATE INDEX IF NOT EXISTS idx_dokumen_desa ON dokumen(desa_id);
 CREATE INDEX IF NOT EXISTS idx_laporan_periode ON laporan(tahun, bulan);
+
+
+-- Server-side opaque authentication sessions.
+-- Only a SHA-256 token fingerprint is stored; the raw session token remains in
+-- the Secure/HttpOnly browser cookie.
+CREATE TABLE IF NOT EXISTS auth_sessions (
+  id BIGSERIAL PRIMARY KEY,
+  token_hash CHAR(64) NOT NULL UNIQUE,
+  user_id BIGINT NOT NULL,
+  remember_me BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_user ON auth_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires ON auth_sessions(expires_at);
