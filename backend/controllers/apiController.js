@@ -674,7 +674,12 @@ async function extractDrpPdf(req, res) {
   let timeoutId = null;
   let timedOut = false;
   try {
-    timeoutId = setTimeout(() => { timedOut = true; try { req.destroy(); } catch (_) {} }, 25000);
+    timeoutId = setTimeout(() => {
+      if (res.headersSent) return;
+      timedOut = true;
+      sendJson(res, 504, { success: false, code: 'PDF_REQUEST_TIMEOUT', message: 'Server tidak menerima PDF dalam batas waktu 25 detik.' });
+      try { req.destroy(); } catch (_) {}
+    }, 25000);
     for await (const chunk of req) {
       if (timedOut) throw Object.assign(new Error('Permintaan PDF melebihi batas waktu 25 detik.'), { code: 'PDF_REQUEST_TIMEOUT' });
       total += chunk.length;
