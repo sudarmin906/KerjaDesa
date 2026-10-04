@@ -46,23 +46,39 @@ const KerjaDesaAuthAPI = {
     }
   },
 
-  async login(username, password) {
-    const response = await fetch(this.baseURL() + '/auth/login', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
+  async login(username, password, rememberMe = false) {
+    let response;
+    try {
+      response = await fetch(this.baseURL() + '/auth/login', {
+        method: 'POST',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ username, password, remember_me: !!rememberMe })
+      });
+    } catch (error) {
+      const err = new Error('Tidak dapat terhubung ke server.');
+      err.code = 'AUTH_NETWORK_ERROR';
+      throw err;
+    }
+
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Login gagal');
+      const err = new Error(data.message || 'Server authentication sedang bermasalah. Silakan coba lagi.');
+      err.status = response.status;
+      err.code = data.code || 'AUTH_UNKNOWN_ERROR';
+      throw err;
     }
+
     sessionStorage.removeItem('kd_auth_token');
     sessionStorage.setItem('kd_csrf_token', data.csrf_token || '');
     sessionStorage.setItem('kd_user', JSON.stringify(data.user || {}));
     sessionStorage.setItem('kd_login', '1');
-    // Saving is best-effort and browser-managed; it never blocks login.
-    void this.saveBrowserCredential(username, password);
+    sessionStorage.setItem('kd_remember_me', data.remember_me ? '1' : '0');
+
+    // Passwords are never written to KerjaDesa storage. When requested,
+    // delegate credential persistence to the browser/OS password manager.
+    if (rememberMe) void this.saveBrowserCredential(username, password);
     return data;
   },
 
@@ -94,6 +110,7 @@ const KerjaDesaAuthAPI = {
     sessionStorage.removeItem('kd_auth_token');
     sessionStorage.removeItem('kd_csrf_token');
     sessionStorage.removeItem('kd_user');
+    sessionStorage.removeItem('kd_remember_me');
   }
 };
 
