@@ -1089,8 +1089,11 @@ async function extractExifDate(file){
  return ''
 }
 async function detectPhotoDate(file){
- const byName=extractPhotoDate(file?.name||'');if(byName)return byName;
- const exif=await extractExifDate(file);return exif||''
+ const byName=extractPhotoDate(file?.name||'');
+ if(byName)return {date:byName,source:'filename'};
+ const exif=await extractExifDate(file);
+ if(exif)return {date:exif,source:'EXIF'};
+ return {date:'',source:''};
 }
 function photoTokens(s){return String(s||'').toLowerCase().replace(/[^a-z0-9à-ÿ]+/gi,' ').split(/\s+/).filter(w=>w.length>=4)}
 function sameDayMonth(a,b){
@@ -1178,16 +1181,18 @@ function matchPhotoToDrp(photo,acts){
  photo.matchConfidence='tinggi';
  return photo;
 }
-function choosePhotoDrpDate(metadataDate,ocrDates,acts){
+function choosePhotoDrpDate(metadataDate,ocrDates,acts,metadataSource){
  const md=dateKey(metadataDate);
  const drpDates=new Set((Array.isArray(acts)?acts:[]).map(a=>dateKey(a?.tanggal)).filter(Boolean));
  const candidates=[...(Array.isArray(ocrDates)?ocrDates:[])].map(dateKey).filter(Boolean);
- // Prefer an OCR date that is actually present in DRP. This prevents a
- // filesystem/EXIF date from overriding the date printed on the field photo.
+ // Trust the actual file metadata first. OCR can read a printed date, report
+ // header, watermark, or another date in the image and therefore must not
+ // overwrite a valid filename/EXIF date merely because that OCR date exists in DRP.
+ if(md&&drpDates.has(md))return md;
+ // OCR is the fallback when no usable metadata date exists in the DRP.
  const ocrDrp=candidates.find(d=>drpDates.has(d));
  if(ocrDrp)return ocrDrp;
- if(md&&drpDates.has(md))return md;
- return candidates[0]||md||'';
+ return md||candidates[0]||'';
 }
 async function ocrPhoto(file,index,total){
  try{
@@ -1204,7 +1209,7 @@ async function loadActivityPhotos(input){
  const files=[...input.files];await loadActivityPhotoFiles(files);input.value='';
 }
 (function kdPhotoRuntimeGuard(){
- const VERSION='PHOTO-RUNTIME-2026.10.04-05';
+ const VERSION='PHOTO-RUNTIME-2026.10.04-06';
  window.KERJADESA_PHOTO_ENGINE_VERSION=VERSION;
  async function run(input){
    const files=[...(input?.files||[])];
@@ -1267,13 +1272,13 @@ async function runPhotoOcrQueue(){
        if(!p)continue;
        try{
          const r=await ocrPhoto(item.file,j,batch.length);
-         const metadataDate=p.date||'';
+         const metadataDate=p.metadataDate||p.date||'';
          p.ocrText=r?.text||'';
          p.ocrDate=r?.date||'';
          p.ocrDates=Array.isArray(r?.dates)?r.dates:[];
-         const resolvedDate=choosePhotoDrpDate(metadataDate,p.ocrDates,acts);
+         const resolvedDate=choosePhotoDrpDate(metadataDate,p.ocrDates,acts,p.metadataSource);
          p.date=resolvedDate;
-         p.source=p.date?(p.ocrDates.length?'OCR ↔ DRP date':'Metadata file ↔ DRP date'):'Belum terdeteksi';
+         p.source=p.date?(p.metadataDate?(p.metadataSource==='EXIF'?'EXIF ↔ DRP date':'Nama file ↔ DRP date'):'OCR ↔ DRP date'):'Belum terdeteksi';
          matchPhotoToDrp(p,acts);
          delete p._photoKey;
          await persistActivityPhotos();
@@ -1326,18 +1331,22 @@ async function loadActivityPhotoFiles(files){
  const items=[];
  for(const item of uniqueFiles){
    const f=item.file;
-   const date=await detectPhotoDate(f);
+   const detected=await detectPhotoDate(f);
    const dataUrl=await readAsDataURL(f);
+   const metadataDate=detected?.date||'';
+   const metadataSource=detected?.source||'';
    const photo={
      name:f.name,
      size:Number(f.size||0),
      lastModified:Number(f.lastModified||0),
      url:dataUrl,
-     date:date||'',
+     date:metadataDate,
+     metadataDate,
+     metadataSource,
      ocrText:'',
      ocrDate:'',
      ocrDates:[],
-     source:date?'Nama file/EXIF':'Menunggu OCR',
+     source:metadataDate?(metadataSource==='EXIF'?'EXIF':'Nama file'):'Menunggu OCR',
      matchedActivityIndex:null,
      matchedActivityNo:null,
      matchedActivityDate:'',
@@ -1531,9 +1540,9 @@ async function makeReport(){const d=data.docs||{},drp=getReportDrp(),h=drp?.head
  // This lets an existing upload recover from a previous weak OCR decision.
  activityPhotos.forEach(p=>{
    if(Array.isArray(p.ocrDates)&&p.ocrDates.length){
-     p.date=choosePhotoDrpDate(p.date,p.ocrDates,allActs);
+     p.date=choosePhotoDrpDate(p.metadataDate||p.date,p.ocrDates,allActs,p.metadataSource);
    }else if(p.ocrDate){
-     p.date=choosePhotoDrpDate(p.date,[p.ocrDate],allActs);
+     p.date=choosePhotoDrpDate(p.metadataDate||p.date,[p.ocrDate],allActs,p.metadataSource);
    }
    matchPhotoToDrp(p,allActs);
  });
