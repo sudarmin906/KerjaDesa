@@ -1097,66 +1097,112 @@ function sameDayMonth(a,b){
  const px=x.split('/'),py=y.split('/');
  return px[0]===py[0]&&px[1]===py[1];
 }
+function drpActivityKey(act){
+ const d=dateKey(act?.tanggal);
+ const n=String(act?.no??'').trim();
+ return (d||'')+'|'+(n||'');
+}
 function scorePhotoActivity(photo,act){
  let score=0;
- const pd=dateKey(photo.date),ad=dateKey(act.tanggal);
- // A photo with a known capture date must NEVER be assigned to another DRP date.
- // Date is the primary key; text/location is only a tie-breaker for activities
- // that occur on the same date.
+ const pd=dateKey(photo?.date),ad=dateKey(act?.tanggal);
+ // HARD RULE: a known photo date may only match the same DRP date.
  if(pd&&ad&&pd!==ad)return -1;
  if(pd&&ad&&pd===ad)score+=10000;
- const photoText=((photo.ocrText||'')+' '+(photo.name||'')).toLowerCase();
- const actText=((act.judul||'')+' '+(act.deskripsi||'')+' '+(act.lokasi||'')+' '+(act.jenis||'')).toLowerCase();
+ const photoText=((photo?.ocrText||'')+' '+(photo?.name||'')).toLowerCase();
+ const actText=((act?.judul||'')+' '+(act?.deskripsi||'')+' '+(act?.lokasi||'')+' '+(act?.jenis||'')).toLowerCase();
  const a=new Set(photoTokens(photoText)),b=photoTokens(actText);
  b.forEach(w=>{if(a.has(w))score+=2});
- const village=locationVillage(act.lokasi).toLowerCase().trim();
+ const village=locationVillage(act?.lokasi).toLowerCase().trim();
  if(village&&village!=='-'&&photoText.includes(village))score+=180;
- const locTokens=photoTokens(act.lokasi||'').filter(w=>w.length>=5);
+ const locTokens=photoTokens(act?.lokasi||'').filter(w=>w.length>=5);
  locTokens.forEach(w=>{if(a.has(w))score+=25});
  return score;
 }
+function findActivityForPhoto(photo,acts){
+ const list=Array.isArray(acts)?acts:[];
+ if(photo?.matchedActivityNo!=null){
+   const no=String(photo.matchedActivityNo);
+   const byNo=list.find(a=>String(a?.no??'')===no && (!photo.matchedActivityDate || dateKey(a?.tanggal)===dateKey(photo.matchedActivityDate)));
+   if(byNo)return byNo;
+ }
+ if(photo?.matchedActivityKey){
+   const byKey=list.find(a=>drpActivityKey(a)===photo.matchedActivityKey);
+   if(byKey)return byKey;
+ }
+ if(photo?.date){
+   const dk=dateKey(photo.date),same=list.filter(a=>dk&&dateKey(a?.tanggal)===dk);
+   if(same.length===1)return same[0];
+ }
+ return null;
+}
 function matchPhotoToDrp(photo,acts){
- if(photo?.matchConfidence==='manual'&&Number.isInteger(photo.matchedActivityIndex)&&acts[photo.matchedActivityIndex]){
-  const a=acts[photo.matchedActivityIndex];
-  photo.matchedActivityNo=a.no||photo.matchedActivityIndex+1;
-  photo.matchScore=scorePhotoActivity(photo,a);
-  return photo;
+ const list=Array.isArray(acts)?acts:[];
+ // Manual mapping is preserved, but stored by stable DRP number/date instead of array position.
+ if(photo?.matchConfidence==='manual'){
+   const manual=findActivityForPhoto(photo,list);
+   if(manual){
+     photo.matchedActivityNo=manual.no||null;
+     photo.matchedActivityDate=dateKey(manual.tanggal)||'';
+     photo.matchedActivityKey=drpActivityKey(manual);
+     photo.matchedActivityIndex=list.indexOf(manual);
+     photo.reportDate=manual.tanggal||'';
+     photo.matchScore=scorePhotoActivity(photo,manual);
+     return photo;
+   }
  }
  const pd=dateKey(photo?.date);
- let best=-1,bestScore=-1;
- acts.forEach((a,i)=>{
+ let best=null,bestScore=-1;
+ list.forEach(a=>{
    const s=scorePhotoActivity(photo,a);
-   if(s>bestScore){bestScore=s;best=i}
+   if(s>bestScore){bestScore=s;best=a}
  });
- // No date = do not guess. A date-known photo must have an exact DRP date.
- if(pd){
-   if(best<0||bestScore<10000){best=-1;bestScore=0}
- }else{
-   best=-1;bestScore=0;
+ // Never guess a photo without a date. Known dates must exactly match DRP.
+ if(!pd||!best||bestScore<10000){
+   photo.matchedActivityIndex=null;
+   photo.matchedActivityNo=null;
+   photo.matchedActivityDate=pd||'';
+   photo.matchedActivityKey='';
+   photo.reportDate='';
+   photo.matchScore=0;
+   photo.matchConfidence='belum cocok';
+   return photo;
  }
- photo.matchedActivityIndex=best>=0?best:null;
- photo.matchedActivityNo=best>=0?(acts[best].no||best+1):null;
- photo.reportDate=best>=0?acts[best].tanggal:'';
+ photo.matchedActivityIndex=list.indexOf(best);
+ photo.matchedActivityNo=best.no||photo.matchedActivityIndex+1;
+ photo.matchedActivityDate=dateKey(best.tanggal)||pd;
+ photo.matchedActivityKey=drpActivityKey(best);
+ photo.reportDate=best.tanggal||'';
  photo.matchScore=bestScore;
- photo.matchConfidence=best>=0?'tinggi':'belum cocok';
+ photo.matchConfidence='tinggi';
  return photo;
+}
+function choosePhotoDrpDate(metadataDate,ocrDates,acts){
+ const md=dateKey(metadataDate);
+ const drpDates=new Set((Array.isArray(acts)?acts:[]).map(a=>dateKey(a?.tanggal)).filter(Boolean));
+ const candidates=[...(Array.isArray(ocrDates)?ocrDates:[])].map(dateKey).filter(Boolean);
+ // Prefer an OCR date that is actually present in DRP. This prevents a
+ // filesystem/EXIF date from overriding the date printed on the field photo.
+ const ocrDrp=candidates.find(d=>drpDates.has(d));
+ if(ocrDrp)return ocrDrp;
+ if(md&&drpDates.has(md))return md;
+ return candidates[0]||md||'';
 }
 async function ocrPhoto(file,index,total){
  try{
-  const T=await loadTesseract();if(!T)return{text:'',date:''};
+  const T=await loadTesseract();if(!T)return{text:'',date:'',dates:[]};
   const worker=await getPhotoOcrWorker();
   const st=document.getElementById('photoOcrStatus');
-  if(st)st.textContent='🔎 OCR hanya untuk foto tanpa tanggal nama file — '+(index+1)+'/'+total;
+  if(st)st.textContent='🔎 OCR tanggal/keterangan foto — '+(index+1)+'/'+total;
   const r=await worker.recognize(file);
   const text=r?.data?.text||'',dates=extractDatesFromOcr(text);
-  return{text,date:dates[0]||''};
- }catch(e){console.warn('OCR foto gagal',e);return{text:'',date:''}}
+  return{text,date:dates[0]||'',dates};
+ }catch(e){console.warn('OCR foto gagal',e);return{text:'',date:'',dates:[]}}
 }
 async function loadActivityPhotos(input){
  const files=[...input.files];await loadActivityPhotoFiles(files);input.value='';
 }
 (function kdPhotoRuntimeGuard(){
- const VERSION='PHOTO-RUNTIME-2026.10.04-03';
+ const VERSION='PHOTO-RUNTIME-2026.10.04-04';
  window.KERJADESA_PHOTO_ENGINE_VERSION=VERSION;
  async function run(input){
    const files=[...(input?.files||[])];
@@ -1230,10 +1276,13 @@ async function loadActivityPhotoFiles(files){
          const idx=activityPhotos.findIndex(p=>String(p.name||'').toLowerCase()===String(x.f.name||'').toLowerCase());
          if(idx>=0){
            const p=activityPhotos[idx];
+           const metadataDate=p.date||'';
            p.ocrText=r?.text||'';
            p.ocrDate=r?.date||'';
-           p.date=r?.date||p.date||'';
-           p.source=p.date?(r?.date?'OCR tanggal foto':'Metadata file'):'Belum terdeteksi';
+           p.ocrDates=Array.isArray(r?.dates)?r.dates:[];
+           const resolvedDate=choosePhotoDrpDate(metadataDate,p.ocrDates,acts);
+           p.date=resolvedDate;
+           p.source=p.date?(p.ocrDates.length?'OCR ↔ DRP date':'Metadata file ↔ DRP date'):'Belum terdeteksi';
            matchPhotoToDrp(p,acts);
          }
          data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;
@@ -1256,8 +1305,8 @@ async function loadActivityPhotoFiles(files){
    if(st)st.textContent=activityPhotos.length+' foto selesai diproses dan siap dimasukkan ke laporan.';
  }
 }
-function setPhotoActivity(photoIndex,activityIndex){const p=activityPhotos[Number(photoIndex)];if(!p)return;const idx=activityIndex===''?null:Number(activityIndex);p.matchedActivityIndex=Number.isInteger(idx)&&idx>=0?idx:null;const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];p.matchedActivityNo=p.matchedActivityIndex!=null?(acts[p.matchedActivityIndex]?.no||p.matchedActivityIndex+1):null;p.reportDate=p.matchedActivityIndex!=null?(acts[p.matchedActivityIndex]?.tanggal||''):'';p.matchScore=p.matchedActivityIndex!=null?scorePhotoActivity(p,acts[p.matchedActivityIndex]):0;p.matchConfidence=p.matchedActivityIndex!=null?'manual':'belum cocok';data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;save();renderMediaPreviews()}
-function renderMediaPreviews(){const d=data.docs||{};profilePhoto=d.profilePhoto||profilePhoto;logoPhoto=d.logoPhoto||'';activityPhotos=d.activityPhotos||[];const pp=document.getElementById('profilePreview'),lp=document.getElementById('logoPreview'),pr=document.getElementById('photoPreview');if(pp){const u=safeMediaUrl(profilePhoto);pp.innerHTML=u?'<img class="profile-preview" src="'+esc(u)+'" alt="Foto profil">':'';}if(lp){const u=safeMediaUrl(logoPhoto);lp.innerHTML=u?'<img class="logo-preview" src="'+esc(u)+'" alt="Logo Kemendesa">':'<span class="small muted">Belum ada logo. Upload logo resmi Kemendesa.</span>';}if(pr){const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];pr.innerHTML=activityPhotos.map((p,i)=>{const a=p.matchedActivityIndex!=null?acts[p.matchedActivityIndex]:null;const u=safeMediaUrl(p.url);const options='<option value="">Pilih kegiatan DRP</option>'+acts.map((x,j)=>'<option value="'+j+'"'+(p.matchedActivityIndex===j?' selected':'')+'>'+esc((x.no||j+1)+'. '+shortActivityTitle(x))+'</option>').join('');return '<div class="photo-card">'+(u?'<img src="'+esc(u)+'" alt="Foto '+(i+1)+'">':'')+'<div class="photo-meta">'+esc(p.name)+(p.date?'<br>Tanggal: '+esc(p.date):'<br><b>Tanggal belum terbaca</b>')+(a?'<br>DRP: <b>'+esc(shortActivityTitle(a))+'</b>':'<br><span class="muted">Belum cocok dengan DRP</span>')+'<br><span class="small muted">Kecocokan: '+esc(p.matchConfidence||'belum cocok')+'</span><select style="margin-top:6px" onchange="setPhotoActivity('+i+',this.value)">'+options+'</select></div></div>'}).join('');}}
+function setPhotoActivity(photoIndex,activityIndex){const p=activityPhotos[Number(photoIndex)];if(!p)return;const idx=activityIndex===''?null:Number(activityIndex);const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];const a=Number.isInteger(idx)&&idx>=0?acts[idx]:null;p.matchedActivityIndex=a?idx:null;p.matchedActivityNo=a?.no||null;p.matchedActivityDate=a?dateKey(a.tanggal):'';p.matchedActivityKey=a?drpActivityKey(a):'';p.reportDate=a?.tanggal||'';p.matchScore=a?scorePhotoActivity(p,a):0;p.matchConfidence=a?'manual':'belum cocok';data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;save();renderMediaPreviews()}
+function renderMediaPreviews(){const d=data.docs||{};profilePhoto=d.profilePhoto||profilePhoto;logoPhoto=d.logoPhoto||'';activityPhotos=d.activityPhotos||[];const pp=document.getElementById('profilePreview'),lp=document.getElementById('logoPreview'),pr=document.getElementById('photoPreview');if(pp){const u=safeMediaUrl(profilePhoto);pp.innerHTML=u?'<img class="profile-preview" src="'+esc(u)+'" alt="Foto profil">':'';}if(lp){const u=safeMediaUrl(logoPhoto);lp.innerHTML=u?'<img class="logo-preview" src="'+esc(u)+'" alt="Logo Kemendesa">':'<span class="small muted">Belum ada logo. Upload logo resmi Kemendesa.</span>';}if(pr){const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];pr.innerHTML=activityPhotos.map((p,i)=>{const a=findActivityForPhoto(p,acts);const u=safeMediaUrl(p.url);const options='<option value="">Pilih kegiatan DRP</option>'+acts.map((x,j)=>'<option value="'+j+'"'+(p.matchedActivityIndex===j?' selected':'')+'>'+esc((x.no||j+1)+'. '+shortActivityTitle(x))+'</option>').join('');return '<div class="photo-card">'+(u?'<img src="'+esc(u)+'" alt="Foto '+(i+1)+'">':'')+'<div class="photo-meta">'+esc(p.name)+(p.date?'<br>Tanggal: '+esc(p.date):'<br><b>Tanggal belum terbaca</b>')+(a?'<br>DRP: <b>'+esc(shortActivityTitle(a))+'</b>':'<br><span class="muted">Belum cocok dengan DRP</span>')+'<br><span class="small muted">Kecocokan: '+esc(p.matchConfidence||'belum cocok')+'</span><select style="margin-top:6px" onchange="setPhotoActivity('+i+',this.value)">'+options+'</select></div></div>'}).join('');}}
 function photosForDate(date){return activityPhotos.filter(p=>p.date&&p.date===date)}
 
 function monthNameFromPeriod(p){
@@ -1329,16 +1378,21 @@ function shortActivityTitle(x){
 function buildVisitRows(acts){return acts.map((x,i)=>'<tr><td>'+ (i+1) +'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(locationVillage(x.lokasi))+'</td><td>'+esc(x.deskripsi||x.judul||'-')+'</td></tr>').join('')}
 function buildVisitDays(acts){const u=[],s=new Set();acts.forEach(x=>{const k=dateKey(x.tanggal);if(k&&!s.has(k)){s.add(k);u.push(x)}});return u.map((x,i)=>{const p=String(x.lokasi||'').split('/').map(v=>v.trim()).filter(Boolean);const kec=p.length>=3?p[2]:(p[1]||'-');return '<tr><td>Hari ke-'+(i+1)+'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(kec)+'</td><td>'+esc(locationVillage(x.lokasi))+'</td></tr>'}).join('')}
 function buildDocumentation(acts){
+ const list=Array.isArray(acts)?acts:[];
  const groups=[],used=new Set();
- // Prefer an exact DRP match by index/date, but never hide an uploaded photo
- // merely because OCR/name-date matching failed.
- acts.forEach((act,idx)=>{
+ // FINAL MATCH RULE:
+ // 1) stable DRP key (date + DRP number);
+ // 2) exact date only when that date occurs once in the report;
+ // 3) NEVER same-month fallback.
+ list.forEach(act=>{
+   const key=drpActivityKey(act),dk=dateKey(act?.tanggal);
+   const sameDateCount=list.filter(x=>dateKey(x?.tanggal)===dk).length;
    const photos=activityPhotos.filter((p,pi)=>{
      if(used.has(pi))return false;
-     const exactIndex=p.matchedActivityIndex===idx;
-     const exactDate=!!(p.date&&dateKey(p.date)===dateKey(act.tanggal));
-     const monthDate=!!(p.date&&sameDayMonth(p.date,act.tanggal));
-     if(exactIndex||exactDate||monthDate){used.add(pi);return true}
+     const exactKey=!!key && p.matchedActivityKey===key;
+     const exactNo=String(p.matchedActivityNo??'')!=='' && String(p.matchedActivityNo)===String(act?.no??'') && dateKey(p.matchedActivityDate||p.date)===dk;
+     const uniqueDate=!!dk && sameDateCount===1 && dateKey(p?.date)===dk && !p.matchedActivityKey;
+     if(exactKey||exactNo||uniqueDate){used.add(pi);return true}
      return false;
    });
    if(photos.length)groups.push({act,photos});
