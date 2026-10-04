@@ -232,7 +232,7 @@ html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#26344
 <script src="js/deployment-config.js"></script><script src="js/login-direct.js?v=2"></script><script src="js/security-hardening.js?v=1"></script><script src="js/secure-storage.js?v=1"></script><script src="js/security-center.js?v=1"></script><script src="js/frontend-api-config.js"></script><script src="js/api-auth.js"></script><script src="js/connect-integration.js"></script><script src="js/offline-sync.js"></script><script src="js/integrated-domain-modules.js"></script>
 <header class="kd-min-header"><div class="kd-min-brand"><div class="kd-logo-mark" aria-hidden="true"><i></i><i></i><i></i></div><div class="kd-logo-text">KerjaDesa</div></div><div class="kd-account"><button type="button" class="kd-account-btn" aria-label="Menu akun" title="Akun & Pengaturan" data-kd-account-toggle="1">👤</button><div id="kdAccountMenu" class="kd-account-menu"><button type="button" data-kd-account-page="pengaturan">⚙️ <span>Pengaturan</span></button><button type="button" data-kd-account-page="security">🛡️ <span>Pusat Keamanan</span></button><button type="button" id="kdLogoutBtn" data-kd-logout="1">↪ <span>Keluar</span></button></div></div></header>
 <main>
-<section id="login" class="card login-card"><div class="login-hero"><span class="login-tag">Sistem Kerja Pendamping Desa</span><img class="login-photo" src="foto_profil.jpg" alt="Sudarmin Aripuddin"><h2>Selamat Datang di<br><span style="color:#ffd34d">KerjaDesa</span></h2><p>Administrasi, dokumentasi, monitoring, DRP, laporan bulanan, dan SPPD dalam satu aplikasi yang dapat digunakan dari HP.</p><div style="margin-top:10px;font-size:12px;opacity:.85">Kecamatan Sendana • Kabupaten Majene • Sulawesi Barat</div></div><div class="login-form"><h2>Masuk ke Aplikasi</h2><p class="muted">Gunakan akun Anda untuk membuka dashboard KerjaDesa.</p><input id="user" name="username" value="" placeholder="Username" autocomplete="username"><input id="pass" name="password" value="" type="password" placeholder="Password" autocomplete="current-password" data-kd-enter-login="1"><button id="loginBtn" type="button" data-kd-login="1">🔐 Masuk ke KerjaDesa</button><p id="loginMsg" class="muted"></p><div style="margin-top:22px;padding:13px;border-radius:14px;background:#f2f7fb;font-size:12px;color:#66788a"><b>Mode Offline Terkontrol</b><br>Data kerja offline tetap berada di perangkat. Jangan gunakan pada perangkat bersama dan selalu keluar setelah selesai.</div></div></section><section id="app">
+<section id="login" class="card login-card"><div class="login-hero"><span class="login-tag">Sistem Kerja Pendamping Desa</span><img class="login-photo" src="foto_profil.jpg" alt="Sudarmin Aripuddin"><h2>Selamat Datang di<br><span style="color:#ffd34d">KerjaDesa</span></h2><p>Administrasi, dokumentasi, monitoring, DRP, laporan bulanan, dan SPPD dalam satu aplikasi yang dapat digunakan dari HP.</p><div style="margin-top:10px;font-size:12px;opacity:.85">Kecamatan Sendana • Kabupaten Majene • Sulawesi Barat</div></div><div class="login-form"><h2>Masuk ke Aplikasi</h2><p class="muted">Gunakan akun Anda untuk membuka dashboard KerjaDesa.</p><input id="user" name="username" value="" placeholder="Username" autocomplete="username"><input id="pass" name="password" value="" type="password" placeholder="Password" autocomplete="current-password" data-kd-enter-login="1"><label style="display:flex;align-items:center;gap:8px;margin:10px 0 4px;font-size:13px;cursor:pointer"><input id="rememberMe" name="rememberMe" type="checkbox" style="width:auto;margin:0"> <span>Ingat saya di perangkat ini</span></label><button id="loginBtn" type="button" data-kd-login="1">🔐 Masuk ke KerjaDesa</button><p id="loginMsg" class="muted" aria-live="polite"></p><div style="margin-top:22px;padding:13px;border-radius:14px;background:#f2f7fb;font-size:12px;color:#66788a"><b>Mode Offline Terkontrol</b><br>Data kerja offline tetap berada di perangkat. Jangan gunakan pada perangkat bersama dan selalu keluar setelah selesai.</div></div></section><section id="app">
 <div id="home"><div class="welcome card"><div class="welcome-copy"><span class="tag">Mendampingi Desa • Membangun Negeri</span><h2>Selamat Datang di <span>KerjaDesa</span></h2><p class="muted" style="font-size:15px;max-width:650px">Ruang kerja digital untuk mengelola kegiatan, monitoring lapangan, dokumen, laporan bulanan, dan SPPD Pendamping Desa.</p><div id="kdHomeProfileName" style="margin-top:18px;font-weight:800">SUDARMIN ARIPUDDIN</div><div id="kdHomeProfileRole" class="muted" style="font-size:13px">Pendamping Lokal Desa • Kecamatan Sendana • Kabupaten Majene</div></div><div class="welcome-profile"><img src="foto_profil.jpg" alt="Sudarmin Aripuddin"></div></div><div class="stats"><div class="stat-card"><div class="stat-icon si-blue">📋</div><div><div class="stat" id="jmlK">0</div><div class="muted">Kegiatan</div></div></div><div class="stat-card"><div class="stat-icon si-green">📍</div><div><div class="stat" id="jmlM">0</div><div class="muted">Monitoring</div></div></div><div class="stat-card"><div class="stat-icon si-orange">📄</div><div><div class="stat">SPPD</div><div class="muted">Template asli</div></div></div><div class="stat-card"><div class="stat-icon si-purple">📷</div><div><div class="stat">Foto</div><div class="muted">Dokumentasi</div></div></div></div><div class="card kd-data-center" style="margin-top:14px">
 <div class="section-title"><h3>📊 Ringkasan Server</h3><span id="kdServerStatus">Memeriksa...</span></div>
 <div class="grid">
@@ -430,23 +430,48 @@ async function kdRestoreSavedLogin(){
   }
 }
 
+let kdLoginInProgress=false;
 async function doLogin(){
-  const u=(document.getElementById('user')?.value||'').trim(),pw=document.getElementById('pass')?.value||'',msg=document.getElementById('loginMsg');
-  if(!u||!pw){if(msg)msg.textContent='Username dan password wajib diisi.';return}
-  if(msg)msg.textContent='Menghubungkan ke server...';
+  if(kdLoginInProgress)return false;
+  const u=(document.getElementById('user')?.value||'').trim();
+  const pw=document.getElementById('pass')?.value||'';
+  const remember=!!document.getElementById('rememberMe')?.checked;
+  const msg=document.getElementById('loginMsg');
+  const btn=document.getElementById('loginBtn');
+  if(!u||!pw){if(msg)msg.textContent='Username dan password wajib diisi.';return false}
+  kdLoginInProgress=true;
+  if(btn){btn.disabled=true;btn.dataset.originalText=btn.textContent;btn.textContent='⏳ Memproses login...';}
+  if(msg)msg.textContent='Memproses login...';
   try{
     sessionStorage.removeItem('kd_logged_out');
-    if(!window.KerjaDesaAuthAPI)throw new Error('Modul autentikasi belum siap.');
-    const result=await window.KerjaDesaAuthAPI.login(u,pw);
-    if(result?.success){
-      kdEnterAppUI();
-      await show();
-      return;
-    }
-    if(msg)msg.textContent='Login gagal.';
+    if(!window.KerjaDesaAuthAPI?.login)throw Object.assign(new Error('Server authentication sedang bermasalah. Silakan coba lagi.'),{code:'AUTH_CLIENT_UNAVAILABLE'});
+    const result=await window.KerjaDesaAuthAPI.login(u,pw,remember);
+    if(!result?.success)throw Object.assign(new Error('Server authentication sedang bermasalah. Silakan coba lagi.'),{code:'AUTH_UNKNOWN_ERROR'});
+    if(msg)msg.textContent='Login berhasil. Memverifikasi session...';
+    // The API has already created the HttpOnly session. Verify it before
+    // exposing the protected UI so a cookie/session mismatch cannot masquerade
+    // as a successful login.
+    const verified=await window.KerjaDesaAuthAPI.me();
+    if(!verified)throw Object.assign(new Error('Login berhasil tetapi session gagal dibuat. Silakan coba lagi.'),{code:'AUTH_SESSION_VERIFY_FAILED'});
+    sessionStorage.setItem('kd_user',JSON.stringify(verified));
+    kdEnterAppUI();
+    await show();
+    return true;
   }catch(e){
-    console.warn('Login server gagal.',e);
-    if(msg)msg.textContent=e.message||'Server login belum tersedia.';
+    console.warn('Login server gagal:',e?.code||e?.message||e);
+    if(msg){
+      const code=e?.code||'';
+      if(code==='AUTH_INVALID_CREDENTIALS'||e?.status===401) msg.textContent='Username atau password salah.';
+      else if(code==='AUTH_NETWORK_ERROR') msg.textContent='Tidak dapat terhubung ke server.';
+      else if(code==='AUTH_SESSION_CREATE_FAILED'||code==='AUTH_SESSION_VERIFY_FAILED') msg.textContent='Login berhasil tetapi session gagal dibuat. Silakan coba lagi.';
+      else if(code==='AUTH_DATABASE_UNAVAILABLE'||code==='AUTH_SERVER_ERROR'||code==='AUTH_CLIENT_UNAVAILABLE') msg.textContent='Server authentication sedang bermasalah. Silakan coba lagi.';
+      else if(e?.status===429) msg.textContent='Terlalu banyak percobaan login. Coba lagi beberapa menit.';
+      else msg.textContent=e?.message||'Server authentication sedang bermasalah. Silakan coba lagi.';
+    }
+    return false;
+  }finally{
+    kdLoginInProgress=false;
+    if(btn){btn.disabled=false;btn.textContent=btn.dataset.originalText||'🔐 Masuk ke KerjaDesa';}
   }
 }
 async function show(){
@@ -2085,20 +2110,37 @@ kdWorkflowSetup();kdAddHomeQuick();
 
 async function kdRecoverSessionOnBoot(){
   try{
-    if(sessionStorage.getItem('kd_login')!=='1') return;
-    if(window.KerjaDesaAuthAPI?.me && navigator.onLine){
-      const user=await Promise.race([
-        window.KerjaDesaAuthAPI.me(),
-        new Promise(resolve=>setTimeout(()=>resolve(null),4000))
-      ]);
-      if(!user){
-        sessionStorage.removeItem('kd_login');
-        sessionStorage.removeItem('kd_csrf_token');
-        sessionStorage.removeItem('kd_user');
+    if(sessionStorage.getItem('kd_logged_out')==='1') return;
+    const api=window.KerjaDesaAuthAPI;
+    if(!api?.me)return;
+    let user=null;
+    try{
+      user=await api.me();
+    }catch(error){
+      // A transient network/server failure must not silently destroy a valid
+      // client state. Protected API calls will surface the real failure.
+      if(sessionStorage.getItem('kd_login')==='1'){
+        console.warn('Pemeriksaan session sementara gagal:',error?.message||error);
         return;
       }
+      return;
     }
-    if(typeof window.show==='function') await window.show();
+    if(user){
+      sessionStorage.setItem('kd_login','1');
+      sessionStorage.setItem('kd_user',JSON.stringify(user));
+      sessionStorage.removeItem('kd_logged_out');
+      kdEnterAppUI();
+      if(typeof window.show==='function') await window.show();
+      return;
+    }
+    // /auth/me returned 401: the server has definitively rejected the session.
+    sessionStorage.removeItem('kd_login');
+    sessionStorage.removeItem('kd_csrf_token');
+    sessionStorage.removeItem('kd_user');
+    if(typeof kdShowLoginScreen==='function')kdShowLoginScreen('Sesi telah berakhir. Silakan masuk kembali.');
+    // If no persistent server session exists, offer the browser password
+    // manager as the optional credential autofill path.
+    if(api.restoreBrowserCredential) void kdRestoreSavedLogin();
   }catch(e){
     console.warn('Pemulihan sesi aplikasi gagal:',e);
   }
@@ -2107,13 +2149,9 @@ window.kdRecoverSessionOnBoot=kdRecoverSessionOnBoot;
 
 (function(){
   function bootSavedLogin(){
-    if(sessionStorage.getItem('kd_login')==='1'){
-      void kdRecoverSessionOnBoot();
-      return;
-    }
     if(sessionStorage.getItem('kd_logged_out')==='1') return;
-    if(window.KerjaDesaAuthAPI?.restoreBrowserCredential){
-      void kdRestoreSavedLogin();
+    if(window.KerjaDesaAuthAPI?.me){
+      void kdRecoverSessionOnBoot();
     }else{
       setTimeout(bootSavedLogin,400);
     }
