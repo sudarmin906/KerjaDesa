@@ -31,22 +31,24 @@ const KerjaDesaAuthAPI = {
     }
   },
 
-  async restoreBrowserCredential() {
-    try {
-      if (sessionStorage.getItem('kd_login') === '1') return null;
-      if (!window.isSecureContext || !navigator.credentials) return null;
-      const credential = await navigator.credentials.get({
-        password: true,
-        mediation: 'silent'
-      });
-      if (!credential || credential.type !== 'password') return null;
-      return { username: credential.id || '', password: credential.password || '' };
-    } catch (e) {
-      return null;
-    }
-  },
-
+  // Password autofill is intentionally delegated to the browser using
+  // autocomplete=username/current-password on the login form. KerjaDesa never
+  // reads a saved password from navigator.credentials.get().
   async login(username, password, rememberMe = false) {
+    const u=String(username || '').trim();
+    const p=String(password || '');
+    if(!u && !p){
+      const err=new Error('Username dan password wajib diisi.');
+      err.code='AUTH_INPUT_INVALID'; err.status=400; throw err;
+    }
+    if(!u){
+      const err=new Error('Username wajib diisi.');
+      err.code='AUTH_INPUT_INVALID'; err.status=400; throw err;
+    }
+    if(!p){
+      const err=new Error('Password wajib diisi.');
+      err.code='AUTH_INPUT_INVALID'; err.status=400; throw err;
+    }
     let response;
     try {
       response = await fetch(this.baseURL() + '/auth/login', {
@@ -54,7 +56,7 @@ const KerjaDesaAuthAPI = {
         credentials: 'include',
         cache: 'no-store',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ username, password, remember_me: !!rememberMe })
+        body: JSON.stringify({ username: u, password: p, remember_me: !!rememberMe })
       });
     } catch (error) {
       const err = new Error('Tidak dapat terhubung ke server.');
