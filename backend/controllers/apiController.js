@@ -9,6 +9,7 @@ const {
   setAuthResponseCookies,
   clearAuthResponseCookies
 } = require('../middleware/auth');
+const pdfParse = require('pdf-parse');
 
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 10;
@@ -569,6 +570,31 @@ async function resourceHandler(req, res, resource, id, method, auth) {
   return sendJson(res, 405, { success: false, message: 'Method tidak didukung.' });
 }
 
+async function extractDrpPdf(req, res) {
+  const MAX_BYTES = 15 * 1024 * 1024;
+  const chunks = [];
+  let total = 0;
+  try {
+    for await (const chunk of req) {
+      total += chunk.length;
+      if (total > MAX_BYTES) return sendJson(res, 413, { success: false, message: 'PDF terlalu besar. Maksimum 15 MB.' });
+      chunks.push(chunk);
+    }
+    if (!total) return sendJson(res, 400, { success: false, message: 'File PDF kosong.' });
+    const buffer = Buffer.concat(chunks, total);
+    if (buffer.slice(0, 5).toString('ascii') !== '%PDF-') {
+      return sendJson(res, 422, { success: false, message: 'File bukan PDF yang valid.' });
+    }
+    const parsed = await pdfParse(buffer, { max: 0 });
+    const text = String(parsed.text || '').replace(/\u0000/g, ' ').trim();
+    if (!text) return sendJson(res, 422, { success: false, message: 'PDF terbaca tetapi tidak mengandung teks.' });
+    return sendJson(res, 200, { success: true, text, pages: Number(parsed.numpages || 0) });
+  } catch (error) {
+    console.error('DRP PDF extraction failed:', error);
+    return sendJson(res, 422, { success: false, message: 'Server gagal membaca PDF DRP: ' + String(error?.message || error).slice(0, 300) });
+  }
+}
+
 module.exports = {
   login,
   bootstrapAdmin,
@@ -576,5 +602,6 @@ module.exports = {
   logout,
   dashboard,
   resourceHandler,
-  seedAdmin
+  seedAdmin,
+  extractDrpPdf
 };
