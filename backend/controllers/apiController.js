@@ -17,6 +17,18 @@ const LOGIN_MAX_ATTEMPTS = 10;
 const LOGIN_MAX_KEYS = 10000;
 const loginAttempts = new Map();
 
+function authDebug(event, details = {}) {
+  if (String(process.env.AUTH_DEBUG_LOGS || '').toLowerCase() !== 'true') return;
+  const safe = { ...details };
+  delete safe.password;
+  delete safe.password_hash;
+  delete safe.token;
+  delete safe.access_token;
+  delete safe.refresh_token;
+  delete safe.session_secret;
+  console.info('[AUTH] ' + event, safe);
+}
+
 const BOOTSTRAP_WINDOW_MS = 15 * 60 * 1000;
 const BOOTSTRAP_MAX_ATTEMPTS = 5;
 const BOOTSTRAP_MAX_KEYS = 5000;
@@ -365,6 +377,7 @@ async function login(req, res) {
     }
 
     loginAttempts.delete(key);
+    authDebug('LOGIN CREDENTIALS VERIFIED', { user_id_present: user?.id != null, role: user?.role || '', remember_me: rememberMe });
     if (passwordCheck.needsUpgrade) {
       await update('users', user.id, { password_hash: hashPassword(password) });
     }
@@ -374,11 +387,21 @@ async function login(req, res) {
       token = await issueSession(user, rememberMe);
     } catch (error) {
       console.error('Authentication session creation failed:', error?.message || error);
+      authDebug('SESSION CREATE FAILED', { code: 'AUTH_SESSION_CREATE_FAILED' });
       return sendJson(res, 503, { success: false, code: 'AUTH_SESSION_CREATE_FAILED', message: 'Login berhasil tetapi session gagal dibuat. Silakan coba lagi.' });
     }
 
-    await writeAudit({ user, action: 'LOGIN', resource: 'auth' });
+    // Audit logging must never turn a valid authentication into a false 500.
+    // The session is already created at this point; an audit-store outage is
+    // recorded but does not invalidate the successful login response.
+    try {
+      await writeAudit({ user, action: 'LOGIN', resource: 'auth' });
+    } catch (auditError) {
+      console.error('Authentication audit write failed:', auditError?.message || auditError);
+      authDebug('LOGIN AUDIT FAILED', { user_id_present: user?.id != null });
+    }
     const csrfToken = setAuthResponseCookies(res, token, req, rememberMe);
+    authDebug('LOGIN SUCCESS', { user_id_present: user?.id != null, role: user?.role || '', remember_me: rememberMe, session_present: true, csrf_present: !!csrfToken });
     res.setHeader('Cache-Control','no-store, max-age=0');
     return sendJson(res, 200, {
       success: true,
@@ -396,8 +419,16 @@ async function login(req, res) {
 async function logout(req, res) {
   const auth = await require('../middleware/auth').authenticate(req);
   const token = auth?.token || '';
-  if (auth) await writeAudit({ user: auth.user, action: 'LOGOUT', resource: 'auth' });
-  revokeSession(token);
+  if (auth) {
+    try {
+      await writeAudit({ user: auth.user, action: 'LOGOUT', resource: 'auth' });
+    } catch (auditError) {
+      console.error('Logout audit write failed:', auditError?.message || auditError);
+      authDebug('LOGOUT AUDIT FAILED', { user_id_present: auth.user?.id != null });
+    }
+  }
+  await revokeSession(token);
+  authDebug('LOGOUT SUCCESS', { session_present_before_revoke: !!token });
   clearAuthResponseCookies(res, req);
   return sendJson(res, 200, { success: true, message: 'Logout berhasil.' });
 }
