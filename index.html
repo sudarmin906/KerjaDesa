@@ -1100,8 +1100,11 @@ function sameDayMonth(a,b){
 function scorePhotoActivity(photo,act){
  let score=0;
  const pd=dateKey(photo.date),ad=dateKey(act.tanggal);
- if(pd&&ad&&pd===ad)score+=1000;
- else if(pd&&ad&&sameDayMonth(pd,ad))score+=650;
+ // A photo with a known capture date must NEVER be assigned to another DRP date.
+ // Date is the primary key; text/location is only a tie-breaker for activities
+ // that occur on the same date.
+ if(pd&&ad&&pd!==ad)return -1;
+ if(pd&&ad&&pd===ad)score+=10000;
  const photoText=((photo.ocrText||'')+' '+(photo.name||'')).toLowerCase();
  const actText=((act.judul||'')+' '+(act.deskripsi||'')+' '+(act.lokasi||'')+' '+(act.jenis||'')).toLowerCase();
  const a=new Set(photoTokens(photoText)),b=photoTokens(actText);
@@ -1119,13 +1122,23 @@ function matchPhotoToDrp(photo,acts){
   photo.matchScore=scorePhotoActivity(photo,a);
   return photo;
  }
- let best=-1,bestScore=0;
- acts.forEach((a,i)=>{const s=scorePhotoActivity(photo,a);if(s>bestScore){bestScore=s;best=i}});
+ const pd=dateKey(photo?.date);
+ let best=-1,bestScore=-1;
+ acts.forEach((a,i)=>{
+   const s=scorePhotoActivity(photo,a);
+   if(s>bestScore){bestScore=s;best=i}
+ });
+ // No date = do not guess. A date-known photo must have an exact DRP date.
+ if(pd){
+   if(best<0||bestScore<10000){best=-1;bestScore=0}
+ }else{
+   best=-1;bestScore=0;
+ }
  photo.matchedActivityIndex=best>=0?best:null;
  photo.matchedActivityNo=best>=0?(acts[best].no||best+1):null;
  photo.reportDate=best>=0?acts[best].tanggal:'';
  photo.matchScore=bestScore;
- photo.matchConfidence=bestScore>=1180?'tinggi':bestScore>=1025?'sedang':bestScore>0?'rendah':'belum cocok';
+ photo.matchConfidence=best>=0?'tinggi':'belum cocok';
  return photo;
 }
 async function ocrPhoto(file,index,total){
@@ -1143,7 +1156,7 @@ async function loadActivityPhotos(input){
  const files=[...input.files];await loadActivityPhotoFiles(files);input.value='';
 }
 (function kdPhotoRuntimeGuard(){
- const VERSION='PHOTO-RUNTIME-2026.10.04-02';
+ const VERSION='PHOTO-RUNTIME-2026.10.04-03';
  window.KERJADESA_PHOTO_ENGINE_VERSION=VERSION;
  async function run(input){
    const files=[...(input?.files||[])];
@@ -1203,7 +1216,10 @@ async function loadActivityPhotoFiles(files){
 
  // OCR is optional/background work. A slow OCR operation must not prevent
  // the documentation photos from appearing in the report.
- const needsOcr=items.filter(x=>!x.date||(x.date&&dateCounts[dateKey(x.date)]>1));
+ // Always run OCR once for every newly uploaded photo. The visible date stamp
+ // on field photos is the authoritative source when available, even if the
+ // filename/EXIF contains a different filesystem date.
+ const needsOcr=items;
  if(needsOcr.length){
    photoOcrBusy=true;
    void (async()=>{
@@ -1217,7 +1233,7 @@ async function loadActivityPhotoFiles(files){
            p.ocrText=r?.text||'';
            p.ocrDate=r?.date||'';
            p.date=r?.date||p.date||'';
-           p.source=p.date?(r?.date?'OCR + metadata':'Metadata file'):'Belum terdeteksi';
+           p.source=p.date?(r?.date?'OCR tanggal foto':'Metadata file'):'Belum terdeteksi';
            matchPhotoToDrp(p,acts);
          }
          data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;
