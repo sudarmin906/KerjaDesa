@@ -1090,6 +1090,33 @@ async function ocrPhoto(file,index,total){
 async function loadActivityPhotos(input){
  const files=[...input.files];await loadActivityPhotoFiles(files);input.value='';
 }
+(function kdPhotoRuntimeGuard(){
+ const VERSION='PHOTO-RUNTIME-2026.10.04-01';
+ window.KERJADESA_PHOTO_ENGINE_VERSION=VERSION;
+ async function run(input){
+   const files=[...(input?.files||[])];
+   const st=document.getElementById('photoOcrStatus');
+   if(!files.length){if(st)st.textContent='ℹ️ Pilih foto dokumentasi terlebih dahulu.';return;}
+   if(st)st.textContent='⏳ Memproses '+files.length+' foto dokumentasi ('+VERSION+')...';
+   try{
+     await loadActivityPhotoFiles(files);
+     if(st)st.textContent='✅ '+activityPhotos.length+' foto tersimpan dan siap dicocokkan dengan DRP.';
+   }catch(e){
+     console.error('Photo runtime guard:',e);
+     if(st)st.textContent='❌ Foto gagal diproses: '+(e?.message||e);
+   }
+ }
+ function bind(){
+   const input=document.getElementById('photoFiles');
+   if(!input||input.dataset.kdPhotoRuntimeBound==='1')return !!input;
+   input.dataset.kdPhotoRuntimeBound='1';
+   input.addEventListener('click',()=>{input.value=''},true);
+   input.addEventListener('change',()=>void run(input),true);
+   return true;
+ }
+ const boot=()=>{if(!bind())setTimeout(boot,250)};
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
 async function loadActivityPhotoFiles(files){
  files=[...(files||[])];if(!files.length)return;
  for(const file of files) await kdValidateFile(file,'photo');
@@ -1201,10 +1228,27 @@ function shortActivityTitle(x){
 function buildVisitRows(acts){return acts.map((x,i)=>'<tr><td>'+ (i+1) +'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(locationVillage(x.lokasi))+'</td><td>'+esc(x.deskripsi||x.judul||'-')+'</td></tr>').join('')}
 function buildVisitDays(acts){const u=[],s=new Set();acts.forEach(x=>{const k=dateKey(x.tanggal);if(k&&!s.has(k)){s.add(k);u.push(x)}});return u.map((x,i)=>{const p=String(x.lokasi||'').split('/').map(v=>v.trim()).filter(Boolean);const kec=p.length>=3?p[2]:(p[1]||'-');return '<tr><td>Hari ke-'+(i+1)+'</td><td>'+esc(dateLongId(x.tanggal))+'</td><td>'+esc(kec)+'</td><td>'+esc(locationVillage(x.lokasi))+'</td></tr>'}).join('')}
 function buildDocumentation(acts){
- const groups=[];acts.forEach((act,idx)=>{const photos=activityPhotos.filter(p=>p.matchedActivityIndex===idx||(p.matchedActivityIndex==null&&p.date&&sameDayMonth(p.date,act.tanggal)));if(photos.length)groups.push({act,photos})});
- const unmatched=activityPhotos.filter(p=>p.matchedActivityIndex==null&&!p.date);if(unmatched.length)groups.push({act:{tanggal:'',lokasi:'',deskripsi:'Dokumentasi belum dapat dicocokkan dengan DRP'},photos:unmatched});
- if(!groups.length)return '<p>Belum ada foto yang dapat dicocokkan dengan kegiatan pada DRP. Pastikan foto memiliki tanggal yang terbaca pada watermark/nama file.</p>';
- const rows=[];for(let i=0;i<groups.length;i+=2)rows.push('<tr>'+documentationCell(groups[i])+(groups[i+1]?documentationCell(groups[i+1]):'<td class="master-doc-cell empty"></td>')+'</tr>');return '<table class="master-doc-table"><tbody>'+rows.join('')+'</tbody></table>';
+ const groups=[],used=new Set();
+ // Prefer an exact DRP match by index/date, but never hide an uploaded photo
+ // merely because OCR/name-date matching failed.
+ acts.forEach((act,idx)=>{
+   const photos=activityPhotos.filter((p,pi)=>{
+     if(used.has(pi))return false;
+     const exactIndex=p.matchedActivityIndex===idx;
+     const exactDate=!!(p.date&&dateKey(p.date)===dateKey(act.tanggal));
+     const monthDate=!!(p.date&&sameDayMonth(p.date,act.tanggal));
+     if(exactIndex||exactDate||monthDate){used.add(pi);return true}
+     return false;
+   });
+   if(photos.length)groups.push({act,photos});
+ });
+ const unmatched=activityPhotos.filter((p,pi)=>!used.has(pi));
+ if(unmatched.length){
+   groups.push({act:{tanggal:'',lokasi:'',deskripsi:'Dokumentasi foto belum dapat dicocokkan otomatis dengan tanggal/kegiatan DRP'},photos:unmatched});
+ }
+ if(!groups.length)return '<p>Belum ada foto dokumentasi yang tersimpan. Upload foto pada menu Dokumentasi.</p>';
+ const rows=[];for(let i=0;i<groups.length;i+=2)rows.push('<tr>'+documentationCell(groups[i])+(groups[i+1]?documentationCell(groups[i+1]):'<td class="master-doc-cell empty"></td>')+'</tr>');
+ return '<table class="master-doc-table"><tbody>'+rows.join('')+'</tbody></table>';
 }
 function documentationCell(g){const photos=g.photos.map(p=>{const u=safeMediaUrl(p.url);return u?'<div class="master-doc-photo"><img src="'+esc(u)+'" alt="Dokumentasi"></div>':''}).join(''),date=g.act.tanggal?dateKey(g.act.tanggal):'Belum terdeteksi',activity=String(g.act.deskripsi||g.act.judul||'-').replace(/\s+/g,' ').trim();return '<td class="master-doc-cell"><div class="master-doc-info"><div>Lokasi: <b>'+esc(locationVillage(g.act.lokasi))+'</b></div><div>Tanggal: <b>'+esc(date)+'</b></div><div>Kegiatan: <b>'+esc(activity)+'</b></div></div><div class="master-doc-photos">'+photos+'</div></td>'}
 let reportContext=null;
