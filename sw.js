@@ -1,5 +1,5 @@
-const CACHE='kerjadesa-v66-secure-offline-queue';
-const ASSETS=['./','./index.html','./manifest.json','./foto_profil.jpg','./jszip.min.js','./template_sppd_asli.docx','./js/login-direct.js','./js/report-master-v2.js?v=55','./js/security-hardening.js?v=1','./js/secure-storage.js?v=1','./js/security-center.js?v=1','./js/offline-sync.js?v=secure'];
+const CACHE='kerjadesa-v67-auth-runtime';
+const ASSETS=['./','./index.html','./manifest.json','./foto_profil.jpg','./jszip.min.js','./template_sppd_asli.docx','./js/login-direct.js?v=20261004auth06','./js/report-master-v2.js?v=55','./js/security-hardening.js?v=20261004auth06','./js/secure-storage.js?v=1','./js/security-center.js?v=1','./js/offline-sync.js?v=secure'];
 const CACHEABLE=new Set(ASSETS.map(x=>new URL(x,self.location.href).pathname));
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
