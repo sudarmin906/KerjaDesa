@@ -357,7 +357,7 @@ async function login(req, res) {
     }
     await writeAudit({ user, action: 'LOGIN', resource: 'auth' });
     const token = issueSession(user);
-    const csrfToken = setAuthResponseCookies(res, token);
+    const csrfToken = setAuthResponseCookies(res, token, req);
     res.setHeader('Cache-Control','no-store');
     return sendJson(res, 200, {
       success: true,
@@ -375,7 +375,7 @@ async function logout(req, res) {
   const token = auth?.token || '';
   if (auth) await writeAudit({ user: auth.user, action: 'LOGOUT', resource: 'auth' });
   revokeSession(token);
-  clearAuthResponseCookies(res);
+  clearAuthResponseCookies(res, req);
   return sendJson(res, 200, { success: true, message: 'Logout berhasil.' });
 }
 
