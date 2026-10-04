@@ -48,7 +48,7 @@ async function revokeSession(token) {
 
 async function cleanupSessions() {
   if (postgresEnabled()) {
-    await postgresQuery('DELETE FROM auth_sessions WHERE expires_at <= NOW() OR last_seen_at <= CASE WHEN remember_me THEN NOW() - INTERVAL '7 days' ELSE NOW() - INTERVAL '30 minutes' END').catch(()=>{});
+    await postgresQuery("DELETE FROM auth_sessions WHERE expires_at <= NOW() OR last_seen_at <= CASE WHEN remember_me THEN NOW() - INTERVAL '7 days' ELSE NOW() - INTERVAL '30 minutes' END").catch(()=>{});
     return;
   }
   const now = Date.now();
