@@ -19,6 +19,9 @@ services:
   web:
     build:
       context: .
+      args:
+        KERJADESA_COMMIT: ${KERJADESA_COMMIT:-unknown}
+        KERJADESA_BUILD: ${KERJADESA_BUILD:-unknown}
     restart: unless-stopped
     depends_on:
       postgres:
