@@ -339,34 +339,57 @@ async function login(req, res) {
     const body = await parseJsonBody(req);
     const username = String(body.username || '').trim();
     const password = String(body.password || '');
+    const rememberMe = body.remember_me === true || body.rememberMe === true;
     const ip = req.socket?.remoteAddress || 'unknown';
     const key = ip + ':' + (username.toLowerCase() || 'anonymous');
-    if (!loginAllowed(key)) return sendJson(res, 429, { success: false, message: 'Terlalu banyak percobaan login. Coba lagi beberapa menit.' });
-    const user = await findByField('users', 'username', username);
+
+    if (!username || !password) {
+      return sendJson(res, 400, { success: false, code: 'AUTH_INPUT_INVALID', message: 'Username dan password wajib diisi.' });
+    }
+    if (!loginAllowed(key)) {
+      return sendJson(res, 429, { success: false, code: 'AUTH_RATE_LIMIT', message: 'Terlalu banyak percobaan login. Coba lagi beberapa menit.' });
+    }
+
+    let user;
+    try {
+      user = await findByField('users', 'username', username);
+    } catch (error) {
+      console.error('Authentication database lookup failed:', error?.message || error);
+      return sendJson(res, 503, { success: false, code: 'AUTH_DATABASE_UNAVAILABLE', message: 'Server authentication sedang bermasalah. Silakan coba lagi.' });
+    }
 
     const passwordCheck = user ? verifyPassword(password, user.password_hash) : { valid: false, needsUpgrade: false };
-    if (!user || user.status === 'INACTIVE' || !passwordCheck.valid) {
+    if (!user || String(user.status || '').toUpperCase() === 'INACTIVE' || !passwordCheck.valid) {
       recordLoginFailure(key);
-      return sendJson(res, 401, { success: false, message: 'Username atau password tidak sesuai.' });
+      return sendJson(res, 401, { success: false, code: 'AUTH_INVALID_CREDENTIALS', message: 'Username atau password salah.' });
     }
 
     loginAttempts.delete(key);
     if (passwordCheck.needsUpgrade) {
       await update('users', user.id, { password_hash: hashPassword(password) });
-      user.password_hash = undefined;
     }
+
+    let token;
+    try {
+      token = await issueSession(user, rememberMe);
+    } catch (error) {
+      console.error('Authentication session creation failed:', error?.message || error);
+      return sendJson(res, 503, { success: false, code: 'AUTH_SESSION_CREATE_FAILED', message: 'Login berhasil tetapi session gagal dibuat. Silakan coba lagi.' });
+    }
+
     await writeAudit({ user, action: 'LOGIN', resource: 'auth' });
-    const token = issueSession(user);
-    const csrfToken = setAuthResponseCookies(res, token, req);
-    res.setHeader('Cache-Control','no-store');
+    const csrfToken = setAuthResponseCookies(res, token, req, rememberMe);
+    res.setHeader('Cache-Control','no-store, max-age=0');
     return sendJson(res, 200, {
       success: true,
-      expires_in: 8 * 60 * 60,
+      expires_in: rememberMe ? 30 * 24 * 60 * 60 : 8 * 60 * 60,
+      remember_me: rememberMe,
       csrf_token: csrfToken,
       user: publicUser(user)
     });
   } catch (error) {
-    return sendJson(res, 400, { success: false, message: error.message });
+    console.error('Authentication request failed:', error?.message || error);
+    return sendJson(res, 500, { success: false, code: 'AUTH_SERVER_ERROR', message: 'Server authentication sedang bermasalah. Silakan coba lagi.' });
   }
 }
 
