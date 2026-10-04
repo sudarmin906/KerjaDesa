@@ -1,22 +1,63 @@
 const crypto = require('crypto');
 const { get } = require('../database/store');
 
+const { enabled: postgresEnabled, query: postgresQuery } = require('../database/postgres');
+
 const sessions = new Map();
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 const SESSION_IDLE_MS = 30 * 60 * 1000;
+const REMEMBER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const REMEMBER_IDLE_MS = 7 * 24 * 60 * 60 * 1000;
 const SESSION_COOKIE = process.env.NODE_ENV === 'production' ? '__Host-kd_session' : 'kd_session';
 const CSRF_COOKIE = process.env.NODE_ENV === 'production' ? '__Host-kd_csrf' : 'kd_csrf';
 
-function issueSession(user) {
-  const token = crypto.randomBytes(32).toString('hex');
-  sessions.set(token, { userId: user.id, createdAt: Date.now(), lastSeenAt: Date.now(), expiresAt: Date.now() + SESSION_TTL_MS });
+function hashToken(token) {
+  return crypto.createHash('sha256').update(String(token || '')).digest('hex');
+}
+
+async function issueSession(user, rememberMe = false) {
+  const token = crypto.randomBytes(48).toString('base64url');
+  const now = Date.now();
+  const ttl = rememberMe ? REMEMBER_TTL_MS : SESSION_TTL_MS;
+  const session = {
+    userId: user.id,
+    rememberMe: !!rememberMe,
+    createdAt: now,
+    lastSeenAt: now,
+    expiresAt: now + ttl
+  };
+  if (postgresEnabled()) {
+    await postgresQuery(
+      'INSERT INTO auth_sessions(token_hash,user_id,remember_me,created_at,last_seen_at,expires_at) VALUES($1,$2,$3,NOW(),NOW(),$4)',
+      [hashToken(token), user.id, !!rememberMe, new Date(session.expiresAt)]
+    );
+  } else {
+    sessions.set(token, session);
+  }
   return token;
 }
-function revokeSession(token) { if (token) sessions.delete(token); }
-function cleanupSessions() {
-  const now = Date.now();
-  for (const [token, session] of sessions.entries()) if (session.expiresAt <= now) sessions.delete(token);
+
+async function revokeSession(token) {
+  if (!token) return;
+  if (postgresEnabled()) {
+    await postgresQuery('DELETE FROM auth_sessions WHERE token_hash=$1', [hashToken(token)]);
+  } else {
+    sessions.delete(token);
+  }
 }
+
+async function cleanupSessions() {
+  if (postgresEnabled()) {
+    await postgresQuery('DELETE FROM auth_sessions WHERE expires_at <= NOW() OR last_seen_at <= CASE WHEN remember_me THEN NOW() - INTERVAL '7 days' ELSE NOW() - INTERVAL '30 minutes' END').catch(()=>{});
+    return;
+  }
+  const now = Date.now();
+  for (const [token, session] of sessions.entries()) {
+    const idle = session.rememberMe ? REMEMBER_IDLE_MS : SESSION_IDLE_MS;
+    if (session.expiresAt <= now || now - session.lastSeenAt > idle) sessions.delete(token);
+  }
+}
+
 function parseCookies(req) {
   const out={};
   String(req.headers.cookie||'').split(';').forEach(part=>{
@@ -52,11 +93,12 @@ function cookieContext(req) {
     partitioned: secure && !sameOrigin ? 'Partitioned' : ''
   };
 }
-function setAuthResponseCookies(res, token, req) {
+function setAuthResponseCookies(res, token, req, rememberMe = false) {
   const ctx=cookieContext(req);
   const csrf=crypto.randomBytes(32).toString('hex');
-  const sessionFlags=['Path=/','HttpOnly',ctx.secure?'Secure':'',ctx.sameSite,ctx.partitioned,'Max-Age='+(SESSION_TTL_MS/1000)].filter(Boolean).join('; ');
-  const csrfFlags=['Path=/',ctx.secure?'Secure':'',ctx.sameSite,ctx.partitioned,'Max-Age='+(SESSION_TTL_MS/1000)].filter(Boolean).join('; ');
+  const maxAge = rememberMe ? Math.floor(REMEMBER_TTL_MS/1000) : null;
+  const sessionFlags=['Path=/','HttpOnly',ctx.secure?'Secure':'',ctx.sameSite,ctx.partitioned,maxAge!==null?'Max-Age='+maxAge:''].filter(Boolean).join('; ');
+  const csrfFlags=['Path=/',ctx.secure?'Secure':'',ctx.sameSite,ctx.partitioned,maxAge!==null?'Max-Age='+maxAge:''].filter(Boolean).join('; ');
   res.setHeader('Set-Cookie',[
     SESSION_COOKIE+'='+encodeURIComponent(token)+'; '+sessionFlags,
     CSRF_COOKIE+'='+csrf+'; '+csrfFlags
@@ -72,34 +114,42 @@ function clearAuthResponseCookies(res, req) {
   ]);
 }
 async function authenticate(req) {
-  cleanupSessions();
+  await cleanupSessions();
   const token = getToken(req);
   if (!token) return null;
-  const session = sessions.get(token);
+  let session = null;
+  if (postgresEnabled()) {
+    const r = await postgresQuery('SELECT user_id,remember_me,created_at,last_seen_at,expires_at FROM auth_sessions WHERE token_hash=$1 LIMIT 1', [hashToken(token)]);
+    if (r.rows[0]) {
+      const row=r.rows[0];
+      session={
+        userId: row.user_id,
+        rememberMe: !!row.remember_me,
+        createdAt: new Date(row.created_at).getTime(),
+        lastSeenAt: new Date(row.last_seen_at).getTime(),
+        expiresAt: new Date(row.expires_at).getTime()
+      };
+    }
+  } else {
+    session = sessions.get(token) || null;
+  }
   const now = Date.now();
-  if (!session || session.expiresAt <= now || (session.lastSeenAt && now - session.lastSeenAt > SESSION_IDLE_MS)) { revokeSession(token); return null; }
-  session.lastSeenAt = now;
+  const idleLimit = session?.rememberMe ? REMEMBER_IDLE_MS : SESSION_IDLE_MS;
+  if (!session || session.expiresAt <= now || now - session.lastSeenAt > idleLimit) {
+    await revokeSession(token);
+    return null;
+  }
+  if (postgresEnabled()) {
+    await postgresQuery('UPDATE auth_sessions SET last_seen_at=NOW() WHERE token_hash=$1', [hashToken(token)]);
+  } else {
+    session.lastSeenAt = now;
+  }
   const user = await get('users', session.userId);
-  if (!user || user.status === 'INACTIVE') { revokeSession(token); return null; }
-  return { user, token };
-}
-async function requireAuth(req, res) {
-  const auth = await authenticate(req);
-  if (!auth) {
-    sendJson(res, 401, { success: false, message: 'Sesi tidak valid atau sudah berakhir.' });
+  if (!user || String(user.status || '').toUpperCase() === 'INACTIVE') {
+    await revokeSession(token);
     return null;
   }
-  return auth;
-}
-async function requireRole(req, res, roles) {
-  const auth = await requireAuth(req, res);
-  if (!auth) return null;
-  const allowed = Array.isArray(roles) ? roles : [roles];
-  if (!allowed.includes(auth.user.role)) {
-    sendJson(res, 403, { success: false, message: 'Akses ditolak untuk role ini.' });
-    return null;
-  }
-  return auth;
+  return { user, token, rememberMe: session.rememberMe };
 }
 function publicUser(user) {
   if (!user) return null;
