@@ -68,9 +68,16 @@ const KerjaDesaAuthAPI = {
 
   async me() {
     const response = await fetch(this.baseURL() + '/auth/me', {
-      credentials: 'include'
+      credentials: 'include',
+      cache: 'no-store'
     });
-    if (!response.ok) return null;
+    if (response.status === 401) return null;
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      const err = new Error(data.message || ('Pemeriksaan sesi gagal (HTTP ' + response.status + ').'));
+      err.status = response.status;
+      throw err;
+    }
     const data = await response.json();
     return data.user || null;
   },
