@@ -389,8 +389,16 @@ html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#26344
 <script src="jszip.min.js"></script>
 <script>
 let data={"kegiatan":[],"monitoring":[],"gps":null,"docs":{}};window.data=data;let deferred=null;let reportHtml='';let reportText='';let profilePhoto='foto_profil.jpg';let logoPhoto='';let activityPhotos=[];
+/* === DRP PIPELINE STATE 2026.10.04 === */
+let selectedDRPFile=null;
+let selectedPackageFiles=[];
+const drpRuntimeState={status:'idle',fileMeta:null,parsed:null,error:null,startedAt:null,finishedAt:null};
+window.KerjaDesaDRPState=drpRuntimeState;
+function kdDrpSetState(status,patch={}){Object.assign(drpRuntimeState,patch,{status});try{window.kdFileTrace?.('DRP state',{status,filename:drpRuntimeState.fileMeta?.name||'',mime:drpRuntimeState.fileMeta?.type||'',size:drpRuntimeState.fileMeta?.size||0,error:drpRuntimeState.error?.message||''})}catch(_){}}
+function kdDrpFileMeta(file){return file?{name:String(file.name||''),type:String(file.type||''),size:Number(file.size||0),lastModified:Number(file.lastModified||0)}:null}
+function kdWithTimeout(promise,ms,label){return Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>{const e=new Error(label+' melebihi batas waktu '+Math.round(ms/1000)+' detik.');e.code='PROCESS_TIMEOUT';reject(e)},ms))])}
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
-async function save(){try{if(!window.KerjaDesaSecureStorage)throw new Error('Secure Offline Vault belum tersedia.');await window.KerjaDesaSecureStorage.save(data);render()}catch(e){console.error('Secure save gagal:',e);alert('Data belum tersimpan: Secure Offline Vault tidak tersedia.')}}
+async function save(){try{if(!window.KerjaDesaSecureStorage)throw new Error('Secure Offline Vault belum tersedia.');await window.KerjaDesaSecureStorage.save(data);render()}catch(e){console.error('Secure save gagal:',e);throw e}}
 /* Authentication lifecycle is explicit so INITIALIZING/SESSION_CHECK never
    masquerades as UNAUTHENTICATED and an old boot request cannot log out a
    login that started after it. */
@@ -940,6 +948,8 @@ function clearDrpData(){
  if(!confirm('Hapus DRP yang tersimpan dan data kegiatan yang berasal dari DRP? Data kegiatan manual tidak akan dihapus.'))return;
  data.docs=data.docs||{};
  delete data.docs.drp;
+ selectedDRPFile=null;
+ kdDrpSetState('idle',{fileMeta:null,parsed:null,error:null,startedAt:null,finishedAt:null});
  data.drpActivities=[];
  data.kegiatan=(data.kegiatan||[]).filter(x=>x.source!=='DRP');
  activityPhotos=(data.docs.activityPhotos||[]).map(p=>({...p,matchedActivityIndex:null,matchedActivityNo:null,matchScore:0}));
@@ -987,15 +997,20 @@ window.kdProcessSelectedDrp=async function(input){
   }
 };
 async function processDrpFile(f,st){
-  if(!f)return null;
-  const txt=await readFile(f);
-  if(!txt||!/(LAPORAN BULANAN|DAFTAR LAPORAN AKTIVITAS|DAFTAR LAPORAN KUNJUNGAN LAPANGAN|IDENTITAS TPP)/i.test(txt)){
-    throw new Error('File bukan DRP Bulanan yang dikenali. Gunakan file DRP asli, bukan laporan kunjungan lapangan hasil jadi.');
-  }
+  if(!f)throw new Error('File DRP tidak ditemukan.');
+  selectedDRPFile=f;
+  kdDrpSetState('validating',{fileMeta:kdDrpFileMeta(f),error:null,parsed:null,startedAt:new Date().toISOString(),finishedAt:null});
+  if(st)st.innerHTML='<span class="loading">⏳ Validasi DRP: '+esc(f.name)+'</span>';
+  await kdValidateFile(f,'drp');
+  kdDrpSetState('processing');
+  if(st)st.innerHTML='<span class="loading">⏳ Membaca dan memproses DRP: '+esc(f.name)+'</span>';
+  const txt=await kdWithTimeout(readFile(f),40000,'Pembacaan DRP');
+  if(!txt||!String(txt).trim())throw Object.assign(new Error('File berhasil dibuka tetapi tidak menghasilkan teks.'),{code:'EMPTY_TEXT'});
+  if(!/(LAPORAN BULANAN|DAFTAR LAPORAN AKTIVITAS|DAFTAR LAPORAN KUNJUNGAN LAPANGAN|IDENTITAS TPP)/i.test(txt))throw Object.assign(new Error('File berhasil dibaca, tetapi struktur DRP tidak dikenali.'),{code:'DRP_STRUCTURE'});
   const parsed=parseDRP(txt);
-  if(!parsed||!parsed.count)throw new Error('DRP terbaca tetapi tidak menemukan daftar aktivitas. Periksa file DRP.');
+  if(!parsed||!Array.isArray(parsed.all)||!parsed.count)throw Object.assign(new Error('DRP terbaca tetapi tidak menemukan daftar aktivitas.'),{code:'DRP_NO_DATA'});
   data.docs=data.docs||{};
-  data.docs.drp={name:f.name,text:txt,parsed,processedAt:new Date().toISOString()};
+  data.docs.drp={name:f.name,mime:f.type||'application/pdf',size:Number(f.size||0),text:txt,parsed,processedAt:new Date().toISOString()};
   data.drpActivities=parsed.all;
   data.kegiatan=parsed.all.map((x,i)=>({id:'drp-'+(i+1)+'-'+x.tanggal,nome:x.no,nama:x.deskripsi.split(' ').slice(0,18).join(' '),desa:x.lokasi,tanggal:x.tanggal,catatan:x.deskripsi,waktu:x.waktu,durasi:x.durasi,jenis:x.jenis,kunjungan:x.kunjungan,source:'DRP'}));
   document.getElementById('rNama').value=parsed.header.nama||'';
@@ -1007,48 +1022,37 @@ async function processDrpFile(f,st){
   const months={'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05','Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12'};
   const mm=Object.keys(months).find(k=>(parsed.header.periode||'').toLowerCase().includes(k.toLowerCase()));
   if(pm&&mm)document.getElementById('rPeriode').value=pm[1]+'-'+months[mm];
-  save();renderDrpPreview(parsed);kdAuditDrp(parsed);updateDocStatus();
-  if(st)st.innerHTML='<span class="ok">✓ DRP selesai dibaca: '+parsed.count+' kegiatan ditemukan.</span>';
+  await save();
+  selectedDRPFile=f;
+  kdDrpSetState('success',{parsed,fileMeta:kdDrpFileMeta(f),error:null,finishedAt:new Date().toISOString()});
+  renderDrpPreview(parsed);kdAuditDrp(parsed);updateDocStatus();
+  if(st)st.innerHTML='<span class="ok">✓ DRP berhasil diproses: '+parsed.count+' kegiatan ditemukan.</span>';
   return parsed;
 }
-async function autoProcessOne(kind){
-  const isDrp=kind==='drp';
-  const fileId=isDrp?'drpFile':'sppdFile';
-  const statusId=isDrp?'drpStatus':'sppdStatus';
-  const input=document.getElementById(fileId);
-  const st=document.getElementById(statusId);
-  const f=input?.files?.[0];
-  if(!f){
-    if(st)st.innerHTML='<span class="warn">Tidak ada file yang dipilih.</span>';
-    return null;
-  }
+async function autoProcessOne(kind,fileOverride=null){
+  const isDrp=kind==='drp',fileId=isDrp?'drpFile':'sppdFile',statusId=isDrp?'drpStatus':'sppdStatus';
+  const input=document.getElementById(fileId),st=document.getElementById(statusId),f=fileOverride||(isDrp?selectedDRPFile:input?.files?.[0]);
+  if(!f){if(st)st.innerHTML='<span class="warn">Tidak ada file yang dipilih.</span>';if(isDrp)kdDrpSetState('idle',{fileMeta:null,parsed:null,error:null});return null}
+  if(isDrp)selectedDRPFile=f;
   try{
     if(st)st.innerHTML='<span class="loading">⏳ Memeriksa '+esc(f.name)+'...</span>';
-    await kdValidateFile(f,isDrp?'drp':'drp');
+    if(isDrp)return await processDrpFile(f,st);
+    await kdValidateFile(f,'drp');
     if(st)st.innerHTML='<span class="loading">⏳ Membaca '+esc(f.name)+'...</span>';
-    if(isDrp){
-      const parsed=await processDrpFile(f,st);
-      if(input)input.value='';
-      return parsed;
-    }
-    const txt=await readFile(f);
+    const txt=await kdWithTimeout(readFile(f),40000,'Pembacaan dokumen');
     if(!txt)throw new Error('Isi dokumen tidak dapat dibaca oleh browser.');
-    data.docs=data.docs||{};
-    const summary=summarizeDoc(txt);
-    data.docs.sppd={name:f.name,text:txt,summary,parsed:parseSPPD(txt),processedAt:new Date().toISOString()};
-    save();
-    if(st)st.innerHTML='<span class="ok">✓ Selesai: '+esc(f.name)+'</span>';
-    updateDocStatus();
-    if(input)input.value='';
-    return data.docs.sppd;
+    data.docs=data.docs||{};data.docs.sppd={name:f.name,text:txt,summary:summarizeDoc(txt),parsed:parseSPPD(txt),processedAt:new Date().toISOString()};
+    await save();if(st)st.innerHTML='<span class="ok">✓ Selesai: '+esc(f.name)+'</span>';updateDocStatus();return data.docs.sppd;
   }catch(e){
     console.error('KerjaDesa gagal memproses dokumen',kind,e);
-    if(st)st.innerHTML='<span class="warn">❌ Gagal membaca: '+esc(e?.message||e)+'</span>';
-    return null;
+    if(isDrp)kdDrpSetState('error',{error:e instanceof Error?e:new Error(String(e)),finishedAt:new Date().toISOString()});
+    const msg=e?.code==='PROCESS_TIMEOUT'?'Pemrosesan membutuhkan waktu terlalu lama. Silakan coba lagi.':e?.code==='PDF_SCANNED'?'PDF ini berupa hasil scan/gambar dan belum dapat dibaca otomatis.':e?.code==='EMPTY_TEXT'?'File berhasil dibaca tetapi tidak berisi teks yang dapat diekstrak.':e?.code==='DRP_STRUCTURE'?'File berhasil dibaca, tetapi struktur DRP tidak dikenali.':e?.message||'Dokumen gagal diproses.';
+    if(st)st.innerHTML='<span class="warn">❌ DRP gagal diproses: '+esc(msg)+'</span>';updateDocStatus();return null;
   }
 }
 async function processPackageFiles(input){
   const files=[...(input.files||[])];if(!files.length)return;
+  selectedPackageFiles=files.slice();
   const st=document.getElementById('packageStatus');
   const docs=files.filter(f=>/\.(pdf|docx|xlsx|xls|csv|txt)$/i.test(f.name));
   const photos=files.filter(f=>/^image\//i.test(f.type)||/\.(jpg|jpeg|png|webp|heic|heif)$/i.test(f.name));
@@ -1057,6 +1061,8 @@ async function processPackageFiles(input){
     await kdValidateFile(docs[0],'packageDoc');
     for(const photo of photos) await kdValidateFile(photo,'photo');
     if(st)st.innerHTML='<span class="loading">⏳ 1/2 Membaca DRP...</span>';
+    selectedDRPFile=docs[0];
+    kdDrpSetState('selected',{fileMeta:kdDrpFileMeta(docs[0]),error:null,parsed:null});
     await processDrpFile(docs[0],null);
     if(st)st.innerHTML='<span class="loading">⏳ 2/2 Memproses '+photos.length+' foto dokumentasi...</span>';
     if(photos.length)await loadActivityPhotoFiles(photos);
@@ -1064,33 +1070,35 @@ async function processPackageFiles(input){
     workflowPage('dokumentasi');
   }catch(e){
     if(st)st.innerHTML='<span class="warn">❌ Paket gagal: '+esc(e.message)+'</span>';
-  }finally{input.value='';}
+  }finally{try{input.value=''}catch(_){};selectedPackageFiles=[];}
 }
 async function processDocs(){
   const status=document.getElementById('docStatus');
-  if(status)status.textContent='Memproses dokumen...';
-  const a=document.getElementById('drpFile')?.files?.[0],b=document.getElementById('sppdFile')?.files?.[0];
-  let drpResult=null,sppdResult=null;
-  if(a)drpResult=await autoProcessOne('drp');
-  if(b)sppdResult=await autoProcessOne('sppd');
-  const drpSaved=!!data.docs?.drp?.parsed;
-  const sppdSaved=!!data.docs?.sppd?.text;
-  if(drpSaved||sppdSaved){
-    updateDocStatus();
-    return {drp:drpResult,sppd:sppdResult};
-  }
-  if(status)status.innerHTML='<span class="warn">❌ Dokumen belum berhasil diproses. Lihat pesan pada bagian Upload DRP/SPPD untuk mengetahui penyebabnya.</span>';
-  return null;
+  const drpFile=selectedDRPFile||document.getElementById('drpFile')?.files?.[0]||null;
+  const sppdFile=document.getElementById('sppdFile')?.files?.[0]||null;
+  if(status)status.innerHTML='<span class="loading">⏳ Memproses dokumen...</span>';
+  try{
+    const drpResult=drpFile?await autoProcessOne('drp',drpFile):null;
+    const sppdResult=sppdFile?await autoProcessOne('sppd',sppdFile):null;
+    const drpSaved=!!data.docs?.drp?.parsed,sppdSaved=!!data.docs?.sppd?.text;
+    if(drpSaved||sppdSaved){updateDocStatus();return {drp:drpResult,sppd:sppdResult}}
+    if(status)status.innerHTML='<span class="warn">❌ Tidak ada dokumen yang berhasil diproses. Pilih DRP atau dokumen terlebih dahulu.</span>';return null;
+  }catch(e){console.error('processDocs:',e);if(status)status.innerHTML='<span class="warn">❌ Pemrosesan gagal: '+esc(e?.message||e)+'</span>';return null}
 }
 function updateDocStatus(){
-  const d=data.docs||{};
-  const n=[d.drp?.name,d.sppd?.name].filter(Boolean).length;
-  document.getElementById('docStatus').textContent=n?`${n} dokumen tersimpan di perangkat dan siap menjadi sumber laporan.`:'Belum ada dokumen yang diproses.';
-  if(d.drp?.parsed){
-    document.getElementById('docResult').innerHTML=`<div class="card"><span class="badge">DRP ${d.drp.parsed.count} kegiatan</span><p class="small">${esc(d.drp.name)}<br>Aktivitas: ${d.drp.parsed.aktivitas.length} • Kunjungan Lapangan: ${d.drp.parsed.kunlap.length}</p></div>`;
-  }else if(n){
-    document.getElementById('docResult').innerHTML=`<div class="card"><span class="badge">${n} dokumen siap</span><p class="small">DRP: ${esc(d.drp?.name||'Belum ada')}<br>SPPD: ${esc(d.sppd?.name||'Belum ada')}</p></div>`;
-  }else document.getElementById('docResult').innerHTML='';
+  const d=data.docs||{},n=[d.drp?.name,d.sppd?.name].filter(Boolean).length,status=document.getElementById('docStatus'),drpName=selectedDRPFile?.name||d.drp?.name||'';
+  if(status){
+    if(drpRuntimeState.status==='processing'||drpRuntimeState.status==='validating')status.innerHTML='<span class="loading">⏳ Memproses DRP...</span>';
+    else if(drpRuntimeState.status==='error')status.innerHTML='<span class="warn">❌ DRP gagal diproses: '+esc(drpRuntimeState.error?.message||'Kesalahan tidak diketahui')+'</span>';
+    else if(drpRuntimeState.status==='selected')status.innerHTML='<span class="badge">FILE TERPILIH</span> '+esc(drpName);
+    else if(d.drp?.parsed)status.innerHTML='<span class="ok">✓ DRP berhasil diproses.</span> '+esc(d.drp.name||drpName);
+    else status.textContent=n?n+' dokumen tersimpan di perangkat dan siap menjadi sumber laporan.':'Belum ada dokumen yang diproses.';
+  }
+  const result=document.getElementById('docResult');if(!result)return;
+  if(d.drp?.parsed)result.innerHTML='<div class="card"><span class="badge">DRP '+d.drp.parsed.count+' kegiatan</span><p class="small">'+esc(d.drp.name)+'<br>Aktivitas: '+d.drp.parsed.aktivitas.length+' • Kunjungan Lapangan: '+d.drp.parsed.kunlap.length+'</p></div>';
+  else if(selectedDRPFile)result.innerHTML='<div class="card"><span class="badge">FILE TERPILIH</span><p class="small">DRP: '+esc(selectedDRPFile.name)+'<br>Status: '+esc(drpRuntimeState.status.toUpperCase())+'</p></div>';
+  else if(n)result.innerHTML='<div class="card"><span class="badge">'+n+' dokumen siap</span><p class="small">DRP: '+esc(d.drp?.name||'Belum ada')+'<br>SPPD: '+esc(d.sppd?.name||'Belum ada')+'</p></div>';
+  else result.innerHTML='';
 }
 function summarizeDoc(t){let x=cleanText(t);return {tanggal:findDate(x),lokasi:findLocations(x),panjang:x.length,cuplikan:x.slice(0,1800)}}
 function parseSPPD(text){
@@ -2326,6 +2334,8 @@ window.kdRecoverSessionOnBoot=kdRecoverSessionOnBoot;
 })();
 
 
+/* === DRP PIPELINE DIAGNOSTICS 2026.10.04 === */
+window.kdDrpDiagnostics=function(){const f=selectedDRPFile,d=data.docs?.drp;return {fileObjectAvailable:!!f,filename:f?.name||d?.name||'',mime:f?.type||d?.mime||'',size:Number(f?.size||d?.size||0),state:drpRuntimeState.status,parserDataFound:!!d?.parsed?.count,parsedCount:Number(d?.parsed?.count||0),storageAvailable:!!window.KerjaDesaSecureStorage,error:drpRuntimeState.error?.message||''}};
 /* === DRP RUNTIME GUARD 2026.10.04 === */
 (function(){
   const VERSION='DRP-RUNTIME-2026.10.04-01';
@@ -2336,18 +2346,19 @@ window.kdRecoverSessionOnBoot=kdRecoverSessionOnBoot;
   }
   async function run(input){
     const f=input?.files?.[0];
-    if(!f){status('⚠️ Pilih file DRP terlebih dahulu.','warn');return}
-    status('📄 File dipilih: '+esc(f.name)+'<br>⏳ Membaca DRP '+VERSION+'...','loading');
+    if(!f){status('⚠️ Pilih file DRP terlebih dahulu.','warn');return null}
+    selectedDRPFile=f;
+    kdDrpSetState('selected',{fileMeta:kdDrpFileMeta(f),parsed:null,error:null,startedAt:new Date().toISOString(),finishedAt:null});
+    status('📄 FILE TERPILIH: '+esc(f.name)+'<br>⏳ Memulai validasi dan pembacaan DRP...','loading');updateDocStatus();
     try{
       if(typeof autoProcessOne!=='function')throw new Error('Mesin pemrosesan DRP belum dimuat.');
-      const result=await autoProcessOne('drp');
-      if(result?.count)status('✓ DRP selesai dibaca: '+result.count+' kegiatan ditemukan.','ok');
-      try{input.value=''}catch(_){};
+      const result=await autoProcessOne('drp',f);
+      if(result?.count)status('✓ DRP berhasil diproses: '+result.count+' kegiatan ditemukan.','ok');
+      else if(drpRuntimeState.status!=='error')status('❌ DRP tidak menghasilkan data.','warn');
       return result;
     }catch(e){
-      console.error('DRP runtime guard:',e);
-      status('❌ DRP gagal dibaca: '+esc(e?.message||e),'warn');
-      return null;
+      console.error('DRP runtime guard:',e);kdDrpSetState('error',{error:e instanceof Error?e:new Error(String(e)),finishedAt:new Date().toISOString()});
+      status('❌ DRP gagal diproses: '+esc(e?.message||e),'warn');updateDocStatus();return null;
     }
   }
   window.kdProcessSelectedDrp=run;
