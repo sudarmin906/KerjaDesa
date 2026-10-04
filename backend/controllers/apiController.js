@@ -10,6 +10,7 @@ const {
   clearAuthResponseCookies
 } = require('../middleware/auth');
 const { PDFParse } = require('pdf-parse');
+const { spawn } = require('child_process');
 
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 10;
@@ -570,6 +571,33 @@ async function resourceHandler(req, res, resource, id, method, auth) {
   return sendJson(res, 405, { success: false, message: 'Method tidak didukung.' });
 }
 
+function extractWithPdftotext(buffer) {
+  return new Promise((resolve, reject) => {
+    const child = spawn('pdftotext', ['-layout', '-', '-'], { stdio: ['pipe', 'pipe', 'pipe'] });
+    const out = [], err = [];
+    let done = false;
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      try { child.kill('SIGKILL'); } catch (_) {}
+      reject(new Error('pdftotext timeout'));
+    }, 12000);
+    child.stdout.on('data', chunk => out.push(chunk));
+    child.stderr.on('data', chunk => err.push(chunk));
+    child.on('error', error => {
+      if (done) return;
+      done = true; clearTimeout(timer); reject(error);
+    });
+    child.on('close', code => {
+      if (done) return;
+      done = true; clearTimeout(timer);
+      if (code === 0) return resolve(Buffer.concat(out).toString('utf8'));
+      reject(new Error(Buffer.concat(err).toString('utf8').trim() || ('pdftotext exit code ' + code)));
+    });
+    child.stdin.end(buffer);
+  });
+}
+
 async function extractDrpPdf(req, res) {
   const MAX_BYTES = 15 * 1024 * 1024;
   const chunks = [];
@@ -586,24 +614,33 @@ async function extractDrpPdf(req, res) {
     if (buffer.slice(0, 5).toString('ascii') !== '%PDF-') {
       return sendJson(res, 422, { success: false, message: 'File bukan PDF yang valid.' });
     }
-    const parser = new PDFParse({ data: buffer });
+
+    let text = '';
     try {
-      const result = await parser.getText({ pageJoiner: '\n' });
-      const text = String(result?.text || '').replace(/\u0000/g, ' ').trim();
-      if (!text) return sendJson(res, 422, { success: false, message: 'PDF terbaca tetapi tidak mengandung teks.' });
-      return sendJson(res, 200, {
-        success: true,
-        text,
-        pages: Number(result?.total || result?.numpages || 0)
-      });
-    } finally {
-      await parser.destroy?.();
+      text = String(await extractWithPdftotext(buffer) || '').replace(/\u0000/g, ' ').trim();
+    } catch (popplerError) {
+      console.warn('pdftotext extraction unavailable, trying pdf-parse:', popplerError.message);
+      const parser = new PDFParse({ data: buffer, pageJoiner: '\n' });
+      try {
+        const result = await parser.getText();
+        text = String(result?.text || '').replace(/\u0000/g, ' ').trim();
+      } finally {
+        await parser.destroy?.();
+      }
     }
+
+    if (!text) return sendJson(res, 422, { success: false, message: 'PDF terbaca tetapi tidak mengandung teks.' });
+    return sendJson(res, 200, {
+      success: true,
+      text,
+      pages: (text.match(/\f/g) || []).length + 1
+    });
   } catch (error) {
     console.error('DRP PDF extraction failed:', error);
     return sendJson(res, 422, { success: false, message: 'Server gagal membaca PDF DRP: ' + String(error?.message || error).slice(0, 300) });
   }
 }
+
 module.exports = {
   login,
   bootstrapAdmin,
