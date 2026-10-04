@@ -985,17 +985,30 @@ async function processDrpFile(f,st){
   if(!f)throw new Error('File DRP tidak ditemukan.');
   selectedDRPFile=f;
   kdDrpSetState('validating',{fileMeta:kdDrpFileMeta(f),error:null,parsed:null,startedAt:new Date().toISOString(),finishedAt:null});
-  if(st)st.innerHTML='<span class="loading">⏳ Validasi DRP: '+esc(f.name)+'</span>';
+  if(st)st.innerHTML='<span class="loading">⏳ Memvalidasi PDF: '+esc(f.name)+'</span>';
   await kdValidateFile(f,'drp');
-  kdDrpSetState('processing');
-  if(st)st.innerHTML='<span class="loading">⏳ Membaca dan memproses DRP: '+esc(f.name)+'</span>';
-  const txt=await kdWithTimeout(readFile(f),40000,'Pembacaan DRP');
-  if(!txt||!String(txt).trim())throw Object.assign(new Error('File berhasil dibuka tetapi tidak menghasilkan teks.'),{code:'EMPTY_TEXT'});
-  if(!/(LAPORAN BULANAN|DAFTAR LAPORAN AKTIVITAS|DAFTAR LAPORAN KUNJUNGAN LAPANGAN|IDENTITAS TPP)/i.test(txt))throw Object.assign(new Error('File berhasil dibaca, tetapi struktur DRP tidak dikenali.'),{code:'DRP_STRUCTURE'});
+  kdDrpSetState('uploading');
+  if(st)st.innerHTML='<span class="loading">⏳ Mengirim PDF ke server...</span>';
+  const extracted=await kdWithTimeout(readPdfBasic(f,st),30000,'Pemrosesan server DRP');
+  const txt=String(extracted?.text||'').trim();
+  if(!txt)throw Object.assign(new Error('Server berhasil membaca PDF tetapi tidak menghasilkan teks.'),{code:'PDF_NO_TEXT'});
+  kdDrpSetState('parsing',{fileMeta:kdDrpFileMeta(f),extractor:extracted.extractor,pages:extracted.pages});
+  if(st)st.innerHTML='<span class="loading">⏳ Menganalisis struktur DRP...</span>';
+  kdFileTrace?.('DRP_PARSE_STARTED',{filename:f.name,pages:extracted.pages,chars:txt.length});
+  if(!/(LAPORAN BULANAN|DAFTAR LAPORAN AKTIVITAS|DAFTAR LAPORAN KUNJUNGAN LAPANGAN|IDENTITAS TPP)/i.test(txt))throw Object.assign(new Error('PDF berhasil dibaca, tetapi struktur DRP tidak dikenali.'),{code:'DRP_STRUCTURE'});
   const parsed=parseDRP(txt);
-  if(!parsed||!Array.isArray(parsed.all)||!parsed.count)throw Object.assign(new Error('DRP terbaca tetapi tidak menemukan daftar aktivitas.'),{code:'DRP_NO_DATA'});
+  const expectedAktivitas=Number(parsed?.aktivitas?.length||0);
+  const expectedKunlap=Number(parsed?.kunlap?.length||0);
+  const declaredTotal=Number(parsed?.header?.totalLaporan||0);
+  if(!parsed||!Array.isArray(parsed.all)||!parsed.count)throw Object.assign(new Error('PDF berhasil dibaca tetapi tidak menemukan daftar kegiatan DRP.'),{code:'DRP_NO_DATA'});
+  if(declaredTotal && parsed.count!==declaredTotal)throw Object.assign(new Error('Struktur DRP terbaca tetapi jumlah kegiatan tidak konsisten ('+parsed.count+' dari '+declaredTotal+').'),{code:'DRP_COUNT_MISMATCH'});
+  if(expectedAktivitas+expectedKunlap!==parsed.count)throw Object.assign(new Error('Hasil parser DRP tidak konsisten antara aktivitas dan kunjungan.'),{code:'DRP_COUNT_MISMATCH'});
+  kdFileTrace?.('DRP_PARSE_RESULT',{count:parsed.count,aktivitas:expectedAktivitas,kunjungan:expectedKunlap});
+  if(st)st.innerHTML='<span class="loading">⏳ '+parsed.count+' kegiatan ditemukan. Menyimpan data...</span>';
+  kdDrpSetState('saving',{parsed,fileMeta:kdDrpFileMeta(f),extractor:extracted.extractor,pages:extracted.pages});
   data.docs=data.docs||{};
-  data.docs.drp={name:f.name,mime:f.type||'application/pdf',size:Number(f.size||0),text:txt,parsed,processedAt:new Date().toISOString()};
+  const previousDrp=data.docs.drp;
+  data.docs.drp={name:f.name,mime:f.type||'application/pdf',size:Number(f.size||0),text:txt,parsed,processedAt:new Date().toISOString(),extractor:extracted.extractor,pages:extracted.pages};
   data.drpActivities=parsed.all;
   data.kegiatan=parsed.all.map((x,i)=>({id:'drp-'+(i+1)+'-'+x.tanggal,nome:x.no,nama:x.deskripsi.split(' ').slice(0,18).join(' '),desa:x.lokasi,tanggal:x.tanggal,catatan:x.deskripsi,waktu:x.waktu,durasi:x.durasi,jenis:x.jenis,kunjungan:x.kunjungan,source:'DRP'}));
   document.getElementById('rNama').value=parsed.header.nama||'';
@@ -1007,11 +1020,19 @@ async function processDrpFile(f,st){
   const months={'Januari':'01','Februari':'02','Maret':'03','April':'04','Mei':'05','Juni':'06','Juli':'07','Agustus':'08','September':'09','Oktober':'10','November':'11','Desember':'12'};
   const mm=Object.keys(months).find(k=>(parsed.header.periode||'').toLowerCase().includes(k.toLowerCase()));
   if(pm&&mm)document.getElementById('rPeriode').value=pm[1]+'-'+months[mm];
-  await save();
+  kdFileTrace?.('DRP_SAVE_STARTED',{count:parsed.count,had_previous:!!previousDrp});
+  try{
+    await save();
+  }catch(e){
+    // Roll back in-memory DRP replacement if the secure vault cannot commit.
+    if(previousDrp){data.docs.drp=previousDrp;data.drpActivities=previousDrp.parsed?.all||[];}
+    throw Object.assign(new Error('Data DRP gagal disimpan secara aman: '+(e?.message||e)),{code:'DRP_SAVE_FAILED'});
+  }
   selectedDRPFile=f;
-  kdDrpSetState('success',{parsed,fileMeta:kdDrpFileMeta(f),error:null,finishedAt:new Date().toISOString()});
+  kdDrpSetState('success',{parsed,fileMeta:kdDrpFileMeta(f),error:null,finishedAt:new Date().toISOString(),extractor:extracted.extractor,pages:extracted.pages});
+  kdFileTrace?.('DRP_SAVE_SUCCESS',{count:parsed.count});
   renderDrpPreview(parsed);kdAuditDrp(parsed);updateDocStatus();
-  if(st)st.innerHTML='<span class="ok">✓ DRP berhasil diproses: '+parsed.count+' kegiatan ditemukan.</span>';
+  if(st)st.innerHTML='<span class="ok">✓ DRP berhasil diproses: '+parsed.count+' kegiatan ditemukan ('+expectedAktivitas+' aktivitas + '+expectedKunlap+' kunjungan lapangan).</span>';
   return parsed;
 }
 async function autoProcessOne(kind,fileOverride=null){
