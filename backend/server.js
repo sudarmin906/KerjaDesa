@@ -14,6 +14,16 @@ const ALLOWED_METHODS = 'GET,POST,PATCH,DELETE,OPTIONS';
 const ALLOWED_HEADERS = 'Content-Type, X-CSRF-Token';
 const WEB_ROOT = path.resolve(__dirname, '..');
 
+function buildInfo() {
+  return {
+    app: 'KerjaDesa Pro',
+    version: String(process.env.KERJADESA_VERSION || '2026.10.04'),
+    commit: String(process.env.KERJADESA_COMMIT || process.env.GITHUB_SHA || 'unknown'),
+    build: String(process.env.KERJADESA_BUILD || process.env.BUILD_ID || 'unknown'),
+    environment: String(process.env.NODE_ENV || 'development')
+  };
+}
+
 const API_RATE_WINDOW_MS = 60 * 1000;
 const API_RATE_MAX = 180;
 const apiRate = new Map();
@@ -137,14 +147,39 @@ async function route(req, res) {
       return sendJson(res, 429, { success: false, message: 'Terlalu banyak permintaan. Coba lagi nanti.' });
     }
 
+    if (req.method === 'GET' && pathName === '/api/version') {
+      res.setHeader('Cache-Control', 'no-store, max-age=0');
+      return sendJson(res, 200, { success: true, ...buildInfo() });
+    }
+
     if (req.method === 'GET' && pathName === '/api/health') {
       const db = await postgresHealth();
-      return sendJson(res, 200, {
-        app: 'KerjaDesa Pro',
-        status: 'online',
+      const { pdfEngineStatus } = require('./controllers/apiController');
+      const pdf = pdfEngineStatus();
+      const ok = db.status === 'healthy' || db.status === 'disabled';
+      return sendJson(res, ok ? 200 : 503, {
+        success: ok,
+        ...buildInfo(),
+        status: ok ? 'online' : 'degraded',
         stage: 'server-backed api',
         timestamp: new Date().toISOString(),
-        database: db
+        database: db,
+        pdf_extractor: pdf
+      });
+    }
+
+    if (req.method === 'GET' && pathName === '/api/health/drp') {
+      const db = await postgresHealth();
+      const { pdfEngineStatus } = require('./controllers/apiController');
+      const pdf = pdfEngineStatus();
+      const ok = (db.status === 'healthy' || db.status === 'disabled') && (pdf.pdftotext || pdf.pdf_parse);
+      return sendJson(res, ok ? 200 : 503, {
+        success: ok,
+        ...buildInfo(),
+        database: db.status,
+        pdf_extractor: pdf.extractor,
+        pdftotext: pdf.pdftotext,
+        pdf_parse: pdf.pdf_parse
       });
     }
 
@@ -214,3 +249,4 @@ bootstrap().catch(error => {
 });
 
 module.exports = server;
+module.exports.buildInfo = buildInfo;
