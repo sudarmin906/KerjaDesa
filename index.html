@@ -1035,7 +1035,7 @@ async function autoProcessOne(kind,fileOverride=null){
   }catch(e){
     console.error('KerjaDesa gagal memproses dokumen',kind,e);
     if(isDrp)kdDrpSetState('error',{error:e instanceof Error?e:new Error(String(e)),finishedAt:new Date().toISOString()});
-    const msg=e?.code==='PROCESS_TIMEOUT'?'Pemrosesan membutuhkan waktu terlalu lama. Silakan coba lagi.':e?.code==='PDF_SCANNED'?'PDF ini berupa hasil scan/gambar dan belum dapat dibaca otomatis.':e?.code==='EMPTY_TEXT'?'File berhasil dibaca tetapi tidak berisi teks yang dapat diekstrak.':e?.code==='DRP_STRUCTURE'?'File berhasil dibaca, tetapi struktur DRP tidak dikenali.':e?.message||'Dokumen gagal diproses.';
+    const msg=e?.code==='PROCESS_TIMEOUT'||e?.code==='DRP_NETWORK_TIMEOUT'?'Server tidak merespons dalam batas waktu.':e?.code==='DRP_NETWORK_ERROR'?'Tidak dapat terhubung ke server DRP.':e?.code==='DRP_CSRF_MISSING'||e?.status===403?'Permintaan DRP ditolak oleh keamanan server. Sesi perlu diperbarui.':e?.status===401?'Sesi login tidak valid. Silakan masuk kembali.':e?.status===413?'Ukuran PDF terlalu besar. Maksimum 15 MB.':e?.code==='PDF_INVALID'?'PDF tidak valid.':e?.code==='PDF_NO_TEXT'?'PDF berhasil diterima tetapi tidak menghasilkan teks.':e?.code==='DRP_SAVE_FAILED'?'DRP berhasil dibaca tetapi gagal disimpan secara aman.':e?.code==='DRP_COUNT_MISMATCH'?'Struktur DRP terbaca tetapi jumlah kegiatan tidak konsisten.':e?.code==='DRP_STRUCTURE'?'PDF berhasil dibaca, tetapi struktur DRP tidak dikenali.':e?.message||'Dokumen gagal diproses.';
     if(st)st.innerHTML='<span class="warn">❌ DRP gagal diproses: '+esc(msg)+'</span>';updateDocStatus();return null;
   }
 }
