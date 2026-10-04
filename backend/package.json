@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "migrate": "node postgres-migrate.js"
+    "migrate": "node postgres-migrate.js",
+    "test": "node tests/auth-session.test.js"
   },
   "engines": {
     "node": ">=18"
