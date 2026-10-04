@@ -19,7 +19,7 @@
         return;
       }
       var script=document.createElement('script');
-      script.src='js/api-auth.js?v=3';
+      script.src='js/api-auth.js?v=20261004auth04';
       script.async=false;
       script.dataset.kdAuthLoader='1';
       script.onload=function(){
