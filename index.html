@@ -2539,4 +2539,33 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 })();
 </script></body></html>
 
+<script>
+/* === KERJADESA DRP DELEGATED CHANGE BRIDGE 2026.10.05 === */
+(function(){
+  'use strict';
+  const VERSION='DRP-DELEGATED-BRIDGE-2026.10.05-01';
+  window.KERJADESA_DRP_DELEGATED_BRIDGE_VERSION=VERSION;
+  if(window.__kdDrpDelegatedBridgeBound)return;
+  window.__kdDrpDelegatedBridgeBound=true;
+  document.addEventListener('change',function(e){
+    const input=e.target;
+    if(!input || input.id!=='drpFile' || input.type!=='file')return;
+    const file=input.files?.[0];
+    if(!file)return;
+    const status=document.getElementById('drpStatus');
+    if(status)status.innerHTML='<span class="loading">⏳ DRP dipilih. Memulai mesin pemrosesan...</span>';
+    const run=window.kdProcessSelectedDrp;
+    if(typeof run!=='function'){
+      if(status)status.innerHTML='<span class="warn">❌ Mesin pemrosesan DRP belum siap.</span>';
+      return;
+    }
+    setTimeout(function(){
+      Promise.resolve(run(input)).catch(function(err){
+        console.error('DRP delegated bridge:',err);
+        if(status)status.innerHTML='<span class="warn">❌ DRP gagal diproses: '+(window.esc?esc(err?.message||err):String(err?.message||err))+'</span>';
+      });
+    },0);
+  },true);
+})();
+</script>
 <!-- KERJADESA-BLITZ-REDEPLOY-2026.10.04 | DRP-PIPELINE-RELEASE | commit-trigger -->
