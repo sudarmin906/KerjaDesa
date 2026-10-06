@@ -1,4 +1,4 @@
-const CACHE='kerjadesa-v68-drp-canonical';
+const CACHE='kerjadesa-v69-drp-single-input';
 const ASSETS=['./','./index.html','./manifest.json','./foto_profil.jpg','./jszip.min.js','./template_sppd_asli.docx','./js/login-direct.js?v=20261004auth07','./js/report-master-v2.js?v=55','./js/security-hardening.js?v=20261004auth07','./js/secure-storage.js?v=1','./js/security-center.js?v=1','./js/offline-sync.js?v=secure'];
 const CACHEABLE=new Set(ASSETS.map(x=>new URL(x,self.location.href).pathname));
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)))});
