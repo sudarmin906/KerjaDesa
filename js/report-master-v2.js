@@ -79,29 +79,86 @@
 
   function buildAllActivityDocumentation(allActs){
     const photosAll=((typeof activityPhotos!=='undefined')?activityPhotos:[]);
+    const acts=safeArr(allActs);
     const used=new Set();
-    const cells = allActs.map((act, idx)=>{
-      const photos = photosAll.filter((p,pi)=>{
-        const matched=(p.matchedActivityIndex===idx);
-        const byDate=(p.matchedActivityIndex==null && p.date && ((typeof sameDayMonth==='function')?sameDayMonth(p.date,act.tanggal):false));
-        if((matched||byDate)&&!used.has(pi)){used.add(pi);return true} return false;
+
+    // Match documentation by stable DRP identity first. The old renderer relied
+    // on matchedActivityIndex, which becomes wrong whenever the report sorts the
+    // DRP rows by date. A photo can therefore be displayed under the wrong activity.
+    const keyOf=(a)=>typeof window.drpActivityKey==='function'
+      ? String(window.drpActivityKey(a)||'')
+      : [String(a?.no??''),String(a?.tanggal??''),String(a?.deskripsi||a?.judul||'').replace(/\\s+/g,' ').trim()].join('|');
+
+    const dateOf=(v)=>typeof window.dateKey==='function'
+      ? String(window.dateKey(v)||'')
+      : String(v||'').slice(0,10);
+
+    const photosForActivity=(act)=>{
+      const actKey=keyOf(act), actNo=String(act?.no??''), actDate=dateOf(act?.tanggal);
+      const sameDate=acts.filter(x=>dateOf(x?.tanggal)===actDate).length;
+      return photosAll.filter((p,pi)=>{
+        if(used.has(pi))return false;
+        const pKey=String(p?.matchedActivityKey||'');
+        const pNo=String(p?.matchedActivityNo??'');
+        const pDate=dateOf(p?.matchedActivityDate||p?.reportDate||p?.date);
+        const exactKey=!!actKey && !!pKey && pKey===actKey;
+        const exactNo=!!actNo && !!pNo && pNo===actNo && !!actDate && pDate===actDate;
+        const uniqueDate=!!actDate && sameDate===1 && pDate===actDate && !pKey && !pNo;
+        // matchedActivityIndex is retained only as a legacy fallback when the
+        // photo has no stable identity at all.
+        const legacyIndex=Number.isInteger(p?.matchedActivityIndex) &&
+          p.matchedActivityIndex===acts.indexOf(act) && !pKey && !pNo && !pDate;
+        if(exactKey||exactNo||uniqueDate||legacyIndex){used.add(pi);return true}
+        return false;
       });
-      const photoHtml = photos.length
-        ? photos.map(p=>(safeMediaUrl(p.url)?'<div class="master-doc-photo"><img src="'+esc2(safeMediaUrl(p.url))+'" alt="Dokumentasi"></div>':'')).join('')
+    };
+
+    const cells=acts.map((act)=>{
+      const photos=photosForActivity(act);
+      const photoHtml=photos.length
+        ? photos.map(p=>{
+            const u=typeof safeMediaUrl==='function'?safeMediaUrl(p?.url):'';
+            return u?'<div class="master-doc-photo"><img src="'+esc2(u)+'" alt="Dokumentasi"></div>':'';
+          }).join('')
         : '<div class="master-doc-empty">Foto dokumentasi belum tersedia untuk kegiatan ini.</div>';
-      const village = (typeof locationVillage==='function'?locationVillage(act.lokasi):String(act.lokasi||'-'));
-      const date = act.tanggal ? dLong(act.tanggal) : '-';
-      const activity = (typeof shortActivityTitle==='function' ? shortActivityTitle(act) : String(act.judul||act.deskripsi||'-').replace(/\s+/g,' ').trim());
-      return '<td class="master-doc-cell"><div class="master-doc-info"><div>Lokasi: <b>'+esc2(village)+'</b></div><div>Tanggal: <b>'+esc2(date)+'</b></div><div>Kegiatan: <b>'+esc2(activity)+'</b></div></div><div class="master-doc-photos">'+photoHtml+'</div></td>';
+      const village=typeof locationVillage==='function'?locationVillage(act.lokasi):String(act.lokasi||'-');
+      const date=act.tanggal?dLong(act.tanggal):'-';
+      const activity=typeof shortActivityTitle==='function'
+        ? shortActivityTitle(act)
+        : String(act.judul||act.deskripsi||'-').replace(/\\s+/g,' ').trim();
+      return '<td class="master-doc-cell"><div class="master-doc-info">'+
+        '<div>Lokasi: <b>'+esc2(village)+'</b></div>'+
+        '<div>Tanggal: <b>'+esc2(date)+'</b></div>'+
+        '<div>Kegiatan: <b>'+esc2(activity)+'</b></div>'+
+        '<div>Jumlah Foto: <b>'+photos.length+'</b></div>'+
+        '</div><div class="master-doc-photos">'+photoHtml+'</div></td>';
     });
+
     const rows=[];
-    for(let i=0;i<cells.length;i+=2) rows.push('<tr>'+cells[i]+(cells[i+1]||'<td class="master-doc-cell empty"></td>')+'</tr>');
+    for(let i=0;i<cells.length;i+=2){
+      rows.push('<tr>'+cells[i]+(cells[i+1]||'<td class="master-doc-cell empty"></td>')+'</tr>');
+    }
+
+    // Never lose photos that cannot yet be matched. Put them in a clearly
+    // labelled section instead of silently attaching them to another activity.
     const remaining=photosAll.filter((p,pi)=>!used.has(pi));
-    if(remaining.length){
-      for(let i=0;i<remaining.length;i+=2){
-        const make=p=>'<td class="master-doc-cell"><div class="master-doc-info"><div>Lokasi: <b>Belum terdeteksi</b></div><div>Tanggal: <b>'+esc2(p.date||'-')+'</b></div><div>Kegiatan: <b>Dokumentasi belum dicocokkan</b></div></div><div class="master-doc-photos"><div class="master-doc-photo"><img src="'+p.url+'" alt="Dokumentasi"></div></div></td>';
-        rows.push('<tr>'+make(remaining[i])+(remaining[i+1]?make(remaining[i+1]):'<td class="master-doc-cell empty"></td>')+'</tr>');
-      }
+    for(let i=0;i<remaining.length;i+=2){
+      const make=(p)=>{
+        const u=typeof safeMediaUrl==='function'?safeMediaUrl(p?.url):'';
+        return '<td class="master-doc-cell"><div class="master-doc-info">'+
+          '<div>Lokasi: <b>Belum terdeteksi</b></div>'+
+          '<div>Tanggal: <b>'+esc2(p?.date||'-')+'</b></div>'+
+          '<div>Kegiatan: <b>Dokumentasi belum dicocokkan</b></div>'+
+          '<div>Nama Foto: <b>'+esc2(p?.name||'-')+'</b></div>'+
+          '</div><div class="master-doc-photos">'+
+          (u?'<div class="master-doc-photo"><img src="'+esc2(u)+'" alt="Dokumentasi"></div>':'<div class="master-doc-empty">Pratinjau foto tidak tersedia.</div>')+
+          '</div></td>';
+      };
+      rows.push('<tr>'+make(remaining[i])+(remaining[i+1]?make(remaining[i+1]):'<td class="master-doc-cell empty"></td>')+'</tr>');
+    }
+
+    if(!rows.length){
+      rows.push('<tr><td colspan="2" class="master-doc-cell"><div class="master-doc-empty">Belum ada aktivitas DRP atau foto dokumentasi.</div></td></tr>');
     }
     return '<table class="master-doc-table"><tbody>'+rows.join('')+'</tbody></table>';
   }
