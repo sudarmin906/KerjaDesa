@@ -380,7 +380,7 @@ html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#26344
 <div class="kd-sec-panel"><h3>Audit Server</h3><div id="kdSecAudit">Memeriksa audit log...</div></div>
 <div class="kd-sec-panel"><h3>Status Pemeriksaan</h3><div id="kdSecRunStatus" class="kd-sec-mono">Belum diperiksa.</div></div>
 <div class="kd-sec-panel"><h3>Kontrol Data Lokal</h3><p style="color:#91a4b8;font-size:11px;line-height:1.5">Data kerja offline tidak dihapus saat logout agar pekerjaan yang belum tersinkron tidak hilang. Hapus hanya setelah memastikan backup/sinkronisasi selesai.</p><div class="kd-sec-actions"><button type="button" data-kd-security-run="1">🔍 Jalankan pemeriksaan</button><button type="button" class="kd-sec-danger" data-kd-security-clear="1">🗑️ Hapus data offline</button></div></div>
-</div></div><div id="reportActions" class="card no-print hide"><h3>Output Laporan</h3><div class="actions"><button data-kd-download-word="1">⬇️ Word Siap Print</button><button data-kd-print-pdf="1">🖨️ Cetak / PDF</button></div><div class="ai-box"><b>🤖 Penyempurnaan Bahasa</b><p class="small muted">C, D, E, dan F disusun dari DRP. Jika koneksi GPT tersedia, kalimat dapat dirapikan tanpa menambah fakta.</p><div class="actions"><button class="secondary" data-kd-improve-gpt="1">✨ Perbaiki dengan GPT</button><button class="secondary" data-kd-copy-gpt="1">📋 Salin Prompt GPT</button></div><div id="aiReportStatus" class="small muted"></div></div><p class="small muted">Word menggunakan A4 dan page break. Cetak/PDF dapat langsung disimpan sebagai PDF.</p></div>
+</div></div><div id="reportActions" class="card no-print hide"><h3>Output Laporan</h3><div class="actions"><button type="button" id="kdWordPrintBtn" onclick="return downloadWord()" data-kd-download-word="1">⬇️ Word Siap Print</button><button type="button" id="kdPrintPdfBtn" onclick="return kdPrintReport()" data-kd-print-pdf="1">🖨️ Cetak / PDF</button></div><div class="ai-box"><b>🤖 Penyempurnaan Bahasa</b><p class="small muted">C, D, E, dan F disusun dari DRP. Jika koneksi GPT tersedia, kalimat dapat dirapikan tanpa menambah fakta.</p><div class="actions"><button class="secondary" data-kd-improve-gpt="1">✨ Perbaiki dengan GPT</button><button class="secondary" data-kd-copy-gpt="1">📋 Salin Prompt GPT</button></div><div id="aiReportStatus" class="small muted"></div></div><p class="small muted">Word menggunakan A4 dan page break. Cetak/PDF dapat langsung disimpan sebagai PDF.</p></div>
 <div id="docResult2"></div>
 </div>
 </section></main>
@@ -1938,6 +1938,36 @@ async function makeReport(){const d=data.docs||{},drp=getReportDrp(),h=drp?.head
    matchPhotoToDrp(p,allActs);
  });
  data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;await save();reportContext.nar=deriveNarratives(acts);renderReportFromNarratives(reportContext.nar);kdPersistGeneratedReport().then(r=>{const st=document.getElementById('aiReportStatus');if(st)st.textContent=r.synced?'✅ Laporan selesai disusun dan tersimpan di server. C, D, E, F dan G sudah dibuat.':'✅ Laporan selesai disusun. Server belum tersedia; laporan tetap tersimpan di perangkat.'});}
+function kdPrintReport(){
+  try{
+    if(!reportHtml){
+      alert('Laporan belum tersedia. Tekan “Buat Laporan Bulanan Otomatis” terlebih dahulu.');
+      return false;
+    }
+    const target=document.getElementById('reportPrint');
+    if(!target || !target.innerHTML.trim()){
+      alert('Isi laporan belum siap untuk dicetak.');
+      return false;
+    }
+    const oldTitle=document.title;
+    document.title='Laporan Kunjungan Lapangan '+String(reportContext?.month||'').trim()+' '+String(reportContext?.year||'').trim();
+    target.classList.add('kd-print-now');
+    document.body.classList.add('kd-printing');
+    const cleanup=()=>{
+      target.classList.remove('kd-print-now');
+      document.body.classList.remove('kd-printing');
+      document.title=oldTitle;
+      window.removeEventListener('afterprint',cleanup);
+    };
+    window.addEventListener('afterprint',cleanup,{once:true});
+    setTimeout(()=>window.print(),120);
+    return true;
+  }catch(e){
+    console.error('Cetak laporan gagal:',e);
+    alert('Cetak laporan gagal: '+(e?.message||e));
+    return false;
+  }
+}
 function downloadWord(){
   if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}
   const css='@page{size:A4 portrait;margin:15mm}@page landscape{size:A4 landscape;margin:12mm 14mm}body{font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.42;color:#111}.report-page{break-after:page;page-break-after:always;box-sizing:border-box;min-height:267mm;padding:12mm 15mm}.landscape-page{page:landscape;min-height:186mm;padding:10mm 12mm}.report-page:last-child{break-after:auto;page-break-after:auto}.cover-head{text-align:center;font-weight:700}.cover-instansi{font-size:16px;line-height:1.45}.cover-logo{display:block;width:78mm;height:78mm;object-fit:contain;margin:24mm auto 20mm}.cover-title{font-size:15px;margin-bottom:17mm}.cover-name{font-size:17px;margin-bottom:6mm}.cover-position{font-size:14px}.cover-region{font-size:14px;line-height:1.55;margin-top:22mm}.report-page h2{text-align:center;font-size:15px}.report-page h3{font-size:13px;margin:4mm 0 2.5mm}.report-page p,.report-page li{font-size:10.5pt;line-height:1.42;text-align:justify}.identity-table,.wide-table,.result-table{width:100%;border-collapse:collapse}.identity-table td{padding:2px 5px}.wide-table th,.wide-table td,.result-table th,.result-table td{border:1px solid #555;padding:4px;vertical-align:top}.wide-table th{text-align:center}.doc-roll{display:grid;grid-template-columns:40% 60%;gap:5mm;align-items:center;min-height:48mm;break-inside:avoid}.doc-note{border:1px solid #333;padding:7px;font-size:9.5pt}.doc-photo-frame{border:1px solid #333;padding:5px;text-align:center}.doc-photo-frame img{max-width:100%;max-height:62mm;object-fit:contain}.signature{text-align:center;margin-top:12mm}';
