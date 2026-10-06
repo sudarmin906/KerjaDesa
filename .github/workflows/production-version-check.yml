@@ -34,6 +34,20 @@ jobs:
           fetch_json /api/version /tmp/version.json
           fetch_json /api/health /tmp/health.json
           fetch_json /api/health/drp /tmp/drp-health.json
+          # Safe authentication health probe: never uses a real account or password.
+          auth_status="$(curl --silent --show-error --retry 2 --retry-delay 1 --max-time 30 \\
+            -H 'Content-Type: application/json' \\
+            -o /tmp/auth-probe.json -w '%{http_code}' \\
+            -X POST "$PRODUCTION_URL/api/auth/login" \\
+            --data '{"username":"__kerjadesa_healthcheck__","password":"Invalid-HealthCheck-20261006-Only"}' || true)"
+          echo "POST /api/auth/login (invalid probe) -> HTTP $auth_status"
+          cat /tmp/auth-probe.json || true
+          echo
+          if [ "$auth_status" != "401" ]; then
+            echo "Production authentication endpoint is unhealthy or misconfigured; expected HTTP 401 for invalid credentials."
+            exit 1
+          fi
+
           version_json="$(cat /tmp/version.json)"
           health_json="$(cat /tmp/health.json)"
           drp_json="$(cat /tmp/drp-health.json)"
