@@ -1152,6 +1152,46 @@ window.handleDrpFile=handleDrpFile;
   }
   window.addEventListener('focus',checkAfterPicker);
   window.addEventListener('pageshow',checkAfterPicker);
+
+  // DOM-independent watchdog: some Android file providers can populate
+  // input.files after the event/listener lifecycle has already changed.
+  // Re-query the live DOM node instead of retaining an old input reference.
+  let watchdogTimer=null;
+  function startWatchdog(){
+    if(watchdogTimer)clearInterval(watchdogTimer);
+    let ticks=0;
+    watchdogTimer=setInterval(function(){
+      ticks++;
+      const live=document.getElementById('drpFile');
+      const file=live?.files?.[0];
+      const status=document.getElementById('drpStatus');
+      const text=String(status?.textContent||'').trim();
+      if(file){
+        const busy=/FILE TERPILIH|Memvalidasi|Mengirim PDF|Teks PDF|Menganalisis|kegiatan ditemukan|Menyimpan|Memproses/i.test(text);
+        const done=/DRP berhasil diproses/i.test(text);
+        if(!busy && !done && typeof window.kdProcessSelectedDrp==='function'){
+          console.info('[DRP WATCHDOG] file detected; starting canonical processor',file.name);
+          void window.kdProcessSelectedDrp(live);
+          clearInterval(watchdogTimer);
+          watchdogTimer=null;
+          return;
+        }
+      }
+      if(ticks>=40){
+        clearInterval(watchdogTimer);
+        watchdogTimer=null;
+      }
+    },250);
+  }
+  document.addEventListener('click',function(e){
+    const el=e.target?.closest?.('label[for="drpFile"],#drpFile');
+    if(el)startWatchdog();
+  },true);
+  document.addEventListener('change',function(e){
+    if(e.target?.id==='drpFile')startWatchdog();
+  },true);
+  window.addEventListener('focus',startWatchdog);
+  window.addEventListener('pageshow',startWatchdog);
 })();
 async function autoProcessOne(kind,fileOverride=null){
   const isDrp=kind==='drp',fileId=isDrp?'drpFile':'sppdFile',statusId=isDrp?'drpStatus':'sppdStatus';
