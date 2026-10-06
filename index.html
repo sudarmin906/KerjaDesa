@@ -2403,6 +2403,63 @@ window.kdGetProductionVersion=async function(){const base=window.KERJADESA_API_B
   const boot=()=>{if(!bind())setTimeout(boot,250)};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
+/* === KERJADESA DRP FILE WATCHDOG 2026.10.06 === */
+(function(){
+  'use strict';
+  const VERSION='DRP-FILE-WATCHDOG-2026.10.06-01';
+  window.KERJADESA_DRP_WATCHDOG_VERSION=VERSION;
+  let lastKey='';
+  let running=false;
+  function key(f){
+    return f ? [f.name||'',f.size||0,f.lastModified||0].join('|') : '';
+  }
+  function detect(){
+    if(running)return;
+    const input=document.getElementById('drpFile');
+    const f=input?.files?.[0];
+    if(!f)return;
+    const k=key(f);
+    if(!k || k===lastKey)return;
+    lastKey=k;
+    const status=document.getElementById('drpStatus');
+    if(status)status.innerHTML='<span class="loading">⏳ FILE TERDETEKSI: '+(typeof esc==='function'?esc(f.name):f.name)+'<br>⏳ Menjalankan pemrosesan DRP...</span>';
+    running=true;
+    const launch=()=>{
+      const current=document.getElementById('drpFile');
+      const currentFile=current?.files?.[0];
+      const run=window.kdProcessSelectedDrp;
+      if(!currentFile || typeof run!=='function'){
+        setTimeout(launch,250);
+        return;
+      }
+      Promise.resolve(run(current)).catch(err=>{
+        console.error('DRP watchdog:',err);
+        const box=document.getElementById('drpStatus');
+        if(box)box.innerHTML='<span class="warn">❌ DRP gagal diproses: '+(typeof esc==='function'?esc(err?.message||err):String(err?.message||err))+'</span>';
+      }).finally(()=>{running=false;});
+    };
+    setTimeout(launch,0);
+  }
+  function bind(){
+    const input=document.getElementById('drpFile');
+    if(input && input.dataset.kdWatchdogBound!=='1'){
+      input.dataset.kdWatchdogBound='1';
+      input.addEventListener('change',detect,true);
+      input.addEventListener('input',detect,true);
+    }
+    detect();
+  }
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(bind,100)});
+  window.addEventListener('focus',()=>setTimeout(bind,150));
+  const observer=new MutationObserver(()=>bind());
+  function boot(){
+    bind();
+    observer.observe(document.documentElement,{childList:true,subtree:true});
+    setInterval(bind,500);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
+  else boot();
+})();
 /* === KerjaDesa TAHAP 475: DIGITAL TWIN 2.0 === */
 (function(){
   const KEY='kerjadesa_digital_twin_v20';
