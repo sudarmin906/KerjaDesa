@@ -2551,17 +2551,31 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
     // Canonical DRP trigger lives in the same file-input bridge that is proven
     // to receive the mobile/PWA change event. This avoids relying on a listener
     // attached to an earlier/replaced input element.
-    if(kind==='drp' && typeof window.kdProcessSelectedDrp==='function' && !window.__kdDrpBridgeBusy){
+    if(kind==='drp' && !window.__kdDrpBridgeBusy){
       window.__kdDrpBridgeBusy=true;
+      const current=input;
+      const file=current?.files?.[0];
+      const s=document.getElementById('drpStatus');
+      if(s && file) s.innerHTML='<span class="loading">⏳ FILE TERPILIH: '+esc(file.name)+'<br>⏳ Menunggu mesin DRP...</span>';
+      let attempts=0;
       const start=()=>{
-        const current=document.getElementById('drpFile');
-        const file=current?.files?.[0];
-        if(!file){window.__kdDrpBridgeBusy=false;return;}
-        Promise.resolve(window.kdProcessSelectedDrp(current)).catch(err=>{
-          console.error('DRP file-input bridge:',err);
-          const s=document.getElementById('drpStatus');
-          if(s)s.innerHTML='<span class="warn">❌ DRP gagal diproses: '+(typeof esc==='function'?esc(err?.message||err):String(err?.message||err))+'</span>';
-        }).finally(()=>{window.__kdDrpBridgeBusy=false;});
+        const active=document.getElementById('drpFile');
+        const activeFile=active?.files?.[0];
+        const run=window.kdProcessSelectedDrp;
+        if(!activeFile){window.__kdDrpBridgeBusy=false;return;}
+        if(typeof run==='function'){
+          Promise.resolve(run(active)).catch(err=>{
+            console.error('DRP file-input bridge:',err);
+            const box=document.getElementById('drpStatus');
+            if(box)box.innerHTML='<span class="warn">❌ DRP gagal diproses: '+(typeof esc==='function'?esc(err?.message||err):String(err?.message||err))+'</span>';
+          }).finally(()=>{window.__kdDrpBridgeBusy=false;});
+          return;
+        }
+        attempts++;
+        if(attempts<120){setTimeout(start,250);return;}
+        window.__kdDrpBridgeBusy=false;
+        const box=document.getElementById('drpStatus');
+        if(box)box.innerHTML='<span class="warn">❌ Mesin DRP tidak tersedia setelah file dipilih. Silakan muat ulang halaman.</span>';
       };
       setTimeout(start,0);
     }
@@ -2651,4 +2665,5 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 /* === KERJADESA DRP INLINE DIRECT TRIGGER 2026.10.06 === */
 window.KERJADESA_DRP_INLINE_DIRECT_TRIGGER='2026.10.06-01';
 </script>
+<!-- KERJADESA-DRP-FIX-2026.10.06-02 | confirmed file bridge waits for canonical processor -->
 <!-- KERJADESA-BLITZ-REDEPLOY-2026.10.04 | DRP-PIPELINE-RELEASE | commit-trigger -->
