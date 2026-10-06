@@ -1940,33 +1940,29 @@ async function makeReport(){const d=data.docs||{},drp=getReportDrp(),h=drp?.head
  data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;await save();reportContext.nar=deriveNarratives(acts);renderReportFromNarratives(reportContext.nar);kdPersistGeneratedReport().then(r=>{const st=document.getElementById('aiReportStatus');if(st)st.textContent=r.synced?'✅ Laporan selesai disusun dan tersimpan di server. C, D, E, F dan G sudah dibuat.':'✅ Laporan selesai disusun. Server belum tersedia; laporan tetap tersimpan di perangkat.'});}
 function kdPrintReport(){
   try{
-    if(!reportHtml){
-      alert('Laporan belum tersedia. Tekan “Buat Laporan Bulanan Otomatis” terlebih dahulu.');
-      return false;
+    if(!reportHtml){alert('Laporan belum tersedia. Tekan “Buat Laporan Bulanan Otomatis” terlebih dahulu.');return false;}
+    const title='Laporan Kunjungan Lapangan '+String(reportContext?.month||'').trim()+' '+String(reportContext?.year||'').trim();
+    const css=`@page{size:A4 portrait;margin:15mm}@page landscape{size:A4 landscape;margin:12mm 14mm}
+body{margin:0;background:#fff;font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.42;color:#111}
+.report-page{break-after:page;page-break-after:always;box-sizing:border-box;min-height:267mm;padding:12mm 15mm}.landscape-page{page:landscape;min-height:186mm;padding:10mm 12mm}.report-page:last-child{break-after:auto;page-break-after:auto}
+.cover-head{text-align:center;font-weight:700}.cover-instansi{font-size:16px;line-height:1.45}.cover-logo{display:block;width:45mm;height:45mm;object-fit:contain;margin:12mm auto 14mm}.cover-title{font-size:15px;margin-bottom:17mm}.cover-name{font-size:17px;margin-bottom:6mm}.cover-position{font-size:14px}.cover-region{font-size:14px;line-height:1.55;margin-top:22mm}
+.report-page h2{text-align:center;font-size:15px;margin:0 0 3mm}.report-page h3{font-size:13px;margin:4mm 0 2.5mm}.report-page p,.report-page li{font-size:10.5pt;line-height:1.42;text-align:justify}
+.identity-table,.wide-table,.result-table{width:100%;border-collapse:collapse}.identity-table td{padding:2px 5px}.wide-table th,.wide-table td,.result-table th,.result-table td{border:1px solid #555;padding:4px;vertical-align:top}.wide-table th{text-align:center}.result-table tr{break-inside:avoid;page-break-inside:avoid}
+.doc-roll{display:grid;grid-template-columns:40% 60%;gap:5mm;align-items:center;min-height:48mm;break-inside:avoid;page-break-inside:avoid}.doc-note{border:1px solid #333;padding:7px;font-size:9.5pt}.doc-photo-frame{border:1px solid #333;padding:5px;text-align:center}.doc-photo-frame img{max-width:100%;max-height:62mm;object-fit:contain}.signature{text-align:center;margin-top:12mm}`;
+    const html='<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(title)+'</title><style>'+css+'</style></head><body>'+reportHtml+'</body></html>';
+    const printWin=window.open('','_blank');
+    if(printWin){
+      printWin.document.open(); printWin.document.write(html); printWin.document.close();
+      const doPrint=()=>setTimeout(()=>{try{printWin.focus();printWin.print()}catch(err){console.error('print window failed',err)}},350);
+      if(printWin.document.readyState==='complete')doPrint();else printWin.addEventListener('load',doPrint,{once:true});
+      return true;
     }
     const target=document.getElementById('reportPrint');
-    if(!target || !target.innerHTML.trim()){
-      alert('Isi laporan belum siap untuk dicetak.');
-      return false;
-    }
-    const oldTitle=document.title;
-    document.title='Laporan Kunjungan Lapangan '+String(reportContext?.month||'').trim()+' '+String(reportContext?.year||'').trim();
-    target.classList.add('kd-print-now');
-    document.body.classList.add('kd-printing');
-    const cleanup=()=>{
-      target.classList.remove('kd-print-now');
-      document.body.classList.remove('kd-printing');
-      document.title=oldTitle;
-      window.removeEventListener('afterprint',cleanup);
-    };
-    window.addEventListener('afterprint',cleanup,{once:true});
-    setTimeout(()=>window.print(),120);
-    return true;
-  }catch(e){
-    console.error('Cetak laporan gagal:',e);
-    alert('Cetak laporan gagal: '+(e?.message||e));
-    return false;
-  }
+    if(!target||!target.innerHTML.trim()){alert('Isi laporan belum siap untuk dicetak.');return false;}
+    const oldTitle=document.title;document.title=title;target.classList.add('kd-print-now');document.body.classList.add('kd-printing');
+    const cleanup=()=>{target.classList.remove('kd-print-now');document.body.classList.remove('kd-printing');document.title=oldTitle;window.removeEventListener('afterprint',cleanup)};
+    window.addEventListener('afterprint',cleanup,{once:true});setTimeout(()=>window.print(),120);return true;
+  }catch(e){console.error('Cetak laporan gagal:',e);alert('Cetak laporan gagal: '+(e?.message||e));return false;}
 }
 function downloadWord(){
   if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}
