@@ -256,6 +256,66 @@ html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#26344
 </div><div class="card" style="margin-top:14px"><h3 style="margin-top:0">Desa Dampingan</h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div class="pill"><b>01</b> Desa Paminggalan<br><span class="muted">Kecamatan Sendana</span></div><div class="pill"><b>02</b> Desa Tallu Banua Utara<br><span class="muted">Kecamatan Sendana</span></div><div class="pill"><b>03</b> Desa Limboro Rambu Rambu<br><span class="muted">Kecamatan Sendana</span></div></div></div></div><div id="kegiatan" class="hide"><div class="card"><h2>Data Kegiatan</h2><input id="knama" placeholder="Nama kegiatan"><input id="kdesa" placeholder="Desa"><input id="ktgl" type="date"><textarea id="kcat" placeholder="Catatan"></textarea><button data-kd-add-kegiatan="1">Simpan Kegiatan</button></div><input id="kSearch" placeholder="🔎 Cari kegiatan atau desa..." data-kd-filter-lists="1"><div id="klist"></div></div>
 <div id="monitoring" class="hide"><div class="card"><h2>Monitoring Lapangan</h2><input id="mkeg" placeholder="ID / nama kegiatan"><input id="mpet" placeholder="Nama petugas"><input id="mprog" type="number" min="0" max="100" placeholder="Progres 0-100"><textarea id="mcat" placeholder="Catatan hasil monitoring"></textarea><button data-kd-gps="1">📍 Ambil Lokasi GPS</button><p id="gpsout" class="muted">Lokasi belum diambil</p><button data-kd-add-monitoring="1">Simpan Monitoring</button></div><input id="mSearch" placeholder="🔎 Cari monitoring, petugas, atau kegiatan..." data-kd-filter-lists="1"><div id="mlist"></div></div>
 <div id="dokumen" class="hide">
+<script>
+/* === KERJADESA DRP MASTER INPUT ROUTER 2026.10.06 === */
+(function(){
+  'use strict';
+  if(window.__KD_DRP_MASTER_ROUTER_BOUND)return;
+  window.__KD_DRP_MASTER_ROUTER_BOUND=true;
+  window.KERJADESA_DRP_MASTER_ROUTER_VERSION='DRP-MASTER-INPUT-2026.10.06-01';
+
+  function safe(s){return String(s??'').replace(/[&<>"']/g,function(m){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'})[m]})}
+  function status(msg,cls){
+    const el=document.getElementById('drpStatus');
+    if(el)el.innerHTML='<span class="'+(cls||'loading')+'">'+msg+'</span>';
+  }
+  function run(input){
+    const file=input?.files?.[0];
+    if(!file)return;
+    const name=safe(file.name);
+    const nameEl=document.getElementById('drpFileName');
+    if(nameEl){nameEl.textContent=nameEl.title=name;nameEl.className='kd-file-name ok'}
+    status('⏳ FILE TERPILIH: '+name+'<br>⏳ Menjalankan pemrosesan DRP...','loading');
+
+    let attempts=0;
+    const invoke=()=>{
+      const active=document.getElementById('drpFile');
+      const activeFile=active?.files?.[0];
+      const processor=window.kdProcessSelectedDrp;
+      if(!activeFile){status('❌ File DRP tidak dapat diakses setelah dipilih.','warn');return}
+      if(typeof processor==='function'){
+        try{
+          Promise.resolve(processor(active)).catch(err=>{
+            console.error('DRP MASTER ROUTER:',err);
+            status('❌ DRP gagal diproses: '+safe(err?.message||err),'warn');
+          });
+        }catch(err){
+          console.error('DRP MASTER ROUTER sync:',err);
+          status('❌ DRP gagal diproses: '+safe(err?.message||err),'warn');
+        }
+        return;
+      }
+      if(++attempts<100){setTimeout(invoke,100);return}
+      status('❌ Mesin pemrosesan DRP tidak tersedia.','warn');
+    };
+    invoke();
+  }
+
+  document.addEventListener('change',function(e){
+    const input=e.target;
+    if(!input || input.id!=='drpFile' || input.type!=='file')return;
+    // This is the one authoritative DRP path. Stop all older competing
+    // DRP change handlers so they cannot overwrite the status or start a race.
+    e.stopImmediatePropagation();
+    run(input);
+  },true);
+
+  document.addEventListener('input',function(e){
+    const input=e.target;
+    if(input?.id==='drpFile' && input.type==='file')run(input);
+  },true);
+})();
+</script>
 <div id="drpPanel" class="card print-area"><h2>📄 Dokumen & Laporan Bulanan</h2><p class="muted">Upload DRP Bulanan untuk membuat laporan. Untuk SPPD, gunakan template Word asli di bawah; tidak perlu mengunggah SPPD setiap kali.</p>
 <script>
 /* === KERJADESA DRP EARLY INPUT ROUTER 2026.10.06 === */
