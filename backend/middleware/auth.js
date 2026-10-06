@@ -5,9 +5,9 @@ const { enabled: postgresEnabled, query: postgresQuery } = require('../database/
 
 const sessions = new Map();
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
-const SESSION_IDLE_MS = 30 * 60 * 1000;
+const SESSION_IDLE_MS = 12 * 60 * 60 * 1000;
 const REMEMBER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
-const REMEMBER_IDLE_MS = 7 * 24 * 60 * 60 * 1000;
+const REMEMBER_IDLE_MS = 30 * 24 * 60 * 60 * 1000;
 const SESSION_COOKIE = process.env.NODE_ENV === 'production' ? '__Host-kd_session' : 'kd_session';
 const CSRF_COOKIE = process.env.NODE_ENV === 'production' ? '__Host-kd_csrf' : 'kd_csrf';
 
