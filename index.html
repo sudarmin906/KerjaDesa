@@ -2522,6 +2522,23 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
       el.className='kd-file-name ok';
       el.title=names.join('\n');
     }
+    // Canonical DRP trigger lives in the same file-input bridge that is proven
+    // to receive the mobile/PWA change event. This avoids relying on a listener
+    // attached to an earlier/replaced input element.
+    if(kind==='drp' && typeof window.kdProcessSelectedDrp==='function' && !window.__kdDrpBridgeBusy){
+      window.__kdDrpBridgeBusy=true;
+      const start=()=>{
+        const current=document.getElementById('drpFile');
+        const file=current?.files?.[0];
+        if(!file){window.__kdDrpBridgeBusy=false;return;}
+        Promise.resolve(window.kdProcessSelectedDrp(current)).catch(err=>{
+          console.error('DRP file-input bridge:',err);
+          const s=document.getElementById('drpStatus');
+          if(s)s.innerHTML='<span class="warn">❌ DRP gagal diproses: '+(typeof esc==='function'?esc(err?.message||err):String(err?.message||err))+'</span>';
+        }).finally(()=>{window.__kdDrpBridgeBusy=false;});
+      };
+      setTimeout(start,0);
+    }
   }
   function bind(){
     for(const [id,status,kind] of map){
