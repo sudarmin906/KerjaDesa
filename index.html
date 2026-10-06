@@ -1885,6 +1885,32 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
       el.className='kd-file-name ok';
       el.title=names.join('\n');
     }
+
+    // AUTHORITATIVE DRP HANDOFF: this function is the exact handler that
+    // already receives the confirmed mobile file-selection event. Do not rely
+    // on a separate listener or a stale input reference.
+    if(kind==='drp' && files[0]){
+      const drpInput=input;
+      const drpStatus=document.getElementById('drpStatus');
+      if(drpStatus)drpStatus.innerHTML='<span class="loading">⏳ FILE TERPILIH: '+(typeof esc==='function'?esc(files[0].name):String(files[0].name))+'<br>⏳ Memulai pemrosesan DRP...</span>';
+      const run=window.handleDrpFile;
+      if(typeof run==='function'){
+        Promise.resolve(run(files[0],drpStatus)).catch(err=>{
+          console.error('[DRP AUTHORITATIVE HANDOFF]',err);
+          if(drpStatus)drpStatus.innerHTML='<span class="warn">❌ DRP gagal diproses: '+(typeof esc==='function'?esc(err?.message||String(err)):String(err?.message||err))+'</span>';
+        });
+      }else{
+        const controller=window.kdProcessSelectedDrp;
+        if(typeof controller==='function'){
+          Promise.resolve(controller(drpInput)).catch(err=>{
+            console.error('[DRP CONTROLLER HANDOFF]',err);
+            if(drpStatus)drpStatus.innerHTML='<span class="warn">❌ DRP gagal diproses: '+String(err?.message||err)+'</span>';
+          });
+        }else if(drpStatus){
+          drpStatus.innerHTML='<span class="warn">❌ Mesin pemrosesan DRP belum tersedia.</span>';
+        }
+      }
+    }
   }
   function bind(){
     for(const [id,status,kind] of map){
