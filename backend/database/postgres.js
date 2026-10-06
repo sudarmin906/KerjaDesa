@@ -79,4 +79,3 @@ async function health() {
 }
 
 module.exports = { enabled, getPool, query, health };
-
