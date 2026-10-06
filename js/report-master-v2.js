@@ -154,22 +154,15 @@
       '</tbody><tfoot><tr><th colspan="4">Total Hari Kunjungan Lapangan Bulan '+esc2(month)+' Tahun '+esc2(year)+' : '+
       ((typeof uniqueVisitDays==='function'?uniqueVisitDays(visitActs):visitActs.length))+' Hari</th></tr></tfoot></table></section>';
 
-    // 3) C — A4 PORTRAIT, preserving the source's structure and six specific objectives.
+    // 3) C — A4 PORTRAIT. Build entirely from the current DRP-derived narrative.
+    const tujuan=safeArr(nar?.tujuan);
     const csec='<section class="'+reportPageClass('portrait')+'"><h3>C. TUJUAN KUNJUNGAN LAPANGAN</h3>'+
-      '<p>Pelaksanaan kunjungan lapangan pada bulan '+esc2(month)+' Tahun '+esc2(year)+' di wilayah pendampingan Desa Tallu Banua Utara, Desa Limboro Rambu-Rambu, dan Desa Paminggalan Kecamatan Sendana Kabupaten Majene bertujuan untuk melaksanakan kegiatan pendampingan, monitoring, koordinasi, serta memastikan proses penyelenggaraan pemerintahan desa, pelaksanaan pembangunan, dan pengelolaan Dana Desa berjalan sesuai dengan perencanaan, ketentuan, dan regulasi yang berlaku.</p>'+
-      '<p>Kegiatan kunjungan lapangan dilaksanakan sebagai bentuk dukungan terhadap Pemerintah Desa dalam meningkatkan kualitas tata kelola pemerintahan desa, percepatan pembangunan desa, pemberdayaan masyarakat, serta penguatan administrasi dan pelaporan kegiatan desa.</p>'+
-      '<p>Adapun tujuan khusus pelaksanaan kunjungan lapangan yaitu:</p>'+
-      '<ol>'+
-      '<li>Melakukan monitoring dan evaluasi terhadap progres pelaksanaan kegiatan pembangunan fisik desa, seperti pembangunan Gedung Koperasi Desa Merah Putih, pembangunan rabat beton jalan, pembangunan jembatan dekker, serta pembangunan drainase desa.</li>'+
-      '<li>Memastikan pelaksanaan kegiatan pembangunan desa berjalan sesuai dengan dokumen perencanaan, standar teknis, volume pekerjaan, serta target waktu yang telah ditetapkan.</li>'+
-      '<li>Melaksanakan koordinasi dan pendampingan bersama Pemerintah Desa dalam rangka persiapan dan pelaksanaan Pra Musrenbang Dusun, Musrenbang Desa, penyusunan RKPDes Tahun Anggaran 2027, serta penyusunan dokumen perencanaan pembangunan desa.</li>'+
-      '<li>Mendampingi Pemerintah Desa dalam proses penyusunan, pembahasan, dan penyesuaian dokumen APBDes serta memastikan perencanaan penggunaan Dana Desa tetap memperhatikan ketentuan dan prioritas pembangunan desa.</li>'+
-      '<li>Melakukan pendampingan dalam pengelolaan administrasi Dana Desa melalui pemutakhiran data realisasi kegiatan dan penginputan laporan pada aplikasi Monitoring dan Evaluasi Dana Desa (Monev DD).</li>'+
-      '<li>Mengidentifikasi kondisi, kendala, serta kebutuhan tindak lanjut yang ditemukan di lapangan sebagai bahan evaluasi dan perbaikan pelaksanaan program pembangunan Desa.</li>'+
-      '</ol></section>';
+      '<p>Kunjungan lapangan pada bulan '+esc2(month)+' Tahun '+esc2(year)+' dilaksanakan berdasarkan aktivitas yang tercatat dalam DRP dan diarahkan untuk memastikan pendampingan, monitoring, koordinasi, verifikasi kondisi lapangan, serta penyelesaian tindak lanjut berjalan sesuai kebutuhan dan ketentuan yang berlaku.</p>'+
+      (tujuan.length?'<p>Tujuan khusus kunjungan lapangan meliputi:</p><ol>'+tujuan.map(x=>'<li>'+esc2(x)+'</li>').join('')+'</ol>':'<p>Tujuan khusus akan disusun berdasarkan aktivitas kunjungan lapangan yang terbaca dari DRP.</p>')+
+      '</section>';
 
     // 4) D — A4 LANDSCAPE. Only the detailed result table belongs here.
-    const dsec='<section class="'+reportPageClass('landscape')+'"><h3>D. Hasil Kunjugan Lapangan</h3>'+
+    const dsec='<section class="'+reportPageClass('landscape')+'"><h3>D. Hasil Kunjungan Lapangan</h3>'+
       '<table class="result-table"><thead><tr><th>No</th><th>Tanggal</th><th>Desa</th><th>Kegiatan</th></tr></thead><tbody>'+
       ((typeof buildVisitRows==='function'?buildVisitRows(visitActs):''))+
       '</tbody></table></section>';
@@ -194,7 +187,7 @@
       '</section>';
 
     // 6) G — A4 PORTRAIT. Two-column documentation cards, portrait photos, concise activity title.
-    const g='<section class="'+reportPageClass('portrait')+'"><h3>G. Dokumentasi Kunjugan Lapangan</h3>'+
+    const g='<section class="'+reportPageClass('portrait')+'"><h3>G. Dokumentasi Kunjungan Lapangan</h3>'+
       buildAllActivityDocumentation(allActs)+
       '</section>';
 
