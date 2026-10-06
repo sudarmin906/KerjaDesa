@@ -34,7 +34,6 @@ jobs:
 
   deploy:
     needs: validate
-    if: ${{ vars.PRODUCTION_DEPLOY_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     environment: production
     steps:
