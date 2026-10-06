@@ -819,8 +819,14 @@ function extractPdfText(src){
 async function readPdfBasic(file,statusEl){
   if(!file)throw new Error('File PDF tidak ditemukan.');
   const apiBase=window.KERJADESA_API_BASE||'/api';
-  const csrf=sessionStorage.getItem('kd_csrf_token')||'';
-  if(!csrf)throw Object.assign(new Error('Sesi login tidak memiliki CSRF token yang valid.'),{code:'DRP_CSRF_MISSING',status:403});
+  let csrf=sessionStorage.getItem('kd_csrf_token')||'';
+  // A restored/persistent login can have a valid session cookie but no CSRF
+  // token in this browser tab. Recover a fresh token before rejecting DRP.
+  if(!csrf && window.KerjaDesaAuthAPI?.me){
+    try{ await window.KerjaDesaAuthAPI.me(); }catch(_){}
+    csrf=sessionStorage.getItem('kd_csrf_token')||'';
+  }
+  if(!csrf)throw Object.assign(new Error('Sesi login tidak memiliki CSRF token yang valid. Silakan masuk kembali.'),{code:'DRP_CSRF_MISSING',status:403});
   if(statusEl)statusEl.innerHTML='<span class="loading">⏳ Mengirim PDF ke server...</span>';
   kdDrpSetState('uploading',{fileMeta:kdDrpFileMeta(file)});
   kdFileTrace?.('DRP_UPLOAD_STARTED',{filename:file.name,mime:file.type,size:file.size});
