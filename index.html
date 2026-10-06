@@ -1117,17 +1117,41 @@ window.handleDrpFile=handleDrpFile;
     input.addEventListener('click',function(){
       try{input.value=''}catch(_){}
     },false);
-    input.addEventListener('change',function(){
-      void process(input);
+    const trigger=function(){
+      if(input.files?.[0])void process(input);
+    };
+    // Android file providers can return focus with a populated FileList but
+    // without dispatching the expected change event. Cover both paths.
+    input.addEventListener('change',trigger,false);
+    input.addEventListener('input',trigger,false);
+    input.onchange=trigger;
+    input.oninput=trigger;
+    input.addEventListener('click',function(){
+      let ticks=0;
+      const timer=setInterval(function(){
+        ticks++;
+        if(input.files?.[0]){
+          clearInterval(timer);
+          trigger();
+        }else if(ticks>=30){
+          clearInterval(timer);
+        }
+      },250);
     },false);
   }
 
+  function checkAfterPicker(){
+    const input=document.getElementById('drpFile');
+    if(input?.files?.[0])void process(input);
+    bind();
+  }
   if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded',bind,{once:true});
   }else{
     bind();
   }
-  window.addEventListener('focus',bind);
+  window.addEventListener('focus',checkAfterPicker);
+  window.addEventListener('pageshow',checkAfterPicker);
 })();
 async function autoProcessOne(kind,fileOverride=null){
   const isDrp=kind==='drp',fileId=isDrp?'drpFile':'sppdFile',statusId=isDrp?'drpStatus':'sppdStatus';
