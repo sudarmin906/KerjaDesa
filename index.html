@@ -987,13 +987,40 @@ function clearDrpData(){
 }
 async function clearActivityPhotos(){
  if(!confirm('Kosongkan semua foto dokumentasi yang tersimpan di aplikasi?'))return;
- activityPhotos=[];
- kdPhotoOcrQueue=[];
- data.docs=data.docs||{};data.docs.activityPhotos=[];
- const f=document.getElementById('photoFiles');if(f)f.value='';
- const st=document.getElementById('photoOcrStatus');if(st)st.textContent='Foto dokumentasi dikosongkan.';
- try{if(window.KerjaDesaSecureStorage?.saveNamed)await window.KerjaDesaSecureStorage.saveNamed('activityPhotos',[])}catch(e){console.error('Vault foto gagal dikosongkan:',e)}
- save();renderMediaPreviews();
+ const st=document.getElementById('photoOcrStatus');
+ try{
+   activityPhotos=[];
+   kdPhotoOcrQueue=[];
+   data.docs=data.docs||{};
+   data.docs.activityPhotos=[];
+   const f=document.getElementById('photoFiles');if(f)f.value='';
+   if(window.KerjaDesaSecureStorage?.saveNamed)await window.KerjaDesaSecureStorage.saveNamed('activityPhotos',[]);
+   await save();
+   renderMediaPreviews();
+   if(st)st.textContent='✅ Semua foto dokumentasi telah dihapus.';
+ }catch(e){
+   console.error('Hapus semua foto gagal:',e);
+   if(st)st.textContent='❌ Foto gagal dihapus: '+(e?.message||e);
+ }
+}
+async function deleteActivityPhoto(index){
+ const i=Number(index);
+ if(!Number.isInteger(i)||i<0||i>=activityPhotos.length)return;
+ const photo=activityPhotos[i];
+ if(!confirm('Hapus foto dokumentasi ini?\n\n'+String(photo?.name||('Foto '+(i+1)))))return;
+ const st=document.getElementById('photoOcrStatus');
+ try{
+   activityPhotos.splice(i,1);
+   data.docs=data.docs||{};
+   data.docs.activityPhotos=activityPhotos;
+   if(window.KerjaDesaSecureStorage?.saveNamed)await window.KerjaDesaSecureStorage.saveNamed('activityPhotos',activityPhotos);
+   await save();
+   renderMediaPreviews();
+   if(st)st.textContent='✅ Foto dihapus. Sisa foto: '+activityPhotos.length+'.';
+ }catch(e){
+   console.error('Hapus foto gagal:',e);
+   if(st)st.textContent='❌ Foto gagal dihapus: '+(e?.message||e);
+ }
 }
 function clearSppdDocument(){
  if(!confirm('Hapus dokumen SPPD yang tersimpan?'))return;
@@ -1709,7 +1736,7 @@ async function loadActivityPhotoFiles(files){
  void runPhotoOcrQueue();
 }
 function setPhotoActivity(photoIndex,activityIndex){const p=activityPhotos[Number(photoIndex)];if(!p)return;const idx=activityIndex===''?null:Number(activityIndex);const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];const a=Number.isInteger(idx)&&idx>=0?acts[idx]:null;p.matchedActivityIndex=a?idx:null;p.matchedActivityNo=a?.no||null;p.matchedActivityDate=a?dateKey(a.tanggal):'';p.matchedActivityKey=a?drpActivityKey(a):'';p.reportDate=a?.tanggal||'';p.matchScore=a?scorePhotoActivity(p,a):0;p.matchConfidence=a?'manual':'belum cocok';data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;save();renderMediaPreviews()}
-function renderMediaPreviews(){const d=data.docs||{};profilePhoto=d.profilePhoto||profilePhoto;logoPhoto=d.logoPhoto||'';activityPhotos=d.activityPhotos||[];const pp=document.getElementById('profilePreview'),lp=document.getElementById('logoPreview'),pr=document.getElementById('photoPreview');if(pp){const u=safeMediaUrl(profilePhoto);pp.innerHTML=u?'<img class="profile-preview" src="'+esc(u)+'" alt="Foto profil">':'';}if(lp){const u=safeMediaUrl(logoPhoto);lp.innerHTML=u?'<img class="logo-preview" src="'+esc(u)+'" alt="Logo Kemendesa">':'<span class="small muted">Belum ada logo. Upload logo resmi Kemendesa.</span>';}if(pr){const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];pr.innerHTML=activityPhotos.map((p,i)=>{const a=findActivityForPhoto(p,acts);const u=safeMediaUrl(p.url);const options='<option value="">Pilih kegiatan DRP</option>'+acts.map((x,j)=>'<option value="'+j+'"'+(p.matchedActivityIndex===j?' selected':'')+'>'+esc((x.no||j+1)+'. '+shortActivityTitle(x))+'</option>').join('');return '<div class="photo-card">'+(u?'<img src="'+esc(u)+'" alt="Foto '+(i+1)+'">':'')+'<div class="photo-meta">'+esc(p.name)+(p.date?'<br>Tanggal: '+esc(p.date):'<br><b>Tanggal belum terbaca</b>')+(a?'<br>DRP: <b>'+esc(shortActivityTitle(a))+'</b>':'<br><span class="muted">Belum cocok dengan DRP</span>')+'<br><span class="small muted">Kecocokan: '+esc(p.matchConfidence||'belum cocok')+'</span><select style="margin-top:6px" onchange="setPhotoActivity('+i+',this.value)">'+options+'</select></div></div>'}).join('');}}
+function renderMediaPreviews(){const d=data.docs||{};profilePhoto=d.profilePhoto||profilePhoto;logoPhoto=d.logoPhoto||'';activityPhotos=d.activityPhotos||[];const pp=document.getElementById('profilePreview'),lp=document.getElementById('logoPreview'),pr=document.getElementById('photoPreview');if(pp){const u=safeMediaUrl(profilePhoto);pp.innerHTML=u?'<img class="profile-preview" src="'+esc(u)+'" alt="Foto profil">':'';}if(lp){const u=safeMediaUrl(logoPhoto);lp.innerHTML=u?'<img class="logo-preview" src="'+esc(u)+'" alt="Logo Kemendesa">':'<span class="small muted">Belum ada logo. Upload logo resmi Kemendesa.</span>';}if(pr){const acts=data.docs?.drp?.parsed?.all||data.docs?.drp?.parsed?.kunlap||[];pr.innerHTML=activityPhotos.map((p,i)=>{const a=findActivityForPhoto(p,acts);const u=safeMediaUrl(p.url);const options='<option value="">Pilih kegiatan DRP</option>'+acts.map((x,j)=>'<option value="'+j+'"'+(p.matchedActivityIndex===j?' selected':'')+'>'+esc((x.no||j+1)+'. '+shortActivityTitle(x))+'</option>').join('');return '<div class="photo-card">'+(u?'<img src="'+esc(u)+'" alt="Foto '+(i+1)+'">':'')+'<div class="photo-meta">'+esc(p.name)+(p.date?'<br>Tanggal: '+esc(p.date):'<br><b>Tanggal belum terbaca</b>')+(a?'<br>DRP: <b>'+esc(shortActivityTitle(a))+'</b>':'<br><span class="muted">Belum cocok dengan DRP</span>')+'<br><span class="small muted">Kecocokan: '+esc(p.matchConfidence||'belum cocok')+'</span><select style="margin-top:6px" onchange="setPhotoActivity('+i+',this.value)">'+options+'</select><button type="button" class="secondary" style="margin-top:6px" onclick="deleteActivityPhoto('+i+')">🗑️ Hapus Foto Ini</button></div></div>'}).join('');}}
 function photosForDate(date){return activityPhotos.filter(p=>p.date&&p.date===date)}
 
 function monthNameFromPeriod(p){
