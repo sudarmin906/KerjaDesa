@@ -385,7 +385,15 @@ async function login(req, res) {
     loginAttempts.delete(key);
     authDebug('LOGIN CREDENTIALS VERIFIED', { user_id_present: user?.id != null, role: user?.role || '', remember_me: rememberMe });
     if (passwordCheck.needsUpgrade) {
-      await update('users', user.id, { password_hash: hashPassword(password) });
+      // A password hash upgrade must never turn valid credentials into a
+      // generic server-authentication failure. Keep the verified login valid
+      // and retry the upgrade on a later successful login if the write fails.
+      try {
+        await update('users', user.id, { password_hash: hashPassword(password) });
+      } catch (upgradeError) {
+        console.error('Authentication password upgrade failed:', upgradeError?.message || upgradeError);
+        authDebug('PASSWORD UPGRADE FAILED', { user_id_present: user?.id != null });
+      }
     }
 
     let token;
