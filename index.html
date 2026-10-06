@@ -1412,9 +1412,13 @@ function normalizePhotoDate(raw){
 function extractPhotoDate(name){return normalizePhotoDate(name)}
 function extractDatesFromOcr(text){
  const out=[];
- const src=String(text||'');
- src.replace(/(20\d{2})[\/-](\d{1,2})[\/-](\d{1,2})|(\d{1,2})[\/-](\d{1,2})[\/-](20\d{2})/g,a=>{const x=normalizePhotoDate(a);if(x&&!out.includes(x))out.push(x)});
- src.replace(/(?:^|[^0-9])(\d{1,2})\s*(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember|Jan|Feb|Mar|Apr|Jun|Jul|Agu|Ags|Sep|Okt|Nov|Des)\s*(20\d{2})(?:[^0-9]|$)/gi,a=>{const x=normalizePhotoDate(a);if(x&&!out.includes(x))out.push(x)});
+ const raw=String(text||'');
+ const src=raw.replace(/[Oo]/g,'0').replace(/[Il|]/g,'1');
+ const add=(x)=>{const d=normalizePhotoDate(x);if(d&&!out.includes(d))out.push(d)};
+ src.replace(/(20\d{2})\s*[\\/.-]\s*(\d{1,2})\s*[\\/.-]\s*(\d{1,2})|(\d{1,2})\s*[\\/.-]\s*(\d{1,2})\s*[\\/.-]\s*(20\d{2})/g,add);
+ src.replace(/(?:^|[^0-9])(\d{1,2})\s*(Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember|Jan|Feb|Mar|Apr|Jun|Jul|Agu|Ags|Sep|Okt|Nov|Des)\s*(20\d{2})(?:[^0-9]|$)/gi,add);
+ src.replace(/(?:^|[^0-9])(20\d{2})(\d{2})(\d{2})(?:[^0-9]|$)/g,add);
+ src.replace(/(?:^|[^0-9])(\d{2})(\d{2})(20\d{2})(?:[^0-9]|$)/g,add);
  return out
 }
 async function extractExifDate(file){
@@ -1560,8 +1564,27 @@ async function ocrPhoto(file,index,total){
   const worker=await getPhotoOcrWorker();
   const st=document.getElementById('photoOcrStatus');
   if(st)st.textContent='🔎 OCR tanggal/keterangan foto — '+(index+1)+'/'+total;
-  const r=await worker.recognize(file);
-  const text=r?.data?.text||'',dates=extractDatesFromOcr(text);
+  const chunks=[];
+  const first=await worker.recognize(file);
+  chunks.push(first?.data?.text||'');
+  let dates=extractDatesFromOcr(chunks[0]);
+  if(!dates.length){
+    try{
+      const bmp=await createImageBitmap(file);
+      const topHeight=Math.max(1,Math.floor(bmp.height*0.62));
+      const rTop=await worker.recognize(file,{rectangle:{left:0,top:0,width:bmp.width,height:topHeight}});
+      chunks.push(rTop?.data?.text||'');
+      dates=extractDatesFromOcr(chunks.join('\n'));
+      if(!dates.length){
+        const bottomTop=Math.floor(bmp.height*0.38);
+        const rBottom=await worker.recognize(file,{rectangle:{left:0,top:bottomTop,width:bmp.width,height:bmp.height-bottomTop}});
+        chunks.push(rBottom?.data?.text||'');
+        dates=extractDatesFromOcr(chunks.join('\n'));
+      }
+      if(typeof bmp.close==='function')bmp.close();
+    }catch(regionError){console.warn('OCR region foto gagal',regionError)}
+  }
+  const text=chunks.join('\n').replace(/\n{3,}/g,'\n\n').trim();
   return{text,date:dates[0]||'',dates};
  }catch(e){console.warn('OCR foto gagal',e);return{text:'',date:'',dates:[]}}
 }
