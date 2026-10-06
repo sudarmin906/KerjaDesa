@@ -8,7 +8,6 @@ COPY package*.json ./
 RUN npm install --omit=dev --no-audit --no-fund
 COPY . .
 ENV NODE_ENV=production
-ENV NODE_OPTIONS=--max-old-space-size=192
 ENV KERJADESA_COMMIT=$KERJADESA_COMMIT
 ENV KERJADESA_BUILD=$KERJADESA_BUILD
 EXPOSE 3000
