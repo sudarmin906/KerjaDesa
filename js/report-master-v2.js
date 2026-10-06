@@ -79,86 +79,29 @@
 
   function buildAllActivityDocumentation(allActs){
     const photosAll=((typeof activityPhotos!=='undefined')?activityPhotos:[]);
-    const acts=safeArr(allActs);
     const used=new Set();
-
-    // Match documentation by stable DRP identity first. The old renderer relied
-    // on matchedActivityIndex, which becomes wrong whenever the report sorts the
-    // DRP rows by date. A photo can therefore be displayed under the wrong activity.
-    const keyOf=(a)=>typeof window.drpActivityKey==='function'
-      ? String(window.drpActivityKey(a)||'')
-      : [String(a?.no??''),String(a?.tanggal??''),String(a?.deskripsi||a?.judul||'').replace(/\\s+/g,' ').trim()].join('|');
-
-    const dateOf=(v)=>typeof window.dateKey==='function'
-      ? String(window.dateKey(v)||'')
-      : String(v||'').slice(0,10);
-
-    const photosForActivity=(act)=>{
-      const actKey=keyOf(act), actNo=String(act?.no??''), actDate=dateOf(act?.tanggal);
-      const sameDate=acts.filter(x=>dateOf(x?.tanggal)===actDate).length;
-      return photosAll.filter((p,pi)=>{
-        if(used.has(pi))return false;
-        const pKey=String(p?.matchedActivityKey||'');
-        const pNo=String(p?.matchedActivityNo??'');
-        const pDate=dateOf(p?.matchedActivityDate||p?.reportDate||p?.date);
-        const exactKey=!!actKey && !!pKey && pKey===actKey;
-        const exactNo=!!actNo && !!pNo && pNo===actNo && !!actDate && pDate===actDate;
-        const uniqueDate=!!actDate && sameDate===1 && pDate===actDate && !pKey && !pNo;
-        // matchedActivityIndex is retained only as a legacy fallback when the
-        // photo has no stable identity at all.
-        const legacyIndex=Number.isInteger(p?.matchedActivityIndex) &&
-          p.matchedActivityIndex===acts.indexOf(act) && !pKey && !pNo && !pDate;
-        if(exactKey||exactNo||uniqueDate||legacyIndex){used.add(pi);return true}
-        return false;
+    const cells = allActs.map((act, idx)=>{
+      const photos = photosAll.filter((p,pi)=>{
+        const matched=(p.matchedActivityIndex===idx);
+        const byDate=(p.matchedActivityIndex==null && p.date && ((typeof sameDayMonth==='function')?sameDayMonth(p.date,act.tanggal):false));
+        if((matched||byDate)&&!used.has(pi)){used.add(pi);return true} return false;
       });
-    };
-
-    const cells=acts.map((act)=>{
-      const photos=photosForActivity(act);
-      const photoHtml=photos.length
-        ? photos.map(p=>{
-            const u=typeof safeMediaUrl==='function'?safeMediaUrl(p?.url):'';
-            return u?'<div class="master-doc-photo"><img src="'+esc2(u)+'" alt="Dokumentasi"></div>':'';
-          }).join('')
+      const photoHtml = photos.length
+        ? photos.map(p=>(safeMediaUrl(p.url)?'<div class="master-doc-photo"><img src="'+esc2(safeMediaUrl(p.url))+'" alt="Dokumentasi"></div>':'')).join('')
         : '<div class="master-doc-empty">Foto dokumentasi belum tersedia untuk kegiatan ini.</div>';
-      const village=typeof locationVillage==='function'?locationVillage(act.lokasi):String(act.lokasi||'-');
-      const date=act.tanggal?dLong(act.tanggal):'-';
-      const activity=typeof shortActivityTitle==='function'
-        ? shortActivityTitle(act)
-        : String(act.judul||act.deskripsi||'-').replace(/\\s+/g,' ').trim();
-      return '<td class="master-doc-cell"><div class="master-doc-info">'+
-        '<div>Lokasi: <b>'+esc2(village)+'</b></div>'+
-        '<div>Tanggal: <b>'+esc2(date)+'</b></div>'+
-        '<div>Kegiatan: <b>'+esc2(activity)+'</b></div>'+
-        '<div>Jumlah Foto: <b>'+photos.length+'</b></div>'+
-        '</div><div class="master-doc-photos">'+photoHtml+'</div></td>';
+      const village = (typeof locationVillage==='function'?locationVillage(act.lokasi):String(act.lokasi||'-'));
+      const date = act.tanggal ? dLong(act.tanggal) : '-';
+      const activity = (typeof shortActivityTitle==='function' ? shortActivityTitle(act) : String(act.judul||act.deskripsi||'-').replace(/\s+/g,' ').trim());
+      return '<td class="master-doc-cell"><div class="master-doc-info"><div>Lokasi: <b>'+esc2(village)+'</b></div><div>Tanggal: <b>'+esc2(date)+'</b></div><div>Kegiatan: <b>'+esc2(activity)+'</b></div></div><div class="master-doc-photos">'+photoHtml+'</div></td>';
     });
-
     const rows=[];
-    for(let i=0;i<cells.length;i+=2){
-      rows.push('<tr>'+cells[i]+(cells[i+1]||'<td class="master-doc-cell empty"></td>')+'</tr>');
-    }
-
-    // Never lose photos that cannot yet be matched. Put them in a clearly
-    // labelled section instead of silently attaching them to another activity.
+    for(let i=0;i<cells.length;i+=2) rows.push('<tr>'+cells[i]+(cells[i+1]||'<td class="master-doc-cell empty"></td>')+'</tr>');
     const remaining=photosAll.filter((p,pi)=>!used.has(pi));
-    for(let i=0;i<remaining.length;i+=2){
-      const make=(p)=>{
-        const u=typeof safeMediaUrl==='function'?safeMediaUrl(p?.url):'';
-        return '<td class="master-doc-cell"><div class="master-doc-info">'+
-          '<div>Lokasi: <b>Belum terdeteksi</b></div>'+
-          '<div>Tanggal: <b>'+esc2(p?.date||'-')+'</b></div>'+
-          '<div>Kegiatan: <b>Dokumentasi belum dicocokkan</b></div>'+
-          '<div>Nama Foto: <b>'+esc2(p?.name||'-')+'</b></div>'+
-          '</div><div class="master-doc-photos">'+
-          (u?'<div class="master-doc-photo"><img src="'+esc2(u)+'" alt="Dokumentasi"></div>':'<div class="master-doc-empty">Pratinjau foto tidak tersedia.</div>')+
-          '</div></td>';
-      };
-      rows.push('<tr>'+make(remaining[i])+(remaining[i+1]?make(remaining[i+1]):'<td class="master-doc-cell empty"></td>')+'</tr>');
-    }
-
-    if(!rows.length){
-      rows.push('<tr><td colspan="2" class="master-doc-cell"><div class="master-doc-empty">Belum ada aktivitas DRP atau foto dokumentasi.</div></td></tr>');
+    if(remaining.length){
+      for(let i=0;i<remaining.length;i+=2){
+        const make=p=>'<td class="master-doc-cell"><div class="master-doc-info"><div>Lokasi: <b>Belum terdeteksi</b></div><div>Tanggal: <b>'+esc2(p.date||'-')+'</b></div><div>Kegiatan: <b>Dokumentasi belum dicocokkan</b></div></div><div class="master-doc-photos"><div class="master-doc-photo"><img src="'+p.url+'" alt="Dokumentasi"></div></div></td>';
+        rows.push('<tr>'+make(remaining[i])+(remaining[i+1]?make(remaining[i+1]):'<td class="master-doc-cell empty"></td>')+'</tr>');
+      }
     }
     return '<table class="master-doc-table"><tbody>'+rows.join('')+'</tbody></table>';
   }
@@ -211,15 +154,22 @@
       '</tbody><tfoot><tr><th colspan="4">Total Hari Kunjungan Lapangan Bulan '+esc2(month)+' Tahun '+esc2(year)+' : '+
       ((typeof uniqueVisitDays==='function'?uniqueVisitDays(visitActs):visitActs.length))+' Hari</th></tr></tfoot></table></section>';
 
-    // 3) C — A4 PORTRAIT. Build entirely from the current DRP-derived narrative.
-    const tujuan=safeArr(nar?.tujuan);
+    // 3) C — A4 PORTRAIT, preserving the source's structure and six specific objectives.
     const csec='<section class="'+reportPageClass('portrait')+'"><h3>C. TUJUAN KUNJUNGAN LAPANGAN</h3>'+
-      '<p>Kunjungan lapangan pada bulan '+esc2(month)+' Tahun '+esc2(year)+' dilaksanakan berdasarkan aktivitas yang tercatat dalam DRP dan diarahkan untuk memastikan pendampingan, monitoring, koordinasi, verifikasi kondisi lapangan, serta penyelesaian tindak lanjut berjalan sesuai kebutuhan dan ketentuan yang berlaku.</p>'+
-      (tujuan.length?'<p>Tujuan khusus kunjungan lapangan meliputi:</p><ol>'+tujuan.map(x=>'<li>'+esc2(x)+'</li>').join('')+'</ol>':'<p>Tujuan khusus akan disusun berdasarkan aktivitas kunjungan lapangan yang terbaca dari DRP.</p>')+
-      '</section>';
+      '<p>Pelaksanaan kunjungan lapangan pada bulan '+esc2(month)+' Tahun '+esc2(year)+' di wilayah pendampingan Desa Tallu Banua Utara, Desa Limboro Rambu-Rambu, dan Desa Paminggalan Kecamatan Sendana Kabupaten Majene bertujuan untuk melaksanakan kegiatan pendampingan, monitoring, koordinasi, serta memastikan proses penyelenggaraan pemerintahan desa, pelaksanaan pembangunan, dan pengelolaan Dana Desa berjalan sesuai dengan perencanaan, ketentuan, dan regulasi yang berlaku.</p>'+
+      '<p>Kegiatan kunjungan lapangan dilaksanakan sebagai bentuk dukungan terhadap Pemerintah Desa dalam meningkatkan kualitas tata kelola pemerintahan desa, percepatan pembangunan desa, pemberdayaan masyarakat, serta penguatan administrasi dan pelaporan kegiatan desa.</p>'+
+      '<p>Adapun tujuan khusus pelaksanaan kunjungan lapangan yaitu:</p>'+
+      '<ol>'+
+      '<li>Melakukan monitoring dan evaluasi terhadap progres pelaksanaan kegiatan pembangunan fisik desa, seperti pembangunan Gedung Koperasi Desa Merah Putih, pembangunan rabat beton jalan, pembangunan jembatan dekker, serta pembangunan drainase desa.</li>'+
+      '<li>Memastikan pelaksanaan kegiatan pembangunan desa berjalan sesuai dengan dokumen perencanaan, standar teknis, volume pekerjaan, serta target waktu yang telah ditetapkan.</li>'+
+      '<li>Melaksanakan koordinasi dan pendampingan bersama Pemerintah Desa dalam rangka persiapan dan pelaksanaan Pra Musrenbang Dusun, Musrenbang Desa, penyusunan RKPDes Tahun Anggaran 2027, serta penyusunan dokumen perencanaan pembangunan desa.</li>'+
+      '<li>Mendampingi Pemerintah Desa dalam proses penyusunan, pembahasan, dan penyesuaian dokumen APBDes serta memastikan perencanaan penggunaan Dana Desa tetap memperhatikan ketentuan dan prioritas pembangunan desa.</li>'+
+      '<li>Melakukan pendampingan dalam pengelolaan administrasi Dana Desa melalui pemutakhiran data realisasi kegiatan dan penginputan laporan pada aplikasi Monitoring dan Evaluasi Dana Desa (Monev DD).</li>'+
+      '<li>Mengidentifikasi kondisi, kendala, serta kebutuhan tindak lanjut yang ditemukan di lapangan sebagai bahan evaluasi dan perbaikan pelaksanaan program pembangunan Desa.</li>'+
+      '</ol></section>';
 
     // 4) D — A4 LANDSCAPE. Only the detailed result table belongs here.
-    const dsec='<section class="'+reportPageClass('landscape')+'"><h3>D. Hasil Kunjungan Lapangan</h3>'+
+    const dsec='<section class="'+reportPageClass('landscape')+'"><h3>D. Hasil Kunjugan Lapangan</h3>'+
       '<table class="result-table"><thead><tr><th>No</th><th>Tanggal</th><th>Desa</th><th>Kegiatan</th></tr></thead><tbody>'+
       ((typeof buildVisitRows==='function'?buildVisitRows(visitActs):''))+
       '</tbody></table></section>';
@@ -244,7 +194,7 @@
       '</section>';
 
     // 6) G — A4 PORTRAIT. Two-column documentation cards, portrait photos, concise activity title.
-    const g='<section class="'+reportPageClass('portrait')+'"><h3>G. Dokumentasi Kunjungan Lapangan</h3>'+
+    const g='<section class="'+reportPageClass('portrait')+'"><h3>G. Dokumentasi Kunjugan Lapangan</h3>'+
       buildAllActivityDocumentation(allActs)+
       '</section>';
 
