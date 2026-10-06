@@ -8,7 +8,6 @@ COPY . .
 WORKDIR /app/backend
 RUN npm install --omit=dev --no-audit --no-fund
 ENV NODE_ENV=production
-ENV NODE_OPTIONS=--max-old-space-size=192
 ENV KERJADESA_COMMIT=$KERJADESA_COMMIT
 ENV KERJADESA_BUILD=$KERJADESA_BUILD
 ENV HOST=0.0.0.0
