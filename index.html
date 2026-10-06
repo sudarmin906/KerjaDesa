@@ -1072,6 +1072,7 @@ async function autoProcessOne(kind,fileOverride=null){
     if(st)st.innerHTML='<span class="loading">⏳ Memeriksa '+esc(f.name)+'...</span>';
     return await handleDrpFile(f,st);
   }
+  try{
     await kdValidateFile(f,'drp');
     if(st)st.innerHTML='<span class="loading">⏳ Membaca '+esc(f.name)+'...</span>';
     const txt=await kdWithTimeout(readFile(f),40000,'Pembacaan dokumen');
