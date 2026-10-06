@@ -1841,52 +1841,16 @@ async function makeReport(){const d=data.docs||{},drp=getReportDrp(),h=drp?.head
    matchPhotoToDrp(p,allActs);
  });
  data.docs=data.docs||{};data.docs.activityPhotos=activityPhotos;await save();reportContext.nar=deriveNarratives(acts);renderReportFromNarratives(reportContext.nar);kdPersistGeneratedReport().then(r=>{const st=document.getElementById('aiReportStatus');if(st)st.textContent=r.synced?'✅ Laporan selesai disusun dan tersimpan di server. C, D, E, F dan G sudah dibuat.':'✅ Laporan selesai disusun. Server belum tersedia; laporan tetap tersimpan di perangkat.'});}
-function downloadWord(){if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}const css='@page{size:A4 portrait;margin:15mm}@page landscape{size:A4 landscape;margin:12mm 14mm}body{font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.42;color:#111}.report-page{break-after:page;page-break-after:always;box-sizing:border-box;min-height:267mm;padding:12mm 15mm}.landscape-page{page:landscape;min-height:186mm;padding:10mm 12mm}.report-page:last-child{break-after:auto;page-break-after:auto}.cover-head{text-align:center;font-weight:700}.cover-instansi{font-size:16px;line-height:1.45}.cover-logo{display:block;width:78mm;height:78mm;object-fit:contain;margin:24mm auto 20mm}.cover-title{font-size:15px;margin-bottom:17mm}.cover-name{font-size:17px;margin-bottom:6mm}.cover-position{font-size:14px}.cover-region{font-size:14px;line-height:1.55;margin-top:22mm}.report-page h2{text-align:center;font-size:15px}.report-page h3{font-size:13px;margin:4mm 0 2.5mm}.report-page p,.report-page li{font-size:10.5pt;line-height:1.42;text-align:justify}.identity-table,.wide-table,.result-table{width:100%;border-collapse:collapse}.identity-table td{padding:2px 5px}.wide-table th,.wide-table td,.result-table th,.result-table td{border:1px solid #555;padding:4px;vertical-align:top}.wide-table th{text-align:center}.doc-roll{display:grid;grid-template-columns:40% 60%;gap:5mm;align-items:center;min-height:48mm;break-inside:avoid}.doc-note{border:1px solid #333;padding:7px;font-size:9.5pt}.doc-photo-frame{border:1px solid #333;padding:5px;text-align:center}.doc-photo-frame img{max-width:100%;max-height:62mm;object-fit:contain}.signature{text-align:center;margin-top:12mm}';const html=`<!doctype html><html><head><meta charset="utf-8"><title>Laporan Kunjungan Lapangan</title><style>'+css+'</style></head><body>'+reportHtml+'<button type="button" class="kd-float-action" aria-label="Aksi cepat" onclick="kdQuickAction()" title="Aksi cepat">⌕</button>\n<script>\nfunction kdToggleAccountMenu(force){\n const m=document.getElementById("kdAccountMenu"); if(!m)return;\n const open=force===true||(force!==false&&!m.classList.contains("open"));\n m.classList.toggle("open",open);\n}\ndocument.addEventListener("click",function(e){\n const box=document.querySelector(".kd-account");\n if(box&&!box.contains(e.target))kdToggleAccountMenu(false);\n});\nfunction kdQuickAction(){\n if(typeof page==="function"){try{page("kegiatan");return;}catch(e){}}\n window.scrollTo({top:0,behavior:"smooth"});\n}\n<\\/script>\n<script>\n/* === KERJADESA NATIVE FILE PICKER 2026.10.06 === */
-(function(){
-  'use strict';
-  const VERSION='FILE-PICKER-NATIVE-2026.10.06-01';
-  window.KERJADESA_FILE_PICKER_VERSION=VERSION;
-
-  function updateName(input){
-    const files=[...(input?.files||[])];
-    const status=document.getElementById(String(input?.id||'')+'Name');
-    if(!status)return;
-    if(!files.length){
-      status.textContent='Tidak ada file yang dipilih';
-      status.className='kd-file-name';
-      status.title='';
-      return;
-    }
-    status.textContent=files.length>1
-      ? files.length+' file dipilih: '+files[0].name+' + '+(files.length-1)+' lainnya'
-      : files[0].name;
-    status.className='kd-file-name ok';
-    status.title=files.map(f=>f.name).join('\n');
-  }
-
-  function bind(){
-    document.querySelectorAll('input[type="file"]').forEach(input=>{
-      if(input.dataset.kdNativePickerBound==='1')return;
-      input.dataset.kdNativePickerBound='1';
-      input.addEventListener('change',function(){
-        updateName(input);
-        try{ window.kdFileTrace?.('native file selected',{
-          id:input.id,
-          count:input.files?.length||0,
-          name:input.files?.[0]?.name||''
-        }); }catch(_){}
-      },true);
-    });
-  }
-
-  function boot(){
-    bind();
-    setTimeout(bind,250);
-    setTimeout(bind,1000);
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
-  else boot();
-})();</script><script>/* V35.17: bind core UI actions after all inline functions are defined. */
+function downloadWord(){
+  if(!reportHtml){alert('Buat laporan terlebih dahulu.');return}
+  const css='@page{size:A4 portrait;margin:15mm}@page landscape{size:A4 landscape;margin:12mm 14mm}body{font-family:Arial,sans-serif;font-size:10.5pt;line-height:1.42;color:#111}.report-page{break-after:page;page-break-after:always;box-sizing:border-box;min-height:267mm;padding:12mm 15mm}.landscape-page{page:landscape;min-height:186mm;padding:10mm 12mm}.report-page:last-child{break-after:auto;page-break-after:auto}.cover-head{text-align:center;font-weight:700}.cover-instansi{font-size:16px;line-height:1.45}.cover-logo{display:block;width:78mm;height:78mm;object-fit:contain;margin:24mm auto 20mm}.cover-title{font-size:15px;margin-bottom:17mm}.cover-name{font-size:17px;margin-bottom:6mm}.cover-position{font-size:14px}.cover-region{font-size:14px;line-height:1.55;margin-top:22mm}.report-page h2{text-align:center;font-size:15px}.report-page h3{font-size:13px;margin:4mm 0 2.5mm}.report-page p,.report-page li{font-size:10.5pt;line-height:1.42;text-align:justify}.identity-table,.wide-table,.result-table{width:100%;border-collapse:collapse}.identity-table td{padding:2px 5px}.wide-table th,.wide-table td,.result-table th,.result-table td{border:1px solid #555;padding:4px;vertical-align:top}.wide-table th{text-align:center}.doc-roll{display:grid;grid-template-columns:40% 60%;gap:5mm;align-items:center;min-height:48mm;break-inside:avoid}.doc-note{border:1px solid #333;padding:7px;font-size:9.5pt}.doc-photo-frame{border:1px solid #333;padding:5px;text-align:center}.doc-photo-frame img{max-width:100%;max-height:62mm;object-fit:contain}.signature{text-align:center;margin-top:12mm}';
+  const html='<!doctype html><html><head><meta charset="utf-8"><title>Laporan Kunjungan Lapangan</title><style>'+css+'</style></head><body>'+reportHtml+'</body></html>';
+  const blob=new Blob([html],{type:'application/msword'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='Laporan_Kunjungan_Lapangan_'+String(reportContext?.month||'BULAN').replace(/\s+/g,'_')+'_'+(reportContext?.year||'2026')+'.doc';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}</script><script>/* V35.17: bind core UI actions after all inline functions are defined. */
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',()=>kdBindCoreActions(),{once:true});}else{kdBindCoreActions();}
 </script><script src="js/report-master-v2.js?v=55"></script><script>
 (function(){
