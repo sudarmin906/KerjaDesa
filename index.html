@@ -322,7 +322,16 @@ html[data-kd-theme="dark"] .nav{background:#111827!important;border-color:#26344
 window.kdDirectDrpInput=function(input){
   const file=input?.files?.[0];
   const st=document.getElementById('drpStatus');
-  if(!file)return;
+  if(!file){
+    const tries=Number(input?.dataset?.kdDrpWait||0);
+    if(input && tries<120){
+      input.dataset.kdDrpWait=String(tries+1);
+      if(st)st.innerHTML='<span class="loading">📎 Menunggu file DRP dipilih...</span>';
+      setTimeout(()=>window.kdDirectDrpInput(input),250);
+    }
+    return;
+  }
+  try{input.dataset.kdDrpWait='0'}catch(_){};
   if(st)st.innerHTML='<span class="loading">⏳ FILE TERPILIH: '+String(file.name).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m])+'<br>⏳ Menjalankan pemrosesan DRP...</span>';
   let n=0;
   const invoke=()=>{
