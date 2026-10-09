@@ -1,4 +1,4 @@
-FROM node:22-alpine
+FROM node:25-alpine
 ARG KERJADESA_COMMIT=unknown
 ARG KERJADESA_BUILD=unknown
 
